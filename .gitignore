@@ -1,0 +1,42 @@
+# Dependencies and generated builds
+**/node_modules/
+**/.next/
+**/.vinext/
+**/dist/
+**/.wrangler/
+**/.pnpm-store/
+**/coverage/
+**/outputs/
+**/__pycache__/
+**/*.pyc
+
+# Secrets and local configuration
+**/.env
+**/.env.*
+!**/.env.example
+**/.dev.vars
+**/*.pem
+**/*.key
+
+# Databases, exports and customer data
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/data/*.json
+**/data/*.csv
+**/exportacion-*.json
+
+# Logs, archives and deployment copies
+**/*.log
+**/*.zip
+**/*.tar
+**/*.tar.gz
+**/dist-backup*/
+**/dist-pre*/
+**/.sites-*/
+
+# Local editor/system files
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
