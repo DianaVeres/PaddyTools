@@ -1,6 +1,5 @@
 # PaddyTools
-
-Proyecto de 2.º DAM para centralizar la gestión de pedidos, reservas, incidencias y listas de preparación de Paddy.
+Programa de gestión integral y proyecto de 2.º DAM para centralizar pedidos, reservas, incidencias y listas de preparación de Paddy.
 
 ## Aplicaciones
 
@@ -67,4 +66,3 @@ railway up
 ## Seguridad
 
 Las claves de WooCommerce, Monday, Cloudflare, Railway y los tokens de sincronización no forman parte del repositorio. Deben configurarse como secretos en cada plataforma y como variables locales durante el desarrollo.
-
