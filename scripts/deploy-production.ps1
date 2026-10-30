@@ -24,11 +24,12 @@ $typeScript = Join-Path $officialRoot 'node_modules\.bin\tsc.cmd'
 $integrationCheck = Join-Path $officialRoot 'scripts\verify-packing-integration.mjs'
 $criticalFlowsCheck = Join-Path $officialRoot 'scripts\verify-critical-flows.mjs'
 $schoolMatchingCheck = Join-Path $officialRoot 'scripts\test-school-matching.mjs'
+$packingReferencesCheck = Join-Path $officialRoot 'scripts\test-packing-references.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -53,6 +54,10 @@ try {
   & $node $schoolMatchingCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La comparación de colegios ha fallado. No se desplegará nada."
+  }
+  & $node $packingReferencesCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La interpretación de referencias de PackingList ha fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {

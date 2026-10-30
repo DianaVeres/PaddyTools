@@ -38,6 +38,11 @@ import {
   schoolFolderName,
 } from '@/lib/school-matching';
 import {
+  mergePackingDictation,
+  packingListType,
+  parsePackingBoxes,
+} from '@/lib/packing-references';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -150,108 +155,6 @@ const recordsByWeek = (items: RecordSummary[]) => {
         right.createdAt.localeCompare(left.createdAt)),
     }));
 };
-const packingListType = (number: string) => {
-  const reference = number.trim().toUpperCase();
-  if (reference.startsWith('PA')) return 'on-line';
-  if (reference.startsWith('I')) return 'Incidencia';
-  if (reference.startsWith('R')) return 'Reserva';
-  return 'on-line';
-};
-
-// Conserva y normaliza el prefijo PA, R, IPA o RPA; ese prefijo determina el
-// tipo mostrado en el documento y en los mensajes.
-const normalizePackingReference = (value: string) => {
-  return value.replace(/\s/g, '').toUpperCase();
-};
-
-// Convierte las líneas del formulario en referencias asociadas a cada caja.
-function parseBoxes(text: string) {
-  const parsed: Array<{ box: string; orderNumber: string }> = [];
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line) continue;
-    const split = line.indexOf(':');
-    const box = (split >= 0 ? line.slice(0, split) : 'SIN CAJA')
-      .trim()
-      .toUpperCase();
-    const numbers =
-      (split >= 0 ? line.slice(split + 1) : line).match(
-        /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z]*\d[A-Z0-9-]*)\b/gi,
-      ) ?? [];
-    for (const number of numbers)
-      parsed.push({
-        box,
-        orderNumber: normalizePackingReference(number),
-      });
-  }
-  return parsed;
-}
-
-const spokenDigits: Record<string, string> = {
-  cero: '0', uno: '1', una: '1', dos: '2', tres: '3', cuatro: '4',
-  cinco: '5', seis: '6', siete: '7', ocho: '8', nueve: '9',
-};
-
-// Interpreta referencias dictadas por voz, incluso cuando el teléfono separa
-// las siglas o escribe los números con palabras.
-function dictatedReferences(value: string) {
-  const normalized = value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    // Los motores de voz móviles separan las siglas de forma distinta.
-    // Mantener estas sustituciones antes de convertir "p a" en un pedido PA.
-    .replace(/\b(?:i|y)\s*p(?:e)?\s*a\b|\bipa\b/g, ' IPA ')
-    .replace(/\b(?:i|y)\s*(?:ene|n)\b|\bin\b/g, ' IN ')
-    .replace(/\b(?:pe|p)\s+a\b/g, ' PA ')
-    .replace(/\bpa\b/g, ' PA ')
-    .replace(/\breservas?\b|\berre\b/g, ' R ')
-    .replace(/\bincidencias?\b/g, ' I ')
-    .replace(/\b(cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\b/g,
-      (word) => spokenDigits[word] || word)
-    .replace(/\bnumero\b|\bcodigo\b|\bpedido\b|\bcoma\b/g, ' ')
-    .toUpperCase();
-  const references = (segment: string) =>
-    [...segment.matchAll(/\b(RPA|IPA|IN|PA|R|I)\s*((?:\d[\s-]*)+)/g)].map(
-      (match) => normalizePackingReference(
-        `${match[1]}${match[2].replace(/\D/g, '')}`,
-      ),
-    );
-  const lines: string[] = [];
-  for (const match of normalized.matchAll(/CAJA\s*(\d+)([\s\S]*?)(?=CAJA\s*\d+|$)/g)) {
-    const codes = references(match[2]);
-    if (codes.length) lines.push(`CAJA ${match[1]}: ${codes.join(', ')}`);
-  }
-  return { lines, references: references(normalized) };
-}
-
-// Incorpora el dictado al texto existente sin borrar las cajas ya escritas.
-function mergeDictation(current: string, transcript: string) {
-  const dictated = dictatedReferences(transcript);
-  const lines = current.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (dictated.lines.length) {
-    for (const dictatedLine of dictated.lines) {
-      const label = dictatedLine.slice(0, dictatedLine.indexOf(':')).trim();
-      const newCodes = dictatedLine.slice(dictatedLine.indexOf(':') + 1).trim();
-      const existingIndex = lines.findIndex(
-        (line) => line.slice(0, line.indexOf(':')).trim().toUpperCase() === label,
-      );
-      if (existingIndex >= 0) {
-        const existingCodes = lines[existingIndex].slice(lines[existingIndex].indexOf(':') + 1).trim();
-        lines[existingIndex] = `${label}: ${[existingCodes, newCodes].filter(Boolean).join(', ')}`;
-      } else {
-        lines.push(dictatedLine);
-      }
-    }
-  } else if (dictated.references.length) {
-    if (!lines.length) lines.push('CAJA 1:');
-    const last = lines.length - 1;
-    const separator = lines[last].endsWith(':') ? ' ' : ', ';
-    lines[last] += `${separator}${dictated.references.join(', ')}`;
-  }
-  return { text: lines.join('\n'), count: dictated.references.length };
-}
-
 // Componente principal: controla las vistas, el formulario, las consultas a
 // WooCommerce/Monday/Incidencias, el archivo y la impresión.
 export default function Home() {
@@ -327,7 +230,7 @@ export default function Home() {
       const transcript = Array.from(event.results)
         .map((result) => result[0]?.transcript || '')
         .join(' ');
-      const merged = mergeDictation(boxes, transcript);
+      const merged = mergePackingDictation(boxes, transcript);
       if (!merged.count) {
         setMessage(`No reconocí ningún código en: “${transcript}”. Vuelve a intentarlo diciendo PA, reserva o incidencia antes del número.`);
         return;
@@ -682,7 +585,7 @@ export default function Home() {
   async function generate(event: FormEvent) {
     event.preventDefault();
     setMessage('');
-    const requested = parseBoxes(boxes);
+    const requested = parsePackingBoxes(boxes);
     if (!school.trim() || !shippingDate || !requested.length) {
       setMessage(
         'Indica el colegio, la fecha y al menos un pedido, incidencia o reserva dentro de una caja.',
