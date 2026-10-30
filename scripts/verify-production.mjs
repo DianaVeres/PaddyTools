@@ -35,38 +35,31 @@ if (!homeHtml.includes('PaddyTools') && !homeHtml.includes('Gestión unificada')
   throw new Error('La portada no contiene la identidad de PaddyTools.');
 }
 
-// Comprobaciones de lectura sobre las bases integradas. El intervalo antiguo
-// evita cargar todos los PackingLists y no crea, modifica ni elimina nada.
-const packing = await json(
+// La ruta pública de salud comprueba ambas bases sin exponer datos personales.
+const health = await json('/api/health');
+if (
+  !health.data?.ok ||
+  !health.data?.database ||
+  !health.data?.packingDatabase ||
+  !Number.isInteger(health.data?.incidents) ||
+  !Number.isInteger(health.data?.packingLists)
+) {
+  throw new Error('La comprobación de salud no confirmó las dos bases de datos.');
+}
+
+// Las API con información comercial deben rechazar cualquier petición sin
+// sesión. Esto verifica la barrera real ya desplegada, no solo el código local.
+for (const path of [
+  '/api/incidents?scope=all',
   '/api/packing-lists?from=2000-01-01&to=2000-01-02',
-);
-if (!Array.isArray(packing.data)) {
-  throw new Error('La API de PackingList no devolvió una lista.');
-}
-
-const incidents = await json('/api/incidents?scope=all');
-if (!Array.isArray(incidents.data?.rows)) {
-  throw new Error('La API de incidencias no devolvió sus registros.');
-}
-const incidentIds = incidents.data.rows.map((row) => row?.id).filter(Boolean);
-if (incidentIds.length !== new Set(incidentIds).size) {
-  throw new Error('La API de incidencias devolvió identificadores duplicados.');
-}
-
-const shipping = await json(
   '/api/shipping?order=SMOKE999999999',
-);
-if (!Array.isArray(shipping.data?.matches)) {
-  throw new Error('La consulta histórica de envíos no devolvió una lista.');
-}
-
-// Una referencia no-PA debe rechazarse antes de llamar a WooCommerce. Con esto
-// comprobamos la validación y el formato JSON sin consumir servicios externos.
-const invalidSearch = await json('/api/search?number=SMOKE-INVALID', [422]);
-if (typeof invalidSearch.data?.error !== 'string') {
-  throw new Error('La búsqueda global no devolvió el error JSON esperado.');
+  '/api/search?number=SMOKE-INVALID',
+]) {
+  const protectedResponse = await json(path, [401]);
+  if (typeof protectedResponse.data?.error !== 'string')
+    throw new Error(`${path} no devolvió el rechazo JSON esperado.`);
 }
 
 console.log(
-  `Producción verificada: portada, PackingList, ${incidents.data.rows.length} incidencias únicas, envíos y búsqueda global.`,
+  `Producción verificada: portada, ${health.data.incidents} incidencias, ${health.data.packingLists} PackingLists y API protegida.`,
 );

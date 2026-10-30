@@ -30,11 +30,12 @@ $packingExportCheck = Join-Path $officialRoot 'scripts\test-packing-export.mjs'
 $httpResponseCheck = Join-Path $officialRoot 'scripts\test-http-response.mjs'
 $incidentRecordCheck = Join-Path $officialRoot 'scripts\test-incident-record.mjs'
 $permissionsCheck = Join-Path $officialRoot 'scripts\test-permissions.mjs'
+$apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -83,6 +84,10 @@ try {
   & $node $permissionsCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los permisos de usuarios han fallado. No se desplegará nada."
+  }
+  & $node $apiAccessCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La protección de las API ha fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {

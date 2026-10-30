@@ -88,6 +88,11 @@ for (const path of ['app/page.tsx', 'app/api/incidents/route.ts']) {
     'Los permisos compartidos de incidencias',
   );
 }
+requireAll(
+  'proxy.ts',
+  ['getSessionUser', 'isPublicApiRequest', "matcher: ['/api/:path*']"],
+  'La barrera de sesión de las API',
+);
 
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.
