@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from 'cloudflare:workers';
+import { wooFetch, wooIsConfigured, wooRoot } from '@/lib/woocommerce';
 
 type WooLine = {
   id: number;
@@ -100,17 +101,6 @@ const checkedValue = (value: unknown) =>
       .toLowerCase(),
   );
 
-async function wooFetch(path: string, config: Record<string, string>) {
-  const root = config.WOOCOMMERCE_URL.replace(/\/$/, '');
-  return fetch(`${root}/wp-json/wc/v3/${path}`, {
-    cache: 'no-store',
-    headers: {
-      authorization: `Basic ${btoa(`${config.WOOCOMMERCE_CONSUMER_KEY}:${config.WOOCOMMERCE_CONSUMER_SECRET}`)}`,
-      accept: 'application/json',
-    },
-  });
-}
-
 function searchMatch(order: WooOrder) {
   const currency = order.currency_symbol || '€';
   return {
@@ -176,11 +166,7 @@ export async function GET(request: NextRequest) {
       { status: 422 },
     );
   const config = env as unknown as Record<string, string>;
-  if (
-    !config.WOOCOMMERCE_URL ||
-    !config.WOOCOMMERCE_CONSUMER_KEY ||
-    !config.WOOCOMMERCE_CONSUMER_SECRET
-  )
+  if (!wooIsConfigured(config))
     return NextResponse.json(
       { error: 'WooCommerce todavía no está configurado.' },
       { status: 503 },
@@ -365,7 +351,7 @@ export async function GET(request: NextRequest) {
           total: `${item.total} ${currency}`,
         };
       }),
-      wooUrl: `${config.WOOCOMMERCE_URL.replace(/\/$/, '')}/wp-admin/post.php?post=${order.id}&action=edit`,
+      wooUrl: `${wooRoot(config)}/wp-admin/post.php?post=${order.id}&action=edit`,
       movements: notes.map((note) => ({
         id: note.id,
         author: clean(note.author) || 'WooCommerce',
