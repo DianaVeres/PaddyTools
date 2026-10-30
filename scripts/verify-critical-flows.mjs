@@ -89,7 +89,12 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/contact-links', 'buildEmailLink', 'buildWhatsAppLink'],
+  [
+    '@/lib/contact-links',
+    'buildEmailLink',
+    'buildWhatsAppLink',
+    'isValidEmail',
+  ],
   'Los enlaces aislados de contacto',
 );
 requireAll(

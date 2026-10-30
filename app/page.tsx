@@ -73,7 +73,11 @@ import {
   type DeliveryEmailDraft as EmailDraft,
   type DeliveryEmailKind,
 } from '@/lib/delivery-message';
-import { buildEmailLink, buildWhatsAppLink } from '@/lib/contact-links';
+import {
+  buildEmailLink,
+  buildWhatsAppLink,
+  isValidEmail,
+} from '@/lib/contact-links';
 
 type Modal =
   | 'incidencia'
@@ -1387,9 +1391,7 @@ export default function Home() {
         }
         if (
           newReservationCustomer &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-            reservationDraft.customerEmail.trim(),
-          )
+          !isValidEmail(reservationDraft.customerEmail)
         ) {
           setSaved('El e-mail del cliente nuevo no tiene un formato válido.');
           return;

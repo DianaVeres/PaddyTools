@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildEmailLink,
   buildWhatsAppLink,
+  isValidEmail,
   normalizeWhatsAppPhone,
 } from '../lib/contact-links.ts';
 
@@ -9,6 +10,10 @@ assert.equal(normalizeWhatsAppPhone('612 345 678'), '34612345678');
 assert.equal(normalizeWhatsAppPhone('+34 612 345 678'), '34612345678');
 assert.equal(normalizeWhatsAppPhone('0034 612 345 678'), '34612345678');
 assert.equal(normalizeWhatsAppPhone('12345'), null);
+assert.equal(isValidEmail(' cliente@example.com '), true);
+assert.equal(isValidEmail('cliente+tienda@example.es'), true);
+assert.equal(isValidEmail('cliente@example'), false);
+assert.equal(isValidEmail('cliente @example.com'), false);
 
 const email = buildEmailLink(
   ' cliente@example.com ',

@@ -1,8 +1,12 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export function isValidEmail(value: string) {
+  return EMAIL_PATTERN.test(value.trim());
+}
+
 export function buildEmailLink(to: string, subject: string, body: string) {
   const recipient = to.trim();
-  if (!EMAIL_PATTERN.test(recipient)) return null;
+  if (!isValidEmail(recipient)) return null;
   const params = new URLSearchParams({ subject, body });
   return `mailto:${recipient}?${params.toString()}`;
 }
