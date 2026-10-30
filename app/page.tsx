@@ -55,6 +55,10 @@ import {
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
 import { canDeleteIncidents } from '@/lib/permissions';
+import {
+  foldSearchText as folded,
+  shippingReferences,
+} from '@/lib/global-search';
 
 type Modal =
   | 'incidencia'
@@ -251,27 +255,6 @@ const fmt = (date: string) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(date));
-const folded = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/gi, '')
-    .toLowerCase();
-
-const shippingReferences = (value: string) => {
-  const reference = value.trim().replace(/^#/, '').toUpperCase();
-  if (!reference) return [];
-  if (/^[RI]\d+$/.test(reference)) return [reference];
-  const linked = reference.match(/^(?:I|R)?PA(.+)$/);
-  if (linked) {
-    const suffix = linked[1];
-    return [reference, `PA${suffix}`, `IPA${suffix}`, `RPA${suffix}`].filter(
-      (item, index, items) => items.indexOf(item) === index,
-    );
-  }
-  return [reference];
-};
-
 function printStandaloneLabel(lines: string[]) {
   const escapeHtml = (value: string) =>
     value
