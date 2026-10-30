@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gestion-unificada",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "keep_vars": true,
+  "assets": {
+    "directory": "dist/client"
+  },
+  "rules": [
+    {
+      "type": "ESModule",
+      "globs": ["**/*.js", "**/*.mjs"]
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gestion-unificada-db",
+      "database_id": "d39d6ca7-1b0f-4338-be3d-7e785332ca24",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "services": [
+    {
+      "binding": "PACKINGLIST",
+      "service": "paddy-packing-list"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

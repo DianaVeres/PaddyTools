@@ -1,0 +1,14 @@
+Aplicación: PaddyTools
+Plataforma: Cloudflare Workers
+Worker: gestion-unificada
+URL: https://gestion-unificada.paddygestion.workers.dev
+Fecha de despliegue: 30/10/2026
+Versión de Cloudflare: 493c7c3e-9b30-41d5-ba57-ed3c1556694e
+
+Contenido del paquete:
+- Código fuente completo de la aplicación integrada.
+- Configuración de Cloudflare usada para el despliegue.
+- Archivos de bloqueo de dependencias.
+- Carpeta dist generada y enviada a Cloudflare.
+
+No se incluyen credenciales, secretos ni node_modules.

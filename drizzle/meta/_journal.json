@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788954533757,
+      "tag": "0000_military_vertigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788965257480,
+      "tag": "0001_sharp_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789030449357,
+      "tag": "0002_talented_cable",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789385095302,
+      "tag": "0003_furry_lord_tyger",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790067600000,
+      "tag": "0004_shared_user_auth",
+      "breakpoints": true
+    }
+  ]
+}
