@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   foldSearchText,
   isExactRecordReference,
+  incidentReferenceCandidates,
   isWooOrderReference,
   linkedWooOrderReference,
   mondayReferenceCandidates,
@@ -53,6 +54,30 @@ assert.deepEqual(mondayReferenceCandidates('RPA49547'), [
 ]);
 assert.deepEqual(mondayReferenceCandidates('#R10692'), ['R10692', '#R10692']);
 assert.deepEqual(mondayReferenceCandidates(''), []);
+assert.deepEqual(incidentReferenceCandidates('PA49547'), [
+  'PA49547',
+  'IPA49547',
+  'RPA49547',
+]);
+assert.deepEqual(incidentReferenceCandidates('IPA49547'), [
+  'IPA49547',
+  'PA49547',
+  'RPA49547',
+]);
+assert.deepEqual(incidentReferenceCandidates('RPA49547'), [
+  'RPA49547',
+  'IRPA49547',
+  'PA49547',
+  'IPA49547',
+]);
+assert.deepEqual(incidentReferenceCandidates('#R10692'), [
+  'R10692',
+  'IR10692',
+]);
+assert.deepEqual(incidentReferenceCandidates('INC-000001'), [
+  'INC-000001',
+  'IINC-000001',
+]);
 
 assert.equal(searchKey('  Sandra-Flórez  '), 'SANDRA FLOREZ');
 assert.equal(searchDigits('+34 612 345 678'), '34612345678');

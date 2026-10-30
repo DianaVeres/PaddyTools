@@ -188,6 +188,8 @@ requireAll(
     'incidentRecords.id',
     '.insert(incidentRecords)',
     '.delete(incidentRecords)',
+    'incidentReferenceCandidates',
+    'normalizeReferenceInput',
   ],
   'Las incidencias individuales',
 );

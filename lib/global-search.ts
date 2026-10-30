@@ -85,3 +85,21 @@ export function mondayReferenceCandidates(value: string) {
       Boolean(candidate) && candidates.indexOf(candidate) === index,
   );
 }
+
+export function incidentReferenceCandidates(value: string) {
+  const reference = normalizeReferenceInput(value);
+  if (!reference) return [];
+  const withoutIncidentPrefix = reference.replace(
+    /^I(?=(?:R|PA|INT-|\d))/,
+    '',
+  );
+  return [
+    reference,
+    withoutIncidentPrefix,
+    `I${withoutIncidentPrefix}`,
+    ...shippingReferences(reference),
+  ].filter(
+    (candidate, index, candidates) =>
+      Boolean(candidate) && candidates.indexOf(candidate) === index,
+  );
+}

@@ -5,23 +5,13 @@ import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
 import { canDeleteIncidents } from '@/lib/permissions';
+import {
+  incidentReferenceCandidates,
+  normalizeReferenceInput,
+} from '@/lib/global-search';
 
 const textValue = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
-function incidentReferences(number: string) {
-  const normalized = number.trim().replace(/^#/, '').toUpperCase();
-  const withoutIncidentPrefix = normalized.replace(
-    /^I(?=(?:R|PA|INT-|\d))/,
-    '',
-  );
-  return [
-    ...new Set([
-      normalized,
-      withoutIncidentPrefix,
-      `I${withoutIncidentPrefix}`,
-    ]),
-  ];
-}
 
 type StoredIncident = { id: string; data: Record<string, unknown> };
 
@@ -140,10 +130,9 @@ async function nextAutomaticIncidentId(rows: StoredIncident[]) {
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
   const id = request.nextUrl.searchParams.get('id')?.trim();
-  const number = request.nextUrl.searchParams
-    .get('number')
-    ?.trim()
-    .replace(/^#/, '');
+  const number = normalizeReferenceInput(
+    request.nextUrl.searchParams.get('number') || '',
+  );
   if (!id && !number && scope !== 'all' && scope !== 'pickups')
     return NextResponse.json(
       { error: 'Introduce un número de pedido.' },
@@ -163,7 +152,7 @@ export async function GET(request: NextRequest) {
     const matches = id
       ? rows.filter((row) => row.id === id)
       : rows.filter((row) =>
-          incidentReferences(number || '').includes(
+          incidentReferenceCandidates(number || '').includes(
             textValue(row.data.order_number).toUpperCase(),
           ),
         );
@@ -211,7 +200,7 @@ export async function PATCH(request: NextRequest) {
         { status: 400 },
       );
     const rows = await readAllRows();
-    const references = incidentReferences(body.orderNumber || '').map((value) =>
+    const references = incidentReferenceCandidates(body.orderNumber || '').map((value) =>
       value.toUpperCase(),
     );
     const stored = rows.find((row) =>
@@ -360,7 +349,7 @@ export async function DELETE(request: NextRequest) {
       orderNumber?: string;
     };
     const rows = await readAllRows();
-    const references = incidentReferences(body.orderNumber || '').map((value) =>
+    const references = incidentReferenceCandidates(body.orderNumber || '').map((value) =>
       value.toUpperCase(),
     );
     const stored = rows.find((row) =>
