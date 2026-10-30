@@ -65,6 +65,17 @@ for (const path of ['app/page.tsx', 'app/packing-list/page.tsx']) {
     'La lectura segura de respuestas en las pantallas',
   );
 }
+requireAll(
+  'app/page.tsx',
+  [
+    '@/lib/incident-record',
+    'incidentLabelLines',
+    'incidentStatusLabel',
+    'checked={incidentDraft.sent}',
+    'sent: incidentDraft.sent ? 1 : 0',
+  ],
+  'Los datos e impresión de incidencias',
+);
 
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.

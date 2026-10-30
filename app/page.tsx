@@ -48,6 +48,12 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { readJsonResponse } from '@/lib/http-response';
+import {
+  formatIncidentDate,
+  incidentLabelLines,
+  incidentStatusLabel,
+  type IncidentRecord as Incident,
+} from '@/lib/incident-record';
 
 type Modal =
   | 'incidencia'
@@ -95,27 +101,6 @@ type Shipment = {
   school: string;
   box: string;
   file: string;
-};
-type Incident = {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  incidentText: string;
-  observations: string;
-  incidentDate: string;
-  solved: boolean;
-  solvedAt: string;
-  updatedAt: string;
-  pickupSchool: boolean;
-  pickupSchoolName: string;
-  pickupDetails: string;
-  pickupReceived: boolean;
-  pickupReceivedAt: string;
-  school: string;
-  recurrenceCount: number;
-  products: unknown[];
 };
 type MondayRecord = {
   id: string;
@@ -171,6 +156,7 @@ type IncidentDraft = {
   pickupNotes: string;
   recurrence: boolean;
   solved: boolean;
+  sent: boolean;
   pickupItems: Record<
     number,
     { selected: boolean; size: string; units: number }
@@ -569,6 +555,7 @@ export default function Home() {
     pickupNotes: '',
     recurrence: false,
     solved: false,
+    sent: false,
     pickupItems: {},
   });
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
@@ -1207,6 +1194,7 @@ export default function Home() {
       pickupNotes: incident?.pickupDetails || '',
       recurrence: false,
       solved: incident?.solved || false,
+      sent: incident?.sent || false,
       pickupItems: {},
     });
     setModal('incidencia');
@@ -1477,6 +1465,7 @@ export default function Home() {
             pickup_details: incidentDraft.pickup ? pickupDetails : '',
             pickup_received: incident?.pickupReceived ? 1 : 0,
             solved: forceSolved || incidentDraft.solved ? 1 : 0,
+            sent: incidentDraft.sent ? 1 : 0,
             incident_school_name: incidentDraft.school,
             is_recurrence: incidentDraft.recurrence ? 1 : 0,
             source_type: 'pedido',
@@ -1689,16 +1678,7 @@ export default function Home() {
     mode: 'document' | 'label' = 'document',
   ) {
     if (mode === 'label') {
-      const rawDate = row.incidentDate?.slice(0, 10) || '';
-      const shownDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-        ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}/${rawDate.slice(0, 4)}`
-        : rawDate;
-      printStandaloneLabel([
-        `INCIDENCIA ${row.orderNumber}`,
-        `NOMBRE: ${row.customerName || 'SIN NOMBRE'}`,
-        `FECHA: ${shownDate}`,
-        `RECOGIDA ${row.pickupSchoolName || row.school || 'SIN COLEGIO'}`,
-      ]);
+      printStandaloneLabel(incidentLabelLines(row));
       return;
     }
     setPrintMode(mode);
@@ -1763,6 +1743,7 @@ export default function Home() {
       observations: incidentDraft.observations,
       incidentDate: incidentDraft.date,
       solved: incidentDraft.solved,
+      sent: incidentDraft.sent,
       solvedAt: '',
       updatedAt: '',
       pickupSchool: incidentDraft.pickup,
@@ -2873,6 +2854,19 @@ export default function Home() {
                 />{' '}
                 Incidencia solucionada
               </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={incidentDraft.sent}
+                  onChange={(e) =>
+                    setIncidentDraft({
+                      ...incidentDraft,
+                      sent: e.target.checked,
+                    })
+                  }
+                />{' '}
+                Enviado
+              </label>
             </div>
             {incidentDraft.pickup && (
               <section className="pickup-box">
@@ -3860,9 +3854,7 @@ export default function Home() {
                       ? row.pickupReceived
                         ? 'Recibida'
                         : 'Pendiente'
-                      : row.solved
-                        ? 'Resuelta'
-                        : 'Pendiente'}
+                      : incidentStatusLabel(row)}
                   </span>
                   <div className="registry-actions">
                     {modal === 'registro' ? (
@@ -3985,16 +3977,7 @@ export default function Home() {
 }
 
 function IncidentLabel({ incident }: { incident: Incident }) {
-  const rawDate = incident.incidentDate?.slice(0, 10) || '';
-  const shownDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-    ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}/${rawDate.slice(0, 4)}`
-    : rawDate;
-  const lines = [
-    `INCIDENCIA ${incident.orderNumber}`,
-    `NOMBRE: ${incident.customerName || 'SIN NOMBRE'}`,
-    `FECHA: ${shownDate}`,
-    `RECOGIDA ${incident.pickupSchoolName || incident.school || 'SIN COLEGIO'}`,
-  ];
+  const lines = incidentLabelLines(incident);
   const sizeFor = (text: string) =>
     text.length > 46
       ? 11
@@ -4027,11 +4010,11 @@ function IncidentDocument({ incident }: { incident: Incident }) {
       <section className="document-meta">
         <div>
           <small>Fecha</small>
-          <b>{incident.incidentDate || 'No indicada'}</b>
+          <b>{formatIncidentDate(incident.incidentDate)}</b>
         </div>
         <div>
           <small>Estado</small>
-          <b>{incident.solved ? 'Resuelta' : 'Pendiente'}</b>
+          <b>{incidentStatusLabel(incident)}</b>
         </div>
         <div>
           <small>Colegio</small>
