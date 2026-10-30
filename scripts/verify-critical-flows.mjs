@@ -47,6 +47,7 @@ requireAll(
     'gestion-unificada-db',
     'paddy-packing-list-db',
     'Get-FileHash',
+    '$attempt -le 3',
     'Select-Object -Skip $Keep',
     'Remove-Item -LiteralPath',
   ],

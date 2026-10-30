@@ -41,8 +41,19 @@ foreach ($database in $databases) {
   $fileName = "$($database.Prefix)_$timestamp.sql"
   $output = Join-Path $backupRoot $fileName
   Write-Host "Creando copia de $($database.Name)..." -ForegroundColor Cyan
-  & $wrangler d1 export $database.Name --remote --config $config --output $output --skip-confirmation
-  if ($LASTEXITCODE -ne 0) {
+  $exported = $false
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    & $wrangler d1 export $database.Name --remote --config $config --output $output --skip-confirmation
+    if ($LASTEXITCODE -eq 0) {
+      $exported = $true
+      break
+    }
+    if ($attempt -lt 3) {
+      Write-Warning "La exportación de $($database.Name) ha fallado (intento $attempt de 3). Se repetirá en 5 segundos."
+      Start-Sleep -Seconds 5
+    }
+  }
+  if (-not $exported) {
     throw "No se pudo exportar $($database.Name)."
   }
 
