@@ -36,11 +36,20 @@ la aplicación, despliega el contenido recién generado y comprueba mediante
 consultas de solo lectura que la versión publicada responde correctamente.
 Si la nueva versión falla tres comprobaciones consecutivas, el proceso restaura
 automáticamente la versión anterior de Cloudflare y verifica la recuperación.
+Antes de aplicar migraciones, también exporta las bases `gestion-unificada-db`
+y `paddy-packing-list-db`, calcula su SHA-256 y conserva las 14 copias más
+recientes de cada una dentro de la carpeta local `backups` (excluida de Git).
 
 La comprobación funcional de producción también se puede ejecutar por separado:
 
 ```powershell
 pnpm run verify:production
+```
+
+Para crear una copia manual sin desplegar:
+
+```powershell
+pnpm run backup:production
 ```
 
 Antes de cualquier cambio relacionado con PackingList se puede comprobar la

@@ -24,9 +24,10 @@ $typeScript = Join-Path $officialRoot 'node_modules\.bin\tsc.cmd'
 $integrationCheck = Join-Path $officialRoot 'scripts\verify-packing-integration.mjs'
 $criticalFlowsCheck = Join-Path $officialRoot 'scripts\verify-critical-flows.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
+$backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $productionCheck, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -57,6 +58,12 @@ try {
   & $compiler build
   if ($LASTEXITCODE -ne 0) {
     throw "La compilación ha fallado con el código $LASTEXITCODE. No se desplegará nada."
+  }
+
+  Write-Host 'Creando copias de seguridad de las bases de datos...' -ForegroundColor Cyan
+  & powershell -NoProfile -ExecutionPolicy Bypass -File $backupScript
+  if ($LASTEXITCODE -ne 0) {
+    throw "La copia de seguridad ha fallado. No se aplicarán migraciones ni se desplegará nada."
   }
 
   Write-Host 'Aplicando migraciones aditivas de la base de datos...' -ForegroundColor Cyan

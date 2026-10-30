@@ -36,6 +36,22 @@ requireAll(
   ],
   'La recuperación automática del despliegue',
 );
+requireAll(
+  'scripts/deploy-production.ps1',
+  ['backup-production.ps1', 'La copia de seguridad ha fallado'],
+  'La copia previa al despliegue',
+);
+requireAll(
+  'scripts/backup-production.ps1',
+  [
+    'gestion-unificada-db',
+    'paddy-packing-list-db',
+    'Get-FileHash',
+    'Select-Object -Skip $Keep',
+    'Remove-Item -LiteralPath',
+  ],
+  'Las copias verificadas de las bases de datos',
+);
 
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.
