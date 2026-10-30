@@ -39,3 +39,22 @@ export function shippingReferences(value: string) {
     (item, index, items) => items.indexOf(item) === index,
   );
 }
+
+export function mondayReferenceCandidates(value: string) {
+  const reference = normalizeReferenceInput(value);
+  if (!reference) return [];
+  const linked = reference.match(/^(?:I|R)?PA(.+)$/);
+  const orderReference = linkedWooOrderReference(reference);
+  const plain = linked ? linked[1] : reference.replace(/^PA/, '');
+  return [
+    reference,
+    orderReference,
+    linked ? `IPA${plain}` : '',
+    linked ? `RPA${plain}` : '',
+    plain,
+    `#${plain}`,
+  ].filter(
+    (candidate, index, candidates) =>
+      Boolean(candidate) && candidates.indexOf(candidate) === index,
+  );
+}

@@ -149,8 +149,8 @@ requireAll(
   [
     'updatesFor',
     'updates(limit:100)',
-    '`IPA${plain}`',
-    '`RPA${plain}`',
+    'mondayReferenceCandidates',
+    'normalizeReferenceInput',
     "normalize('NFD')",
   ],
   'La integración de Monday',

@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  mondayReferenceCandidates,
+  normalizeReferenceInput,
+} from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
 
 const BOARDS = [
@@ -479,26 +483,15 @@ export async function GET(request: NextRequest) {
       );
     }
   }
-  const number = request.nextUrl.searchParams
-    .get('number')
-    ?.trim()
-    .replace(/^#/, '');
+  const number = normalizeReferenceInput(
+    request.nextUrl.searchParams.get('number') || '',
+  );
   if (!number)
     return NextResponse.json(
       { error: 'Introduce un número de pedido.' },
       { status: 400 },
     );
-  const linkedMatch = number.match(/^(?:I|R)?PA(.+)$/i);
-  const orderNumber = linkedMatch ? `PA${linkedMatch[1]}` : number;
-  const plain = linkedMatch ? linkedMatch[1] : number.replace(/^PA/i, '');
-  const numbers = [
-    number,
-    orderNumber,
-    linkedMatch ? `IPA${plain}` : '',
-    linkedMatch ? `RPA${plain}` : '',
-    plain,
-    `#${plain}`,
-  ].filter((value, index, array) => value && array.indexOf(value) === index);
+  const numbers = mondayReferenceCandidates(number);
   const query = `query ($board: ID!, $numbers: [String]!) { items_page_by_column_values(board_id:$board, limit:100, columns:[{column_id:"name",column_values:$numbers}]) { items { id name updated_at column_values { id text ... on BoardRelationValue { display_value linked_item_ids } ... on FormulaValue { display_value } column { title } } } } }`;
   try {
     const exactRecords = (
