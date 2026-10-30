@@ -32,7 +32,14 @@ pnpm run deploy:production
 ```
 
 El script comprueba que está dentro de esta fuente oficial, compila de nuevo
-la aplicación y solo entonces despliega el contenido recién generado.
+la aplicación, despliega el contenido recién generado y comprueba mediante
+consultas de solo lectura que la versión publicada responde correctamente.
+
+La comprobación funcional de producción también se puede ejecutar por separado:
+
+```powershell
+pnpm run verify:production
+```
 
 Antes de cualquier cambio relacionado con PackingList se puede comprobar la
 integridad del Worker recuperado con:

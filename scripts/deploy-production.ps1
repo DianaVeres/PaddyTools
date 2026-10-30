@@ -23,9 +23,10 @@ $wrangler = Join-Path $officialRoot 'node_modules\.bin\wrangler.cmd'
 $typeScript = Join-Path $officialRoot 'node_modules\.bin\tsc.cmd'
 $integrationCheck = Join-Path $officialRoot 'scripts\verify-packing-integration.mjs'
 $criticalFlowsCheck = Join-Path $officialRoot 'scripts\verify-critical-flows.mjs'
+$productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $productionCheck, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -70,7 +71,13 @@ try {
     throw "Cloudflare ha rechazado el despliegue con el código $LASTEXITCODE."
   }
 
-  Write-Host 'PaddyTools se ha desplegado desde la fuente oficial.' -ForegroundColor Green
+  Write-Host 'Comprobando la aplicación ya desplegada...' -ForegroundColor Cyan
+  & $node $productionCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El despliegue terminó, pero la comprobación funcional de producción ha fallado. Revisa la versión publicada."
+  }
+
+  Write-Host 'PaddyTools se ha desplegado y verificado desde la fuente oficial.' -ForegroundColor Green
 }
 finally {
   Pop-Location

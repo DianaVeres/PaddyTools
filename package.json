@@ -11,6 +11,7 @@
     "verify:packing-list-worker": "node workers/packing-list/scripts/verify-recovered.mjs",
     "verify:packing-integration": "node scripts/verify-packing-integration.mjs",
     "verify:critical-flows": "node scripts/verify-critical-flows.mjs",
+    "verify:production": "node scripts/verify-production.mjs",
     "deploy:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
