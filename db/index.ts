@@ -11,3 +11,10 @@ export function getDb() {
 
   return drizzle(env.DB, { schema });
 }
+
+export function getPackingDb() {
+  const packingDb = (env as unknown as { PACKING_DB?: D1Database }).PACKING_DB;
+  if (!packingDb)
+    throw new Error('Cloudflare D1 binding `PACKING_DB` no está disponible.');
+  return drizzle(packingDb, { schema });
+}

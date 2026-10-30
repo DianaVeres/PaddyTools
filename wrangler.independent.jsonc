@@ -21,12 +21,11 @@
       "database_name": "gestion-unificada-db",
       "database_id": "d39d6ca7-1b0f-4338-be3d-7e785332ca24",
       "migrations_dir": "drizzle"
-    }
-  ],
-  "services": [
+    },
     {
-      "binding": "PACKINGLIST",
-      "service": "paddy-packing-list"
+      "binding": "PACKING_DB",
+      "database_name": "paddy-packing-list-db",
+      "database_id": "1c3284f2-56f0-4f44-81fb-99f9a128986e"
     }
   ],
   "observability": {

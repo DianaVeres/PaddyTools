@@ -10,19 +10,18 @@ Esta carpeta es la única fuente oficial de PaddyTools:
 - URL: `https://gestion-unificada.paddygestion.workers.dev`
 - Configuración: `wrangler.independent.jsonc`
 - Base principal: `gestion-unificada-db`
-- Servicio vinculado de Packing List: `paddy-packing-list`
+- Base histórica de PackingList: `paddy-packing-list-db`, vinculada como `PACKING_DB`
 
 ## Estructura integrada
 
 - Aplicación PaddyTools: `app/`, `components/`, `lib/` y `db/`.
 - Pantalla de PackingList: `app/packing-list/`.
-- Conexión con el servicio de PackingList: `lib/packinglist-service.ts`.
+- Lógica editable de datos de PackingList: `lib/packing-list-store.ts`.
 - Copia exacta recuperada del Worker de PackingList: `workers/packing-list/`.
 
-El Worker separado se recuperó de Cloudflare el 30/10/2026. Cloudflare solo
-devuelve sus módulos compilados, por lo que de momento se conserva como base de
-recuperación y no debe desplegarse directamente. El siguiente trabajo de
-integración será trasladar esa lógica de datos a TypeScript editable y probado.
+El Worker separado se recuperó de Cloudflare el 30/10/2026. Su lógica activa ya
+se trasladó a TypeScript editable dentro de PaddyTools. La copia compilada se
+conserva únicamente como referencia y mecanismo de recuperación; no se despliega.
 
 ## Regla de despliegue
 
