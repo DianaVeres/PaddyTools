@@ -32,11 +32,12 @@ $incidentRecordCheck = Join-Path $officialRoot 'scripts\test-incident-record.mjs
 $permissionsCheck = Join-Path $officialRoot 'scripts\test-permissions.mjs'
 $apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $globalSearchCheck = Join-Path $officialRoot 'scripts\test-global-search.mjs'
+$labelPrintCheck = Join-Path $officialRoot 'scripts\test-label-print.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -93,6 +94,10 @@ try {
   & $node $globalSearchCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La normalización de la búsqueda global ha fallado. No se desplegará nada."
+  }
+  & $node $labelPrintCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La impresión independiente de etiquetas ha fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {

@@ -76,6 +76,16 @@ requireAll(
   ],
   'Los datos e impresión de incidencias',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/lib/label-print', 'printStandaloneLabel'],
+  'La impresión aislada de etiquetas',
+);
+requireAll(
+  'lib/label-print.ts',
+  ['buildStandaloneLabelHtml', '@page { size: 150mm 100mm'],
+  'El formato de las etiquetas',
+);
 for (const path of ['app/page.tsx', 'app/api/incidents/route.ts']) {
   requireAll(
     path,

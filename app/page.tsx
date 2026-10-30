@@ -59,6 +59,7 @@ import {
   foldSearchText as folded,
   shippingReferences,
 } from '@/lib/global-search';
+import { printStandaloneLabel } from '@/lib/label-print';
 
 type Modal =
   | 'incidencia'
@@ -255,66 +256,6 @@ const fmt = (date: string) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(date));
-function printStandaloneLabel(lines: string[]) {
-  const escapeHtml = (value: string) =>
-    value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  const sizeFor = (text: string) =>
-    text.length > 46
-      ? 11
-      : text.length > 40
-        ? 12.5
-        : text.length > 34
-          ? 14.5
-          : 17;
-  const frame = document.createElement('iframe');
-  frame.setAttribute('aria-hidden', 'true');
-  frame.style.position = 'fixed';
-  frame.style.width = '0';
-  frame.style.height = '0';
-  frame.style.border = '0';
-  frame.style.right = '0';
-  frame.style.bottom = '0';
-  document.body.appendChild(frame);
-  const labelDocument = frame.contentDocument;
-  if (!labelDocument) {
-    frame.remove();
-    return;
-  }
-  const rows = lines
-    .map(
-      (line, index) =>
-        `<p class="line-${index + 1}" style="font-size:${sizeFor(line)}pt">${escapeHtml(line.toUpperCase())}</p>`,
-    )
-    .join('');
-  labelDocument.open();
-  labelDocument.write(`<!doctype html><html><head><meta charset="utf-8"><title></title><style>
-    @page { size: 150mm 100mm; margin: 0; }
-    html, body { width: 150mm; height: 100mm; margin: 0; padding: 0; overflow: hidden; }
-    body { background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-weight: 700; }
-    .label { position: relative; width: 150mm; height: 100mm; overflow: hidden; }
-    p { position: absolute; left: 15mm; width: 120mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
-    .line-1 { bottom: 75mm; }
-    .line-2 { bottom: 62mm; }
-    .line-3 { bottom: 49mm; }
-    .line-4 { bottom: 36mm; }
-  </style></head><body><article class="label">${rows}</article></body></html>`);
-  labelDocument.close();
-  const cleanup = () => setTimeout(() => frame.remove(), 500);
-  setTimeout(() => {
-    const labelWindow = frame.contentWindow;
-    if (!labelWindow) return cleanup();
-    labelWindow.addEventListener('afterprint', cleanup, { once: true });
-    labelWindow.focus();
-    labelWindow.print();
-  }, 150);
-  setTimeout(() => frame.isConnected && frame.remove(), 60000);
-}
-
 function Field({
   label,
   children,
