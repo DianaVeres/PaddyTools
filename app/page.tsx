@@ -57,6 +57,10 @@ import {
 import { canDeleteIncidents } from '@/lib/permissions';
 import {
   foldSearchText as folded,
+  isExactRecordReference,
+  isWooOrderReference,
+  linkedWooOrderReference,
+  normalizeReferenceInput,
   shippingReferences,
 } from '@/lib/global-search';
 import { printStandaloneLabel } from '@/lib/label-print';
@@ -523,7 +527,7 @@ export default function Home() {
   const [noteKind, setNoteKind] = useState<OrderNote['kind']>('nota');
   const [noteDraft, setNoteDraft] = useState('');
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
-  const normalized = useMemo(() => query.trim().replace(/^#/, ''), [query]);
+  const normalized = useMemo(() => normalizeReferenceInput(query), [query]);
   const mondayUpdateItemIds = useMemo(
     () =>
       [
@@ -538,10 +542,10 @@ export default function Home() {
         .join(','),
     [mondayRecords],
   );
-  const linkedOrderNumber = useMemo(() => {
-    const match = normalized.match(/^(?:I|R)?PA(.+)$/i);
-    return match ? `PA${match[1]}` : normalized;
-  }, [normalized]);
+  const linkedOrderNumber = useMemo(
+    () => linkedWooOrderReference(normalized),
+    [normalized],
+  );
   const reservationArticles = useMemo(() => {
     const articles = reservationOptions?.articles || [];
     const school = folded(reservationDraft.school);
@@ -694,15 +698,10 @@ export default function Home() {
     setOrderSearchMatches([]);
     setIncidentSearchMatches([]);
     try {
-      const selectedLinkedOrderNumber = (() => {
-        const reference = searchTerm.replace(/^#/, '');
-        if (/^I(?=R\d+)/i.test(reference)) return reference.slice(1);
-        const match = reference.match(/^I?PA(.+)$/i);
-        return match ? `PA${match[1]}` : reference;
-      })();
-      const isWooOrder = /^PA/i.test(selectedLinkedOrderNumber);
-      const isExactReference = /^(?:R\d+|\d+)$/i.test(
-        selectedLinkedOrderNumber.replace(/^#/, ''),
+      const selectedLinkedOrderNumber = linkedWooOrderReference(searchTerm);
+      const isWooOrder = isWooOrderReference(selectedLinkedOrderNumber);
+      const isExactReference = isExactRecordReference(
+        selectedLinkedOrderNumber,
       );
       if (!isWooOrder && !isExactReference && !selectedOrderNumber) {
         const [wooResponse, mondayResponse, incidentsResponse] =

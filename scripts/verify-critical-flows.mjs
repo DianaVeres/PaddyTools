@@ -78,6 +78,15 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  [
+    'linkedWooOrderReference',
+    'isWooOrderReference',
+    'isExactRecordReference',
+  ],
+  'La interpretación compartida de referencias',
+);
+requireAll(
+  'app/page.tsx',
   ['@/lib/contact-links', 'buildEmailLink', 'buildWhatsAppLink'],
   'Los enlaces aislados de contacto',
 );

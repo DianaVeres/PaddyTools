@@ -6,8 +6,28 @@ export function foldSearchText(value: string) {
     .toLowerCase();
 }
 
+export function normalizeReferenceInput(value: string) {
+  return value.trim().replace(/^#/, '').toUpperCase();
+}
+
+export function linkedWooOrderReference(value: string) {
+  const reference = normalizeReferenceInput(value);
+  if (/^I(?=R\d+$)/.test(reference)) return reference.slice(1);
+  const linked = reference.match(/^(?:I|R)?PA(.+)$/);
+  return linked ? `PA${linked[1]}` : reference;
+}
+
+export function isWooOrderReference(value: string) {
+  return /^PA.+/.test(linkedWooOrderReference(value));
+}
+
+export function isExactRecordReference(value: string) {
+  const reference = linkedWooOrderReference(value);
+  return isWooOrderReference(reference) || /^(?:R\d+|\d+)$/.test(reference);
+}
+
 export function shippingReferences(value: string) {
-  const reference = value.trim().replace(/^#/, '').toUpperCase();
+  const reference = normalizeReferenceInput(value);
   if (!reference) return [];
   if (/^[RI]\d+$/.test(reference)) return [reference];
 
