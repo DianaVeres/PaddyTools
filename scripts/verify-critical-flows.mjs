@@ -53,6 +53,18 @@ requireAll(
   ],
   'Las copias verificadas de las bases de datos',
 );
+for (const path of ['app/page.tsx', 'app/packing-list/page.tsx']) {
+  requireAll(
+    path,
+    ['@/lib/http-response'],
+    'La lectura segura de respuestas en las pantallas',
+  );
+  forbid(
+    path,
+    ['.json()'],
+    'La lectura segura de respuestas en las pantallas',
+  );
+}
 
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.

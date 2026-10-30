@@ -471,7 +471,7 @@ export default function Home() {
     void fetch('/api/auth/session')
       .then(async (response) => {
         if (!response.ok) throw new Error('Sesión no válida');
-        const data = (await response.json()) as { user: SessionUser };
+        const data = await readJsonResponse<{ user: SessionUser }>(response);
         setSessionUser(data.user);
         const initialView = new URLSearchParams(window.location.search).get(
           'view',
@@ -502,10 +502,10 @@ export default function Home() {
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ orderNumber: pendingDelete }),
           });
-          const deleteData = (await deleteResponse.json()) as {
+          const deleteData = await readJsonResponse<{
             deleted?: boolean;
             error?: string;
-          };
+          }>(deleteResponse);
           if (!deleteResponse.ok || !deleteData.deleted) {
             window.alert(
               deleteData.error || 'No se pudo eliminar la incidencia.',
@@ -531,11 +531,11 @@ export default function Home() {
       return;
     void fetch('/api/monday?maintenance=f8626767-5497-41dd-8d0a-cc43668155d8')
       .then(async (response) => {
-        const result = (await response.json()) as {
+        const result = await readJsonResponse<{
           removed?: boolean;
           message?: string;
           error?: string;
-        };
+        }>(response);
         if (!response.ok)
           throw new Error(
             result.error || 'No se pudo eliminar la columna ETIQUETA.',
@@ -740,7 +740,7 @@ export default function Home() {
           `/api/shipping?order=${encodeURIComponent(order.number)}`,
           { cache: 'no-store' },
         );
-        const data = (await response.json()) as { matches?: Shipment[] };
+        const data = await readJsonResponse<{ matches?: Shipment[] }>(response);
         school = data.matches?.[0]?.school || '';
       } catch {
         // El colegio seguirá siendo editable si PackingList no responde.
@@ -855,18 +855,18 @@ export default function Home() {
             }),
             fetch('/api/incidents?scope=all', { cache: 'no-store' }),
           ]);
-        const wooData = (await wooResponse.json()) as {
+        const wooData = await readJsonResponse<{
           matches?: OrderSearchMatch[];
           error?: string;
-        };
-        const mondayData = (await mondayResponse.json()) as {
+        }>(wooResponse, { source: 'WooCommerce' });
+        const mondayData = await readJsonResponse<{
           records?: MondayRecord[];
           error?: string;
-        };
-        const incidentsData = (await incidentsResponse.json()) as {
+        }>(mondayResponse, { source: 'Monday' });
+        const incidentsData = await readJsonResponse<{
           rows?: Incident[];
           error?: string;
-        };
+        }>(incidentsResponse);
         const wooMatches = wooResponse.ok ? wooData.matches || [] : [];
         const mondayMatches = mondayResponse.ok ? mondayData.records || [] : [];
         const queryDigits = searchTerm.replace(/\D/g, '');
@@ -925,23 +925,25 @@ export default function Home() {
           }),
         ]);
       const wooData = wooResponse
-        ? ((await wooResponse.json()) as Order & { error?: string })
+        ? await readJsonResponse<Order & { error?: string }>(wooResponse, {
+            source: 'WooCommerce',
+          })
         : null;
-      const incidentData = (await incidentResponse.json()) as {
+      const incidentData = await readJsonResponse<{
         found?: boolean;
         incident?: Incident;
         error?: string;
-      };
-      const mondayData = (await mondayResponse.json()) as {
+      }>(incidentResponse);
+      const mondayData = await readJsonResponse<{
         found?: boolean;
         records?: MondayRecord[];
         error?: string;
-      };
-      const ticketData = (await ticketResponse.json()) as {
+      }>(mondayResponse, { source: 'Monday' });
+      const ticketData = await readJsonResponse<{
         found?: boolean;
         ticket?: StoreTicket;
         error?: string;
-      };
+      }>(ticketResponse);
       if (wooResponse?.ok && wooData) setOrder(wooData);
       if (incidentResponse.ok && incidentData.found)
         setIncident(incidentData.incident || null);
@@ -975,10 +977,10 @@ export default function Home() {
         `/api/order-notes?number=${encodeURIComponent(orderNumber)}`,
         { cache: 'no-store' },
       );
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         notes?: OrderNote[];
         error?: string;
-      };
+      }>(response);
       if (!response.ok) throw new Error(data.error);
       setOrderNotes(data.notes || []);
     } catch (error) {
@@ -1160,10 +1162,10 @@ export default function Home() {
       { cache: 'no-store' },
     )
       .then(async (response) => {
-        const data = (await response.json()) as {
+        const data = await readJsonResponse<{
           updates?: MondayUpdate[];
           error?: string;
-        };
+        }>(response, { source: 'Monday' });
         if (!response.ok)
           throw new Error(
             data.error || 'No se pudieron cargar los comentarios de Monday.',
@@ -1210,7 +1212,7 @@ export default function Home() {
     setModal('incidencia');
     if (!schoolOptions.length)
       void fetch('/api/schools')
-        .then((response) => response.json())
+        .then((response) => readJsonResponse<string[]>(response))
         .then((data) => Array.isArray(data) && setSchoolOptions(data));
     if (incident?.pickupSchool && pickupSchool)
       void loadPickupProducts(pickupSchool);
@@ -1281,12 +1283,15 @@ export default function Home() {
         fetch('/api/monday?mode=reservation-options', { cache: 'no-store' }),
         fetch('/api/monday?mode=reservations', { cache: 'no-store' }),
       ]);
-      const data = (await response.json()) as ReservationOptions & {
+      const data = await readJsonResponse<ReservationOptions & {
         error?: string;
-      };
+      }>(response, { source: 'Monday' });
       if (!response.ok) throw new Error(data.error);
       const reservationsData = reservationsResponse.ok
-        ? ((await reservationsResponse.json()) as { records?: MondayRecord[] })
+        ? await readJsonResponse<{ records?: MondayRecord[] }>(
+            reservationsResponse,
+            { source: 'Monday' },
+          )
         : { records: [] };
       const recoveredArticles = (reservationsData.records || []).flatMap(
         (record) =>
@@ -1343,10 +1348,10 @@ export default function Home() {
       const response = await fetch('/api/monday?mode=reservations', {
         cache: 'no-store',
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         records?: MondayRecord[];
         error?: string;
-      };
+      }>(response, { source: 'Monday' });
       if (!response.ok) throw new Error(data.error);
       setReservationRows(data.records || []);
     } catch (error) {
@@ -1370,9 +1375,9 @@ export default function Home() {
         `/api/school-products?school=${encodeURIComponent(school)}`,
         { cache: 'no-store' },
       );
-      const data = (await response.json()) as SchoolProduct[] & {
+      const data = await readJsonResponse<SchoolProduct[] & {
         error?: string;
-      };
+      }>(response, { source: 'WooCommerce' });
       if (!response.ok)
         throw new Error(data.error || 'No se pudieron cargar los productos.');
       setPickupProducts(Array.isArray(data) ? data : []);
@@ -1543,13 +1548,15 @@ export default function Home() {
         });
       }
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
+        const data = await readJsonResponse<{ error?: string }>(response, {
+          source: 'Monday',
+        });
         throw new Error(data.error);
       }
-      const record = (await response.json()) as {
+      const record = await readJsonResponse<{
         id?: string;
         formula?: string;
-      };
+      }>(response, { source: 'Monday' });
       setSaved(
         kind === 'reserva'
           ? editingReservationId
@@ -1634,7 +1641,7 @@ export default function Home() {
         `/api/shipping?order=${encodeURIComponent(shippingReference)}`,
         { cache: 'no-store' },
       );
-      const data = (await response.json()) as { matches?: Shipment[] };
+      const data = await readJsonResponse<{ matches?: Shipment[] }>(response);
       setShipments(data.matches ?? []);
     } catch {
       setShipments([]);
@@ -1656,10 +1663,10 @@ export default function Home() {
         `/api/incidents?scope=${kind === 'registro' ? 'all' : 'pickups'}`,
         { cache: 'no-store' },
       );
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         rows?: Incident[];
         error?: string;
-      };
+      }>(response);
       if (!response.ok) throw new Error(data.error);
       setRegistryRows(data.rows || []);
     } catch (error) {
