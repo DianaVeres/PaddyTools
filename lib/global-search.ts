@@ -103,3 +103,15 @@ export function incidentReferenceCandidates(value: string) {
       Boolean(candidate) && candidates.indexOf(candidate) === index,
   );
 }
+
+export function incidentStorageReference(value: string) {
+  const reference = linkedWooOrderReference(value);
+  if (!reference) return '';
+  return /^I/.test(reference) ? reference : `I${reference}`;
+}
+
+export function reservationStorageReference(value: string) {
+  const reference = linkedWooOrderReference(value);
+  if (!reference) return '';
+  return /^R/.test(reference) ? reference : `R${reference}`;
+}

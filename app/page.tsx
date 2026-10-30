@@ -58,9 +58,11 @@ import { canDeleteIncidents } from '@/lib/permissions';
 import {
   foldSearchText as folded,
   isExactRecordReference,
+  incidentStorageReference,
   isWooOrderReference,
   linkedWooOrderReference,
   normalizeReferenceInput,
+  reservationStorageReference,
   shippingReferences,
 } from '@/lib/global-search';
 import { printStandaloneLabel } from '@/lib/label-print';
@@ -1256,8 +1258,9 @@ export default function Home() {
       kind === 'reserva'
         ? reservationDraft.reference
         : order?.number || incident?.orderNumber || mondayRecords[0]?.reference;
-    const linkedMatch = rawReference?.match(/^(?:I|R)?PA(.+)$/i);
-    const reference = linkedMatch ? `PA${linkedMatch[1]}` : rawReference;
+    const reference = rawReference
+      ? linkedWooOrderReference(rawReference)
+      : '';
     if (!reference) return;
     if (kind === 'reserva' && reservationSaving) return;
     try {
@@ -1315,7 +1318,7 @@ export default function Home() {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            order_number: /^I/i.test(reference) ? reference : `I${reference}`,
+            order_number: incidentStorageReference(reference),
             order_id: order?.id || '',
             customer_name: customerName,
             customer_email: incidentDraft.customerEmail,
@@ -1392,9 +1395,7 @@ export default function Home() {
           return;
         }
         setReservationSaving(true);
-        const reservationReference = /^R/i.test(reference)
-          ? reference
-          : `R${reference}`;
+        const reservationReference = reservationStorageReference(reference);
         response = await fetch('/api/monday', {
           method: editingReservationId ? 'PUT' : 'POST',
           headers: { 'content-type': 'application/json' },
@@ -1429,9 +1430,7 @@ export default function Home() {
         const article = reservationOptions?.articles.find(
           (item) => item.id === reservationDraft.articleId,
         );
-        const reservationReference = /^R/i.test(reference)
-          ? reference
-          : `R${reference}`;
+        const reservationReference = reservationStorageReference(reference);
         const savedReservation: MondayRecord = {
           id: record.id || '',
           kind: 'reserva',

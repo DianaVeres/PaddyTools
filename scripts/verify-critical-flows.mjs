@@ -82,6 +82,8 @@ requireAll(
     'linkedWooOrderReference',
     'isWooOrderReference',
     'isExactRecordReference',
+    'incidentStorageReference',
+    'reservationStorageReference',
   ],
   'La interpretación compartida de referencias',
 );

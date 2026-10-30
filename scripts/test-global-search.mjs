@@ -3,12 +3,14 @@ import {
   foldSearchText,
   isExactRecordReference,
   incidentReferenceCandidates,
+  incidentStorageReference,
   isWooOrderReference,
   linkedWooOrderReference,
   mondayReferenceCandidates,
   normalizeReferenceInput,
   searchDigits,
   searchKey,
+  reservationStorageReference,
   shippingReferences,
   wooSearchVariants,
 } from '../lib/global-search.ts';
@@ -78,6 +80,14 @@ assert.deepEqual(incidentReferenceCandidates('INC-000001'), [
   'INC-000001',
   'IINC-000001',
 ]);
+assert.equal(incidentStorageReference('PA49547'), 'IPA49547');
+assert.equal(incidentStorageReference('IPA49547'), 'IPA49547');
+assert.equal(incidentStorageReference('RPA49547'), 'IPA49547');
+assert.equal(incidentStorageReference('R10692'), 'IR10692');
+assert.equal(reservationStorageReference('PA49547'), 'RPA49547');
+assert.equal(reservationStorageReference('IPA49547'), 'RPA49547');
+assert.equal(reservationStorageReference('RPA49547'), 'RPA49547');
+assert.equal(reservationStorageReference('R10692'), 'R10692');
 
 assert.equal(searchKey('  Sandra-Flórez  '), 'SANDRA FLOREZ');
 assert.equal(searchDigits('+34 612 345 678'), '34612345678');
