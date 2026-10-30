@@ -1,0 +1,1 @@
+import{n as e}from"./server-DZQhy7zf.js";import{n as t,s as n,t as r}from"./db-CZ7wTVq5.js";async function i(){let i=await r().select().from(t).orderBy(n(t.createdAt)).limit(250);return e.json(i)}export{i as GET};

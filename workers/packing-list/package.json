@@ -1,0 +1,9 @@
+{
+  "name": "@paddytools/packing-list-worker",
+  "version": "1.0.0-recovered",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "node scripts/verify-recovered.mjs"
+  }
+}

@@ -1,0 +1,2 @@
+# Los módulos recuperados deben conservar exactamente los bytes descargados de Cloudflare.
+workers/packing-list/deployed/** -text

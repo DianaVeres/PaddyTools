@@ -1,0 +1,10 @@
+{
+  "worker": "paddy-packing-list",
+  "recoveredAt": "2026-10-30",
+  "deployedVersion": "5b833e31-d17f-4ca2-b7be-26699c64104e",
+  "entryPointSha256": "d10e486ca6225b511f53118aac5c774a7935c5c70d2aef1d0bf64e95de695f31",
+  "moduleCount": 52,
+  "database": "paddy-packing-list-db",
+  "databaseId": "1c3284f2-56f0-4f44-81fb-99f9a128986e",
+  "notes": "Paquete compilado recuperado mediante GET /accounts/{account_id}/workers/scripts/paddy-packing-list. No contiene valores de secretos."
+}

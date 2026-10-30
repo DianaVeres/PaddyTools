@@ -39,3 +39,5 @@ next-env.d.ts
 /work/
 *.tsbuildinfo
 /.tmp-*.js
+/.tmp-*.bin
+**/.tmp-packing-dry-run/

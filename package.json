@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
+    "verify:packing-list-worker": "node workers/packing-list/scripts/verify-recovered.mjs",
     "deploy:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
