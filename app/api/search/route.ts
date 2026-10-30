@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { searchDigits, wooSearchVariants } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
 import { wooFetch, wooIsConfigured, wooRoot } from '@/lib/woocommerce';
 
@@ -80,7 +81,7 @@ const clean = (value: unknown) =>
   String(value ?? '')
     .replace(/<[^>]*>/g, '')
     .trim();
-const digits = (value: unknown) => clean(value).replace(/\D/g, '');
+const digits = searchDigits;
 const folded = (value: unknown) =>
   clean(value)
     .normalize('NFD')
@@ -173,16 +174,9 @@ export async function GET(request: NextRequest) {
     );
   try {
     if (query) {
-      const phoneQuery = digits(query);
-      const wooQuery = phoneQuery.length >= 5 ? phoneQuery : query;
+      const phoneQuery = searchDigits(query);
       const words = query.split(/\s+/).filter((word) => word.length >= 3);
-      const plainQuery = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const plainWords = plainQuery
-        .split(/\s+/)
-        .filter((word) => word.length >= 3);
-      const searchVariants = [wooQuery, plainQuery, ...words, ...plainWords]
-        .filter((value, index, values) => values.indexOf(value) === index)
-        .filter(Boolean);
+      const searchVariants = wooSearchVariants(query);
       const orderSearches = searchVariants.map(async (value) => {
         const response = await wooFetch(
           `orders?search=${encodeURIComponent(value)}&status=any&per_page=100&orderby=date&order=desc`,

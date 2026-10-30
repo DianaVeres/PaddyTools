@@ -133,7 +133,8 @@ requireAll(
 requireAll(
   'app/api/search/route.ts',
   [
-    "normalize('NFD')",
+    'wooSearchVariants',
+    'searchDigits',
     'customers?search=',
     'orders?customer=',
     'schoolCandidates:',
@@ -151,7 +152,8 @@ requireAll(
     'updates(limit:100)',
     'mondayReferenceCandidates',
     'normalizeReferenceInput',
-    "normalize('NFD')",
+    'searchKey',
+    'searchDigits',
   ],
   'La integración de Monday',
 );

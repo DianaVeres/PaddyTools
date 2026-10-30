@@ -6,6 +6,33 @@ export function foldSearchText(value: string) {
     .toLowerCase();
 }
 
+export function searchKey(value: unknown) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+export function searchDigits(value: unknown) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+export function wooSearchVariants(value: string) {
+  const query = value.trim();
+  if (!query) return [];
+  const phone = searchDigits(query);
+  const first = phone.length >= 5 ? phone : query;
+  const plain = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const words = query.split(/\s+/).filter((word) => word.length >= 3);
+  const plainWords = plain.split(/\s+/).filter((word) => word.length >= 3);
+  return [first, plain, ...words, ...plainWords].filter(
+    (candidate, index, candidates) =>
+      Boolean(candidate) && candidates.indexOf(candidate) === index,
+  );
+}
+
 export function normalizeReferenceInput(value: string) {
   return value.trim().replace(/^#/, '').toUpperCase();
 }

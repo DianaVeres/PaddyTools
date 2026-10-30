@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   mondayReferenceCandidates,
   normalizeReferenceInput,
+  searchDigits,
+  searchKey,
 } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
 
@@ -67,14 +69,8 @@ type MondayItem = {
   updated_at?: string;
   column_values: ColumnValue[];
 };
-const cleanKey = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z0-9]+/gi, ' ')
-    .trim()
-    .toUpperCase();
-const digits = (value: unknown) => String(value ?? '').replace(/\D/g, '');
+const cleanKey = searchKey;
+const digits = searchDigits;
 const reservationBaseReference = (value: string) =>
   value.trim().replace(/(?:\s*\(copy\))+\s*$/gi, '').trim().toUpperCase();
 const columnPhone = (value?: ColumnValue) => {

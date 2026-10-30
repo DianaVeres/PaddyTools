@@ -6,7 +6,10 @@ import {
   linkedWooOrderReference,
   mondayReferenceCandidates,
   normalizeReferenceInput,
+  searchDigits,
+  searchKey,
   shippingReferences,
+  wooSearchVariants,
 } from '../lib/global-search.ts';
 
 assert.equal(foldSearchText('Sandra Flórez'), 'sandraflorez');
@@ -50,5 +53,16 @@ assert.deepEqual(mondayReferenceCandidates('RPA49547'), [
 ]);
 assert.deepEqual(mondayReferenceCandidates('#R10692'), ['R10692', '#R10692']);
 assert.deepEqual(mondayReferenceCandidates(''), []);
+
+assert.equal(searchKey('  Sandra-Flórez  '), 'SANDRA FLOREZ');
+assert.equal(searchDigits('+34 612 345 678'), '34612345678');
+assert.deepEqual(wooSearchVariants('Sandra Flórez'), [
+  'Sandra Flórez',
+  'Sandra Florez',
+  'Sandra',
+  'Flórez',
+  'Florez',
+]);
+assert.deepEqual(wooSearchVariants('612 345 678'), ['612345678', '612 345 678', '612', '345', '678']);
 
 console.log('Búsqueda global verificada.');
