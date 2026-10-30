@@ -4,11 +4,18 @@ import { and, desc, eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { orderNotes } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
+import {
+  normalizeOrderNoteContent,
+  normalizeOrderNoteKind,
+  normalizeOrderNoteReference,
+} from '@/lib/order-note';
 
 export async function GET(request: NextRequest) {
   const sessionUser = await getSessionUser(request);
   if (!sessionUser) return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
-  const orderNumber = request.nextUrl.searchParams.get('number')?.trim().replace(/^#/, '');
+  const orderNumber = normalizeOrderNoteReference(
+    request.nextUrl.searchParams.get('number'),
+  );
   if (!orderNumber) return NextResponse.json({ error: 'Falta el número de pedido.' }, { status: 400 });
   try {
     const rows = await getDb().select().from(orderNotes).where(eq(orderNotes.orderNumber, orderNumber)).orderBy(desc(orderNotes.createdAt));
@@ -24,7 +31,7 @@ export async function DELETE(request: NextRequest) {
     if (!sessionUser) return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
     const body = await request.json() as { id?: string; orderNumber?: string };
     const id = String(body.id || '').trim();
-    const orderNumber = String(body.orderNumber || '').trim().replace(/^#/, '');
+    const orderNumber = normalizeOrderNoteReference(body.orderNumber);
     if (!id || !orderNumber)
       return NextResponse.json({ error: 'Falta identificar la nota.' }, { status: 400 });
 
@@ -50,9 +57,9 @@ export async function POST(request: NextRequest) {
     const sessionUser = await getSessionUser(request);
     if (!sessionUser) return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
     const body = await request.json() as { id?: string; orderNumber?: string; kind?: string; content?: string; createdAt?: number };
-    const orderNumber = String(body.orderNumber || '').trim().replace(/^#/, '');
-    const content = String(body.content || '').trim();
-    const kind = body.kind === 'llamada' || body.kind === 'email' ? body.kind : 'nota';
+    const orderNumber = normalizeOrderNoteReference(body.orderNumber);
+    const content = normalizeOrderNoteContent(body.content);
+    const kind = normalizeOrderNoteKind(body.kind);
     if (!orderNumber || !content) return NextResponse.json({ error: 'Escribe una nota antes de guardarla.' }, { status: 400 });
     const config = env as unknown as Record<string, string>;
     const importing = Boolean(body.id || body.createdAt);

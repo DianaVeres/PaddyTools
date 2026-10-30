@@ -76,6 +76,13 @@ requireAll(
   ],
   'Los datos e impresión de incidencias',
 );
+for (const path of ['app/page.tsx', 'app/api/order-notes/route.ts']) {
+  requireAll(
+    path,
+    ['@/lib/order-note', 'normalizeOrderNoteReference'],
+    'Las notas internas compartidas',
+  );
+}
 requireAll(
   'app/page.tsx',
   [

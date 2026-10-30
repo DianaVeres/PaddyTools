@@ -78,6 +78,12 @@ import {
   buildWhatsAppLink,
   isValidEmail,
 } from '@/lib/contact-links';
+import {
+  normalizeOrderNoteContent,
+  normalizeOrderNoteReference,
+  type OrderNoteKind,
+  type OrderNoteRecord as OrderNote,
+} from '@/lib/order-note';
 
 type Modal =
   | 'incidencia'
@@ -226,15 +232,6 @@ type ReservationOptions = {
   paid: string[];
   observations: string[];
   status: string[];
-};
-type OrderNote = {
-  id: string;
-  orderNumber: string;
-  kind: 'nota' | 'llamada' | 'email';
-  content: string;
-  authorEmail?: string | null;
-  authorName?: string | null;
-  createdAt: string;
 };
 type MondayUpdate = {
   id: string;
@@ -530,7 +527,7 @@ export default function Home() {
   const [mondayUpdatesLoading, setMondayUpdatesLoading] = useState(false);
   const [notesLoading, setNotesLoading] = useState(false);
   const [noteDeletingId, setNoteDeletingId] = useState('');
-  const [noteKind, setNoteKind] = useState<OrderNote['kind']>('nota');
+  const [noteKind, setNoteKind] = useState<OrderNoteKind>('nota');
   const [noteDraft, setNoteDraft] = useState('');
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
   const normalized = useMemo(() => normalizeReferenceInput(query), [query]);
@@ -839,7 +836,7 @@ export default function Home() {
     setNotesLoading(true);
     try {
       const response = await fetch(
-        `/api/order-notes?number=${encodeURIComponent(orderNumber)}`,
+        `/api/order-notes?number=${encodeURIComponent(normalizeOrderNoteReference(orderNumber))}`,
         { cache: 'no-store' },
       );
       const data = await readJsonResponse<{
@@ -945,7 +942,8 @@ export default function Home() {
     const noteReference =
       order?.number ||
       mondayRecords.find((record) => record.kind === 'reserva')?.reference;
-    if (!noteReference || !noteDraft.trim()) {
+    const content = normalizeOrderNoteContent(noteDraft);
+    if (!noteReference || !content) {
       setSaved('Escribe una nota antes de guardarla.');
       return;
     }
@@ -954,9 +952,9 @@ export default function Home() {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          orderNumber: noteReference,
+          orderNumber: normalizeOrderNoteReference(noteReference),
           kind: noteKind,
-          content: noteDraft,
+          content,
         }),
       });
       const data = await readJsonResponse<{
@@ -988,7 +986,10 @@ export default function Home() {
       const response = await fetch('/api/order-notes', {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id: note.id, orderNumber: noteReference }),
+        body: JSON.stringify({
+          id: note.id,
+          orderNumber: normalizeOrderNoteReference(noteReference),
+        }),
       });
       const data = await readJsonResponse<{
         deleted?: boolean;
