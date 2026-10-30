@@ -34,6 +34,8 @@ pnpm run deploy:production
 El script comprueba que está dentro de esta fuente oficial, compila de nuevo
 la aplicación, despliega el contenido recién generado y comprueba mediante
 consultas de solo lectura que la versión publicada responde correctamente.
+Si la nueva versión falla tres comprobaciones consecutivas, el proceso restaura
+automáticamente la versión anterior de Cloudflare y verifica la recuperación.
 
 La comprobación funcional de producción también se puede ejecutar por separado:
 

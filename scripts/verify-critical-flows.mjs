@@ -24,6 +24,19 @@ function forbid(path, fragments, description) {
   }
 }
 
+// El despliegue debe verificar la versión publicada y recuperar la anterior si
+// la nueva falla repetidamente. Así un error detectado no se queda en producción.
+requireAll(
+  'scripts/deploy-production.ps1',
+  [
+    '$attempt -le 3',
+    'rollback --config $config',
+    'Versión anterior restaurada',
+    '& $node $productionCheck',
+  ],
+  'La recuperación automática del despliegue',
+);
+
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.
 requireAll(

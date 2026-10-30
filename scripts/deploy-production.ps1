@@ -72,9 +72,32 @@ try {
   }
 
   Write-Host 'Comprobando la aplicación ya desplegada...' -ForegroundColor Cyan
-  & $node $productionCheck
-  if ($LASTEXITCODE -ne 0) {
-    throw "El despliegue terminó, pero la comprobación funcional de producción ha fallado. Revisa la versión publicada."
+  $productionVerified = $false
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    & $node $productionCheck
+    if ($LASTEXITCODE -eq 0) {
+      $productionVerified = $true
+      break
+    }
+    if ($attempt -lt 3) {
+      Write-Warning "La comprobación de producción ha fallado (intento $attempt de 3). Se repetirá en 5 segundos."
+      Start-Sleep -Seconds 5
+    }
+  }
+
+  if (-not $productionVerified) {
+    Write-Warning 'La nueva versión no ha superado las comprobaciones. Restaurando la versión anterior...'
+    & $wrangler rollback --config $config --message "Rollback automático: falló la verificación funcional posterior al despliegue" --yes
+    if ($LASTEXITCODE -ne 0) {
+      throw "ALERTA: la versión nueva falló y Cloudflare no pudo restaurar automáticamente la anterior."
+    }
+
+    Write-Host 'Versión anterior restaurada. Comprobando la recuperación...' -ForegroundColor Yellow
+    & $node $productionCheck
+    if ($LASTEXITCODE -ne 0) {
+      throw "ALERTA: se restauró la versión anterior, pero la comprobación funcional continúa fallando."
+    }
+    throw "El despliegue nuevo no era válido. PaddyTools ha vuelto automáticamente a la versión anterior verificada."
   }
 
   Write-Host 'PaddyTools se ha desplegado y verificado desde la fuente oficial.' -ForegroundColor Green
