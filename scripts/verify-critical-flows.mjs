@@ -76,6 +76,18 @@ requireAll(
   ],
   'Los datos e impresión de incidencias',
 );
+for (const path of ['app/page.tsx', 'app/api/incidents/route.ts']) {
+  requireAll(
+    path,
+    ['@/lib/permissions', 'canDeleteIncidents'],
+    'Los permisos compartidos de incidencias',
+  );
+  forbid(
+    path,
+    ["new Set(['rociosaez', 'administracion'])"],
+    'Los permisos compartidos de incidencias',
+  );
+}
 
 // La búsqueda global debe seguir consultando WooCommerce por nombre/teléfono,
 // sin distinguir tildes, además de conservar la búsqueda exacta de pedidos PA.

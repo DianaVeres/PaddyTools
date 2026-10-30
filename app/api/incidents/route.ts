@@ -3,26 +3,11 @@ import { desc, eq } from 'drizzle-orm';
 import { env } from 'cloudflare:workers';
 import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
-import { getSessionUser, type AuthUser } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
+import { canDeleteIncidents } from '@/lib/permissions';
 
 const textValue = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
-const INCIDENT_DELETE_USERS = new Set(['rociosaez', 'administracion']);
-
-function normalizedUserName(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-}
-
-function canDeleteIncidents(user: AuthUser) {
-  return [user.email.split('@')[0] || '', user.displayName]
-    .map(normalizedUserName)
-    .some((value) => INCIDENT_DELETE_USERS.has(value));
-}
-
 function incidentReferences(number: string) {
   const normalized = number.trim().replace(/^#/, '').toUpperCase();
   const withoutIncidentPrefix = normalized.replace(

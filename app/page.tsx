@@ -54,6 +54,7 @@ import {
   incidentStatusLabel,
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
+import { canDeleteIncidents } from '@/lib/permissions';
 
 type Modal =
   | 'incidencia'
@@ -245,19 +246,6 @@ type OrderSearchMatch = {
 };
 type SessionUser = { email: string; displayName: string };
 
-function canDeleteIncidents(user: SessionUser | null) {
-  if (!user) return false;
-  const allowed = new Set(['rociosaez', 'administracion']);
-  const normalize = (value: string) =>
-    value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-  return [user.email.split('@')[0] || '', user.displayName]
-    .map(normalize)
-    .some((value) => allowed.has(value));
-}
 const fmt = (date: string) =>
   new Intl.DateTimeFormat('es-ES', {
     dateStyle: 'medium',
