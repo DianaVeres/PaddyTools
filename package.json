@@ -14,6 +14,7 @@
     "test:school-matching": "node scripts/test-school-matching.mjs",
     "test:packing-references": "node scripts/test-packing-references.mjs",
     "test:packing-dates": "node scripts/test-packing-dates.mjs",
+    "test:packing-export": "node scripts/test-packing-export.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "backup:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup-production.ps1",
     "deploy:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",

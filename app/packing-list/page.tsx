@@ -51,6 +51,10 @@ import {
   type PackingRecordSummary as RecordSummary,
 } from '@/lib/packing-dates';
 import {
+  buildPackingWorkbook,
+  packingWorkbookFileName,
+} from '@/lib/packing-export';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -431,32 +435,14 @@ export default function Home() {
   };
   // Crea y descarga una hoja compatible con Excel.
   const downloadExcel = (list: PackingList) => {
-    const escape = (value: string) =>
-      value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    const shipping = list.shippingDate.split('-').reverse().join('/');
-    const rows = list.orders
-      .map(
-        (order) =>
-          `<tr><td>${escape(order.orderNumber)}</td><td>${escape(order.customerName)}</td><td>${escape(packingListType(order.orderNumber))}</td><td>${escape(order.orderDate ? order.orderDate.split('-').reverse().join('/') : '')}</td><td>${shipping}</td><td></td><td>${escape(order.phone)}</td><td>${escape(order.box)}</td></tr>`,
-      )
-      .join('');
-    const blanks = Array.from(
-      { length: Math.max(0, 14 - list.orders.length) },
-      () =>
-        '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>',
-    ).join('');
-    const workbook = `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><style>@page{size:portrait;margin:0.3in}body{font-family:Arial,sans-serif}.title{color:red;font-weight:bold;font-size:16px;height:55px}.label{color:red;font-weight:bold}.meta{height:30px}table{border-collapse:collapse;width:100%;font-size:9px}th{background:#aaa;color:#fff;font-weight:bold;text-align:center;height:32px;border:1px solid #fff}td{height:28px;border:1px solid #fff;padding:3px}tbody tr:nth-child(odd) td{background:#d3d3d3}tbody tr:nth-child(even) td{background:#ececec}</style><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>PackingList</x:Name><x:WorksheetOptions><x:Selected/><x:FitToPage/><x:PrintArea>$A$1:$H$18</x:PrintArea></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table><tr><td class="title" colspan="8">ALBARAN PEDIDO ON-LINE</td></tr><tr class="meta"><td colspan="2"></td><td class="label">COLEGIO:</td><td colspan="3">${escape(list.school)}</td><td colspan="2"></td></tr><tr class="meta"><td colspan="2"></td><td class="label">FECHA:</td><td colspan="3">${shipping}</td><td colspan="2"></td></tr><tr><th>Nº PEDIDO</th><th>NOMBRE</th><th>TIPO PEDIDO</th><th>FECHA PEDIDO</th><th>FECHA ENVÍO</th><th>FIRMA</th><th>TELEFONO</th><th>CAJA</th></tr><tbody>${rows}${blanks}</tbody></table></body></html>`;
+    const workbook = buildPackingWorkbook(list);
     const blob = new Blob(['\ufeff', workbook], {
       type: 'application/vnd.ms-excel;charset=utf-8',
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `PackingList-${list.school.replace(/[^a-z0-9]+/gi, '-')}-${list.shippingDate}.xls`;
+    link.download = packingWorkbookFileName(list);
     document.body.appendChild(link);
     link.click();
     link.remove();
