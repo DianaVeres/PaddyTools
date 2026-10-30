@@ -67,6 +67,7 @@ import {
   type DeliveryEmailDraft as EmailDraft,
   type DeliveryEmailKind,
 } from '@/lib/delivery-message';
+import { buildEmailLink, buildWhatsAppLink } from '@/lib/contact-links';
 
 type Modal =
   | 'incidencia'
@@ -649,29 +650,28 @@ export default function Home() {
 
   function launchEmail() {
     if (!emailDraft) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailDraft.to.trim())) {
+    const link = buildEmailLink(
+      emailDraft.to,
+      emailDraft.subject,
+      emailDraft.body,
+    );
+    if (!link) {
       setSaved('Indica un email válido del cliente.');
       return;
     }
-    const params = new URLSearchParams({
-      subject: emailDraft.subject,
-      body: emailDraft.body,
-    });
-    window.location.href = `mailto:${emailDraft.to.trim()}?${params.toString()}`;
+    window.location.href = link;
   }
 
   function launchWhatsApp() {
     if (!emailDraft) return;
-    let phone = emailDraft.phone.replace(/\D/g, '');
-    if (phone.startsWith('00')) phone = phone.slice(2);
-    if (phone.length === 9) phone = `34${phone}`;
-    if (phone.length < 11) {
+    const link = buildWhatsAppLink(emailDraft.phone, emailDraft.body);
+    if (!link) {
       setSaved(
         'Indica un teléfono válido del cliente, incluyendo el prefijo si no es español.',
       );
       return;
     }
-    window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(emailDraft.body)}`;
+    window.location.href = link;
   }
   async function search(
     event?: FormEvent,

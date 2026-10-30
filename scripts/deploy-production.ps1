@@ -34,11 +34,12 @@ $apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $globalSearchCheck = Join-Path $officialRoot 'scripts\test-global-search.mjs'
 $labelPrintCheck = Join-Path $officialRoot 'scripts\test-label-print.mjs'
 $deliveryMessageCheck = Join-Path $officialRoot 'scripts\test-delivery-message.mjs'
+$contactLinksCheck = Join-Path $officialRoot 'scripts\test-contact-links.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -103,6 +104,10 @@ try {
   & $node $deliveryMessageCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los mensajes de entrega han fallado. No se desplegará nada."
+  }
+  & $node $contactLinksCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "Los enlaces de correo y WhatsApp han fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {

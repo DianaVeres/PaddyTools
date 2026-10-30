@@ -78,6 +78,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/lib/contact-links', 'buildEmailLink', 'buildWhatsAppLink'],
+  'Los enlaces aislados de contacto',
+);
+requireAll(
+  'app/page.tsx',
   ['@/lib/label-print', 'printStandaloneLabel'],
   'La impresión aislada de etiquetas',
 );
