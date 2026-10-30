@@ -86,6 +86,16 @@ requireAll(
   ['buildStandaloneLabelHtml', '@page { size: 150mm 100mm'],
   'El formato de las etiquetas',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/lib/delivery-message',
+    'createDeliveryEmailDraft',
+    'deliveryKindFromText',
+    'updateDeliveryEmailDraft',
+  ],
+  'Los mensajes aislados de entrega',
+);
 for (const path of ['app/page.tsx', 'app/api/incidents/route.ts']) {
   requireAll(
     path,

@@ -60,6 +60,13 @@ import {
   shippingReferences,
 } from '@/lib/global-search';
 import { printStandaloneLabel } from '@/lib/label-print';
+import {
+  createDeliveryEmailDraft,
+  deliveryKindFromText,
+  updateDeliveryEmailDraft,
+  type DeliveryEmailDraft as EmailDraft,
+  type DeliveryEmailKind,
+} from '@/lib/delivery-message';
 
 type Modal =
   | 'incidencia'
@@ -136,20 +143,6 @@ type MondayRecord = {
   estimatedProduction?: string;
   formula?: string;
   updatedAt: string;
-};
-type DeliveryEmailKind = 'colegio' | 'domicilio' | 'tienda';
-type EmailDraft = {
-  to: string;
-  phone: string;
-  subject: string;
-  body: string;
-  delivery: DeliveryEmailKind;
-  carrier: 'viaxpress' | 'dhl';
-  trackingNumber: string;
-  customerName: string;
-  recordKind: 'pedido' | 'reserva';
-  reference: string;
-  school: string;
 };
 type IncidentDraft = {
   date: string;
@@ -581,33 +574,10 @@ export default function Home() {
     return matches.length ? matches : articles;
   }, [reservationDraft.school, reservationOptions]);
 
-  // Genera el texto con los campos actuales para poder cambiar el tipo de
-  // entrega, transportista, número de envío o colegio antes de abrir el correo.
-  function emailBody(draft: EmailDraft) {
-    if (draft.delivery === 'colegio') {
-      return `Hola ${draft.customerName}. IMPORTANTE: su ${draft.recordKind} ${draft.reference} YA ESTÁ EN EL COLEGIO ${draft.school}. YA PUEDE IR AL COLEGIO A RECOGERLO. Gracias, un saludo.`;
-    }
-    if (draft.delivery === 'tienda') {
-      return `Hola ${draft.customerName}, le comunicamos que ya tenemos su ${draft.recordKind} ${draft.reference} disponible para recoger en nuestra tienda de Paddy. Recuerde que ya estamos en el horario habitual (Mañanas de Lunes a Viernes de 10.00 a 14.00 y Tardes sólo Martes y Jueves de 15.00 a 19.00). Puede pasar cuando quiera a recogerlo. Gracias, un saludo`;
-    }
-    const trackingUrl =
-      draft.carrier === 'dhl'
-        ? 'https://www.dhl.com/'
-        : 'https://viaxpress.es/envios/';
-    return `Su pedido está preparado para ser enviado. El número de envío es ${draft.trackingNumber || '[Nº ENVÍO]'}. Podrá hacer el seguimiento en el siguiente enlace: ${trackingUrl}`;
-  }
-
   function openEmailComposer(
     input: Omit<EmailDraft, 'subject' | 'body' | 'carrier' | 'trackingNumber'>,
   ) {
-    const draft: EmailDraft = {
-      ...input,
-      carrier: 'viaxpress',
-      trackingNumber: '',
-      subject: `${input.recordKind === 'reserva' ? 'Reserva' : 'Pedido'} ${input.reference} preparado`,
-      body: '',
-    };
-    setEmailDraft({ ...draft, body: emailBody(draft) });
+    setEmailDraft(createDeliveryEmailDraft(input));
     setModal('email');
     setSaved('');
   }
@@ -615,19 +585,14 @@ export default function Home() {
   function updateGeneratedEmail(changes: Partial<EmailDraft>) {
     setEmailDraft((current) => {
       if (!current) return current;
-      const next = { ...current, ...changes };
-      return { ...next, body: emailBody(next) };
+      return updateDeliveryEmailDraft(current, changes);
     });
   }
 
   async function openOrderEmail() {
     if (!order) return;
     const method = folded(order.shippingMethod);
-    const delivery: DeliveryEmailKind = method.includes('colegio')
-      ? 'colegio'
-      : method.includes('recog') || method.includes('tienda')
-        ? 'tienda'
-        : 'domicilio';
+    const delivery = deliveryKindFromText(method, 'domicilio');
     const linkedReservation = mondayRecords.find(
       (record) => record.kind === 'reserva',
     );
@@ -658,11 +623,7 @@ export default function Home() {
 
   function openReservationEmail(record: MondayRecord) {
     const observation = folded(record.observations);
-    const delivery: DeliveryEmailKind = observation.includes('colegio')
-      ? 'colegio'
-      : observation.includes('domicilio')
-        ? 'domicilio'
-        : 'tienda';
+    const delivery = deliveryKindFromText(observation, 'tienda');
     openEmailComposer({
       to: record.customerEmail || '',
       phone: record.phone || '',
