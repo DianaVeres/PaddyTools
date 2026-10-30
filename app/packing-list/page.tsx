@@ -54,6 +54,7 @@ import {
   buildPackingWorkbook,
   packingWorkbookFileName,
 } from '@/lib/packing-export';
+import { readJsonResponse as readResponseJson } from '@/lib/http-response';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,18 +98,6 @@ type SpeechRecognitionInstance = {
   onend: (() => void) | null;
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
-
-// Lee una respuesta de API de forma segura. Si llega vacía o no es JSON,
-// devuelve un objeto vacío para que la pantalla no se bloquee.
-async function readResponseJson<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  if (!text) return {} as T;
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return {} as T;
-  }
-}
 
 // Componente principal: controla las vistas, el formulario, las consultas a
 // WooCommerce/Monday/Incidencias, el archivo y la impresión.

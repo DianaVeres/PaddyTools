@@ -47,6 +47,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { readJsonResponse } from '@/lib/http-response';
 
 type Modal =
   | 'incidencia'
@@ -1005,10 +1006,10 @@ export default function Home() {
           attended,
         }),
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         returnAttended?: boolean;
         error?: string;
-      };
+      }>(response, { source: 'WooCommerce' });
       if (!response.ok)
         throw new Error(data.error || 'No se pudo actualizar la devolución.');
       setOrder((current) =>
@@ -1045,7 +1046,9 @@ export default function Home() {
         cache: 'no-store',
       });
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
+        const data = await readJsonResponse<{ error?: string }>(response, {
+          source: 'WooCommerce',
+        });
         throw new Error(data.error || 'No se pudo descargar el documento.');
       }
       const url = URL.createObjectURL(await response.blob());
@@ -1089,10 +1092,10 @@ export default function Home() {
           content: noteDraft,
         }),
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         note?: OrderNote;
         error?: string;
-      };
+      }>(response);
       if (!response.ok || !data.note)
         throw new Error(data.error || 'No se pudo guardar la nota.');
       setOrderNotes((notes) => [data.note!, ...notes]);
@@ -1120,10 +1123,10 @@ export default function Home() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: note.id, orderNumber: noteReference }),
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         deleted?: boolean;
         error?: string;
-      };
+      }>(response);
       if (!response.ok || !data.deleted)
         throw new Error(data.error || 'No se pudo eliminar la nota.');
       setOrderNotes((notes) =>
@@ -1777,7 +1780,7 @@ export default function Home() {
           received,
         }),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = await readJsonResponse<{ error?: string }>(response);
       if (!response.ok) throw new Error(data.error);
       setRegistryRows((rows) =>
         rows.map((item) =>
@@ -1820,10 +1823,10 @@ export default function Home() {
           solved,
         }),
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         error?: string;
         incident?: Incident;
-      };
+      }>(response);
       if (!response.ok) throw new Error(data.error);
       const updated = data.incident || {
         ...row,
@@ -1862,10 +1865,10 @@ export default function Home() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: row.id, orderNumber: row.orderNumber }),
       });
-      const data = (await response.json()) as {
+      const data = await readJsonResponse<{
         deleted?: boolean;
         error?: string;
-      };
+      }>(response);
       if (!response.ok || !data.deleted)
         throw new Error(data.error || 'No se pudo eliminar la incidencia.');
       setRegistryRows((rows) => rows.filter((item) => item.id !== row.id));
