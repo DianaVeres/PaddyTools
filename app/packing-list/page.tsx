@@ -31,6 +31,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  foldSchoolText as fold,
+  matchesSchoolCandidates,
+  sameSchool,
+  sameSchoolFolder,
+  schoolFolderName,
+} from '@/lib/school-matching';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -142,153 +149,6 @@ const recordsByWeek = (items: RecordSummary[]) => {
         right.shippingDate.localeCompare(left.shippingDate) ||
         right.createdAt.localeCompare(left.createdAt)),
     }));
-};
-const fold = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/gi, '')
-    .toLowerCase();
-
-// Quita palabras genéricas o de canal para agrupar variantes como
-// "Shackleton", "Shackleton Web" y "Shackleton Tienda".
-const schoolFolderWords = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(
-      (word) =>
-        word &&
-        ![
-          'colegio',
-          'college',
-          'school',
-          'centro',
-          'ceip',
-          'cp',
-          'web',
-          'online',
-          'tienda',
-          'boarding',
-          'de',
-          'del',
-          'el',
-          'la',
-          'los',
-          'las',
-        ].includes(word),
-    );
-const sameSchoolFolder = (left: string, right: string) => {
-  const leftWords = schoolFolderWords(left);
-  const rightWords = schoolFolderWords(right);
-  if (!leftWords.length || !rightWords.length) return fold(left) === fold(right);
-  if (leftWords.join(' ') === rightWords.join(' ')) return true;
-  const [shorter, longer] =
-    leftWords.length <= rightWords.length
-      ? [leftWords, rightWords]
-      : [rightWords, leftWords];
-  return (
-    shorter.length >= 2 &&
-    shorter.every((word, index) => longer[index] === word)
-  );
-};
-
-// Escoge el nombre más corto y representativo para titular cada carpeta.
-const schoolFolderName = (names: string[]) =>
-  [...names].sort((left, right) => {
-    const wordDifference =
-      schoolFolderWords(left).length - schoolFolderWords(right).length;
-    return wordDifference || left.length - right.length || left.localeCompare(right, 'es');
-  })[0].trim();
-const schoolWords = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(
-      (word) =>
-        word.length >= 3 &&
-        ![
-          'colegio',
-          'college',
-          'school',
-          'centro',
-          'ceip',
-          'cp',
-          'web',
-          'online',
-          'tienda',
-          'boarding',
-          'de',
-          'del',
-          'los',
-          'las',
-        ].includes(word),
-    );
-const schoolAcronym = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .split(/[^A-Z0-9]+/)
-    .filter((word) => word && !['DE', 'DEL', 'EL', 'LOS', 'LAS'].includes(word))
-    .map((word) => word[0])
-    .join('');
-const sameSchool = (expected: string, actual: string) => {
-  if (!actual.trim()) return false;
-  const expectedFolded = fold(expected);
-  const actualFolded = fold(actual);
-  if (
-    !expectedFolded ||
-    actualFolded.includes(expectedFolded) ||
-    expectedFolded.includes(actualFolded)
-  )
-    return true;
-  const expectedWords = schoolWords(expected);
-  const actualWords = new Set(schoolWords(actual));
-  if (expectedWords.length && expectedWords.every((word) => actualWords.has(word))) return true;
-  const compactExpected = expected.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  const compactActual = actual.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  const expectedAcronym = schoolAcronym(expected);
-  const actualAcronym = schoolAcronym(actual);
-  return (
-    compactExpected.length >= 2 &&
-    compactExpected.length <= 6 &&
-    actualAcronym.includes(compactExpected)
-  ) || (
-    compactActual.length >= 2 &&
-    compactActual.length <= 6 &&
-    expectedAcronym.includes(compactActual)
-  );
-};
-
-// Compara las evidencias fiables de WooCommerce. El nombre puede estar en la
-// prenda y la localidad en el envío (por ejemplo, TEATINAS + PINTO), por eso
-// también comprobamos que todas las palabras del colegio estén presentes en
-// el conjunto, pero sin crear acrónimos artificiales al concatenar campos.
-const rawMatchesSchoolCandidates = (expected: string, candidates: string[]) => {
-  if (candidates.some((candidate) => sameSchool(expected, candidate))) return true;
-  const expectedWords = schoolWords(expected);
-  const candidateWords = new Set(candidates.flatMap(schoolWords));
-  return expectedWords.length > 0 && expectedWords.every((word) => candidateWords.has(word));
-};
-
-const matchesSchoolCandidates = (
-  expected: string,
-  candidates: string[],
-  knownSchools: string[] = [],
-) => {
-  // Si las evidencias identifican uno o más colegios del catálogo, el pedido
-  // solo es válido cuando alguno pertenece a la misma familia que el elegido.
-  const detectedSchools = knownSchools.filter((known) =>
-    rawMatchesSchoolCandidates(known, candidates),
-  );
-  if (detectedSchools.length)
-    return detectedSchools.some((known) => sameSchoolFolder(expected, known));
-  return rawMatchesSchoolCandidates(expected, candidates);
 };
 const packingListType = (number: string) => {
   const reference = number.trim().toUpperCase();
