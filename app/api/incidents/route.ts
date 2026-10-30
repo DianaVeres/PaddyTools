@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { getDb } from '@/db';
-import { incidentCache } from '@/db/schema';
-import { getSessionUser, type AuthUser } from '@/lib/auth';
+import { desc, eq } from 'drizzle-orm';
 import { env } from 'cloudflare:workers';
+import { getDb } from '@/db';
+import { incidentRecords } from '@/db/schema';
+import { getSessionUser, type AuthUser } from '@/lib/auth';
 
 const textValue = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
-
 const INCIDENT_DELETE_USERS = new Set(['rociosaez', 'administracion']);
 
 function normalizedUserName(value: string) {
@@ -19,32 +18,50 @@ function normalizedUserName(value: string) {
 }
 
 function canDeleteIncidents(user: AuthUser) {
-  const emailName = user.email.split('@')[0] || '';
-  return [emailName, user.displayName]
+  return [user.email.split('@')[0] || '', user.displayName]
     .map(normalizedUserName)
     .some((value) => INCIDENT_DELETE_USERS.has(value));
 }
 
-function dedupeIncidentRows(rows: Record<string, unknown>[]) {
-  const sorted = [...rows].sort((a, b) =>
-    textValue(b.updated_at).localeCompare(textValue(a.updated_at)),
+function incidentReferences(number: string) {
+  const normalized = number.trim().replace(/^#/, '').toUpperCase();
+  const withoutIncidentPrefix = normalized.replace(
+    /^I(?=(?:R|PA|INT-|\d))/,
+    '',
   );
-  const seen = new Set<string>();
-  return sorted.filter((row) => {
-    const key = [
-      textValue(row.source_type).trim().toUpperCase(),
-      textValue(row.order_number).trim().toUpperCase(),
-      textValue(row.customer_name).trim().toUpperCase(),
-      textValue(row.incident_date).slice(0, 10),
-      textValue(row.incident_text).trim().replace(/\s+/g, ' ').toUpperCase(),
-    ].join('|');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return [
+    ...new Set([
+      normalized,
+      withoutIncidentPrefix,
+      `I${withoutIncidentPrefix}`,
+    ]),
+  ];
 }
 
-function mapIncident(row: Record<string, unknown>, fallback = '') {
+type StoredIncident = { id: string; data: Record<string, unknown> };
+
+function decodeRow(row: typeof incidentRecords.$inferSelect): StoredIncident {
+  try {
+    return {
+      id: row.id,
+      data: JSON.parse(row.rawJson) as Record<string, unknown>,
+    };
+  } catch {
+    return { id: row.id, data: {} };
+  }
+}
+
+async function readAllRows() {
+  return (
+    await getDb()
+      .select()
+      .from(incidentRecords)
+      .orderBy(desc(incidentRecords.updatedAt))
+  ).map(decodeRow);
+}
+
+function mapIncident(stored: StoredIncident, fallback = '') {
+  const row = stored.data;
   let products: unknown[] = [];
   try {
     products = JSON.parse(textValue(row.products_json) || '[]');
@@ -54,17 +71,22 @@ function mapIncident(row: Record<string, unknown>, fallback = '') {
   const storedText = textValue(row.incident_text);
   const observationMatch = storedText.match(/\n\nOBSERVACIONES:\s*([\s\S]*)$/i);
   const storedSource = textValue(row.source_type).toLowerCase();
-  const sourceType = storedSource === 'store' || storedSource === 'tienda'
-    ? 'tienda'
-    : storedSource === 'manual'
-      ? 'manual'
-      : textValue(row.ticket_number) || textValue(row.amount) || textValue(row.ticket_file_id)
-        ? 'tienda'
-        : storedSource || 'order';
+  const sourceType =
+    storedSource === 'store' || storedSource === 'tienda'
+      ? 'tienda'
+      : storedSource === 'manual'
+        ? 'manual'
+        : textValue(row.ticket_number) ||
+            textValue(row.amount) ||
+            textValue(row.ticket_file_id)
+          ? 'tienda'
+          : storedSource || 'order';
   return {
+    id: stored.id,
     orderNumber: textValue(row.order_number) || fallback,
     sourceType,
-    ticketNumber: textValue(row.ticket_number) || textValue(row.order_number) || fallback,
+    ticketNumber:
+      textValue(row.ticket_number) || textValue(row.order_number) || fallback,
     customerName: textValue(row.customer_name),
     customerEmail: textValue(row.customer_email),
     customerPhone: textValue(row.customer_phone),
@@ -92,66 +114,24 @@ function mapIncident(row: Record<string, unknown>, fallback = '') {
   };
 }
 
-function incidentReferences(number: string) {
-  const normalized = number.trim().replace(/^#/, '').toUpperCase();
-  const withoutIncidentPrefix = normalized.replace(/^I(?=(?:R|PA|INT-|\d))/, '');
-
-  // Las incidencias se almacenan con una I delante de la referencia original.
-  // Por eso una reserva R12345 debe encontrar también IR12345, igual que un
-  // pedido PA12345 debe encontrar IPA12345.
-  return [...new Set([
-    normalized,
-    withoutIncidentPrefix,
-    `I${withoutIncidentPrefix}`,
-  ])];
+function fieldsFor(id: string, data: Record<string, unknown>) {
+  return {
+    id,
+    orderNumber: textValue(data.order_number).trim().toUpperCase(),
+    sourceType: textValue(data.source_type) || 'order',
+    incidentDate: textValue(data.incident_date) || textValue(data.created_at),
+    updatedAt: textValue(data.updated_at) || new Date().toISOString(),
+    pickupSchool: Boolean(Number(data.pickup_school)),
+    rawJson: JSON.stringify(data),
+  };
 }
 
-async function readCachedRows(scope: 'all' | 'pickups') {
-  try {
-    const [cached] = await getDb()
-      .select()
-      .from(incidentCache)
-      .where(eq(incidentCache.scope, scope))
-      .limit(1);
-    if (!cached) return null;
-    const rows = JSON.parse(cached.payload) as Record<string, unknown>[];
-    return { rows: Array.isArray(rows) ? rows : [], updatedAt: cached.updatedAt };
-  } catch {
-    return null;
-  }
-}
-
-async function saveCachedRows(scope: 'all' | 'pickups', rows: Record<string, unknown>[]) {
-  await getDb()
-    .insert(incidentCache)
-    .values({ scope, payload: JSON.stringify(rows), updatedAt: new Date() })
-    .onConflictDoUpdate({
-      target: incidentCache.scope,
-      set: { payload: JSON.stringify(rows), updatedAt: new Date() },
-    });
-}
-
-async function readAllRows() {
-  return dedupeIncidentRows((await readCachedRows('all'))?.rows || []);
-}
-
-async function persistAllRows(rows: Record<string, unknown>[]) {
-  const deduped = dedupeIncidentRows(rows);
-  await Promise.all([
-    saveCachedRows('all', deduped),
-    saveCachedRows(
-      'pickups',
-      deduped.filter((row) => Boolean(Number(row.pickup_school))),
-    ),
-  ]);
-  return deduped;
-}
-
-async function nextAutomaticIncidentId(rows: Record<string, unknown>[]) {
-  // El incremento se realiza en D1 para que dos altas simultáneas nunca
-  // reciban el mismo identificador.
+async function nextAutomaticIncidentId(rows: StoredIncident[]) {
   const highestExisting = rows.reduce((highest, row) => {
-    const match = textValue(row.order_number).trim().toUpperCase().match(/^INC-(\d+)$/);
+    const match = textValue(row.data.order_number)
+      .trim()
+      .toUpperCase()
+      .match(/^I?INC-(\d+)$/);
     return match ? Math.max(highest, Number(match[1])) : highest;
   }, 0);
   await env.DB.prepare(
@@ -159,41 +139,55 @@ async function nextAutomaticIncidentId(rows: Record<string, unknown>[]) {
   ).run();
   await env.DB.prepare(
     'INSERT INTO incident_sequences(name, value) VALUES(?, ?) ON CONFLICT(name) DO NOTHING',
-  ).bind('incidents', highestExisting).run();
+  )
+    .bind('incidents', highestExisting)
+    .run();
   const result = await env.DB.prepare(
     'UPDATE incident_sequences SET value = MAX(value, ?) + 1 WHERE name = ? RETURNING value',
-  ).bind(highestExisting, 'incidents').first<{ value: number }>();
-  if (!result?.value) throw new Error('No se pudo generar el número automático.');
+  )
+    .bind(highestExisting, 'incidents')
+    .first<{ value: number }>();
+  if (!result?.value)
+    throw new Error('No se pudo generar el número automático.');
   return `INC-${String(result.value).padStart(6, '0')}`;
 }
 
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
+  const id = request.nextUrl.searchParams.get('id')?.trim();
   const number = request.nextUrl.searchParams
     .get('number')
     ?.trim()
     .replace(/^#/, '');
-  if (!number && scope !== 'all' && scope !== 'pickups')
+  if (!id && !number && scope !== 'all' && scope !== 'pickups')
     return NextResponse.json(
       { error: 'Introduce un número de pedido.' },
       { status: 400 },
     );
   try {
-    const allRows = await readAllRows();
+    const rows = await readAllRows();
     if (scope === 'all' || scope === 'pickups') {
-      const rows = scope === 'pickups'
-        ? allRows.filter((row) => Boolean(Number(row.pickup_school)))
-        : allRows;
-      return NextResponse.json({ rows: rows.map((row) => mapIncident(row)) });
+      const selected =
+        scope === 'pickups'
+          ? rows.filter((row) => Boolean(Number(row.data.pickup_school)))
+          : rows;
+      return NextResponse.json({
+        rows: selected.map((row) => mapIncident(row)),
+      });
     }
-    const references = incidentReferences(number || '').map((value) => value.toUpperCase());
-    const row = allRows.find((item) =>
-      references.includes(textValue(item.order_number).toUpperCase()),
-    );
-    if (!row) return NextResponse.json({ found: false, incident: null });
+    const matches = id
+      ? rows.filter((row) => row.id === id)
+      : rows.filter((row) =>
+          incidentReferences(number || '').includes(
+            textValue(row.data.order_number).toUpperCase(),
+          ),
+        );
+    if (!matches.length)
+      return NextResponse.json({ found: false, incident: null, incidents: [] });
     return NextResponse.json({
       found: true,
-      incident: mapIncident(row, number),
+      incident: mapIncident(matches[0], number),
+      incidents: matches.map((row) => mapIncident(row, number)),
     });
   } catch (error) {
     return NextResponse.json(
@@ -211,15 +205,15 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = (await request.json()) as {
+      id?: string;
       orderNumber?: string;
       received?: boolean;
       solved?: boolean;
       sent?: boolean;
     };
-    const orderNumber = String(body.orderNumber || '').trim();
-    if (!orderNumber)
+    if (!body.id && !body.orderNumber)
       return NextResponse.json(
-        { error: 'Falta el número de pedido.' },
+        { error: 'Falta la incidencia.' },
         { status: 400 },
       );
     if (
@@ -231,19 +225,23 @@ export async function PATCH(request: NextRequest) {
         { error: 'No se ha indicado ningún cambio.' },
         { status: 400 },
       );
-    const references = incidentReferences(orderNumber).map((value) => value.toUpperCase());
     const rows = await readAllRows();
-    const storedRow = rows.find((item) =>
-      references.includes(textValue(item.order_number).toUpperCase()),
+    const references = incidentReferences(body.orderNumber || '').map((value) =>
+      value.toUpperCase(),
     );
-    if (!storedRow)
+    const stored = rows.find((row) =>
+      body.id
+        ? row.id === body.id
+        : references.includes(textValue(row.data.order_number).toUpperCase()),
+    );
+    if (!stored)
       return NextResponse.json(
         { error: 'No se encontró la incidencia para actualizarla.' },
         { status: 404 },
       );
     const now = new Date().toISOString();
-    const record: Record<string, unknown> = {
-      ...storedRow,
+    const data = {
+      ...stored.data,
       ...(typeof body.received === 'boolean'
         ? {
             pickup_received: body.received ? 1 : 0,
@@ -251,20 +249,18 @@ export async function PATCH(request: NextRequest) {
           }
         : {}),
       ...(typeof body.solved === 'boolean'
-        ? {
-            solved: body.solved ? 1 : 0,
-            solved_at: body.solved ? now : '',
-          }
+        ? { solved: body.solved ? 1 : 0, solved_at: body.solved ? now : '' }
         : {}),
-      ...(typeof body.sent === 'boolean'
-        ? { sent: body.sent ? 1 : 0 }
-        : {}),
+      ...(typeof body.sent === 'boolean' ? { sent: body.sent ? 1 : 0 } : {}),
       updated_at: now,
     };
-    await persistAllRows(rows.map((item) => item === storedRow ? record : item));
+    await getDb()
+      .update(incidentRecords)
+      .set(fieldsFor(stored.id, data))
+      .where(eq(incidentRecords.id, stored.id));
     return NextResponse.json({
       ok: true,
-      incident: mapIncident(record, orderNumber),
+      incident: mapIncident({ id: stored.id, data }, body.orderNumber),
     });
   } catch (error) {
     return NextResponse.json(
@@ -283,13 +279,15 @@ export async function POST(request: NextRequest) {
   try {
     const incoming = (await request.json()) as Record<string, unknown>;
     const rows = await readAllRows();
-    if (Boolean(incoming.allocate_id_only)) {
-      return NextResponse.json({ generatedId: await nextAutomaticIncidentId(rows) });
-    }
-    let originalReference = textValue(incoming.order_number).trim().toUpperCase();
-    if (!originalReference && Boolean(incoming.auto_generate_id)) {
+    if (Boolean(incoming.allocate_id_only))
+      return NextResponse.json({
+        generatedId: await nextAutomaticIncidentId(rows),
+      });
+    let originalReference = textValue(incoming.order_number)
+      .trim()
+      .toUpperCase();
+    if (!originalReference && Boolean(incoming.auto_generate_id))
       originalReference = await nextAutomaticIncidentId(rows);
-    }
     if (!originalReference)
       return NextResponse.json(
         { error: 'Falta el número de pedido.' },
@@ -311,28 +309,41 @@ export async function POST(request: NextRequest) {
         { error: 'Describe la incidencia antes de guardar.' },
         { status: 400 },
       );
+    const requestedId = textValue(incoming.record_id).trim();
+    const previous = requestedId
+      ? rows.find((row) => row.id === requestedId)
+      : undefined;
     const now = new Date().toISOString();
-    const references = incidentReferences(textValue(record.order_number)).map((value) => value.toUpperCase());
-    const previous = rows.find((item) =>
-      references.includes(textValue(item.order_number).toUpperCase()),
-    );
     const saved: Record<string, unknown> = {
-      ...previous,
+      ...previous?.data,
       ...record,
-      source_type: textValue(record.source_type) || textValue(previous?.source_type) || 'order',
-      products_json: typeof record.products_json === 'string'
-        ? record.products_json
-        : JSON.stringify(record.products_json || []),
-      created_at: textValue(previous?.created_at) || now,
+      source_type:
+        textValue(record.source_type) ||
+        textValue(previous?.data.source_type) ||
+        'order',
+      products_json:
+        typeof record.products_json === 'string'
+          ? record.products_json
+          : JSON.stringify(record.products_json || []),
+      created_at: textValue(previous?.data.created_at) || now,
       updated_at: now,
-      recurrence_count: Number(previous?.recurrence_count || 0) +
+      recurrence_count:
+        Number(previous?.data.recurrence_count || 0) +
         (Boolean(record.is_recurrence) ? 1 : 0),
     };
-    const nextRows = previous
-      ? rows.map((item) => item === previous ? saved : item)
-      : [...rows, saved];
-    await persistAllRows(nextRows);
-    return NextResponse.json({ ok: true, row: saved });
+    const id = previous?.id || `INC-${crypto.randomUUID()}`;
+    if (previous)
+      await getDb()
+        .update(incidentRecords)
+        .set(fieldsFor(id, saved))
+        .where(eq(incidentRecords.id, id));
+    else await getDb().insert(incidentRecords).values(fieldsFor(id, saved));
+    return NextResponse.json({
+      ok: true,
+      id,
+      row: { ...saved, record_id: id },
+      incident: mapIncident({ id, data: saved }),
+    });
   } catch (error) {
     return NextResponse.json(
       {
@@ -349,34 +360,42 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const user = await getSessionUser(request);
   if (!user)
-    return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Debes iniciar sesión.' },
+      { status: 401 },
+    );
   if (!canDeleteIncidents(user))
     return NextResponse.json(
       { error: 'Tu usuario no tiene permiso para eliminar incidencias.' },
       { status: 403 },
     );
-
   try {
-    const body = (await request.json()) as { orderNumber?: string };
-    const orderNumber = String(body.orderNumber || '').trim().replace(/^#/, '');
-    if (!orderNumber)
-      return NextResponse.json(
-        { error: 'Falta el número de incidencia.' },
-        { status: 400 },
-      );
-
-    const references = incidentReferences(orderNumber).map((value) => value.toUpperCase());
+    const body = (await request.json()) as {
+      id?: string;
+      orderNumber?: string;
+    };
     const rows = await readAllRows();
-    const nextRows = rows.filter(
-      (item) => !references.includes(textValue(item.order_number).toUpperCase()),
+    const references = incidentReferences(body.orderNumber || '').map((value) =>
+      value.toUpperCase(),
     );
-    if (nextRows.length === rows.length)
+    const stored = rows.find((row) =>
+      body.id
+        ? row.id === body.id
+        : references.includes(textValue(row.data.order_number).toUpperCase()),
+    );
+    if (!stored)
       return NextResponse.json(
         { error: 'No se encontró la incidencia para eliminarla.' },
         { status: 404 },
       );
-    await persistAllRows(nextRows);
-    return NextResponse.json({ deleted: true, orderNumber });
+    await getDb()
+      .delete(incidentRecords)
+      .where(eq(incidentRecords.id, stored.id));
+    return NextResponse.json({
+      deleted: true,
+      id: stored.id,
+      orderNumber: textValue(stored.data.order_number),
+    });
   } catch (error) {
     return NextResponse.json(
       {

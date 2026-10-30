@@ -105,6 +105,27 @@ export const incidentCache = sqliteTable('incident_cache', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+export const incidentRecords = sqliteTable(
+  'incident_records',
+  {
+    id: text('id').primaryKey(),
+    orderNumber: text('order_number').notNull(),
+    sourceType: text('source_type').notNull().default('order'),
+    incidentDate: text('incident_date'),
+    updatedAt: text('updated_at').notNull(),
+    pickupSchool: integer('pickup_school', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    rawJson: text('raw_json').notNull(),
+  },
+  (table) => [
+    index('idx_incident_records_order').on(table.orderNumber),
+    index('idx_incident_records_updated').on(table.updatedAt),
+    index('idx_incident_records_source').on(table.sourceType),
+    index('idx_incident_records_pickup').on(table.pickupSchool),
+  ],
+);
+
 // PackingList conserva su D1 histórica separada; así integramos el código sin
 // mover ni duplicar datos de producción.
 export const packingLists = sqliteTable(

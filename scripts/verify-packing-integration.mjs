@@ -56,6 +56,19 @@ for (const route of wooRoutes) {
     );
 }
 
+const incidentRoute = read('app/api/incidents/route.ts');
+if (!incidentRoute.includes('incidentRecords'))
+  throw new Error('Incidencias no utiliza la tabla individual.');
+if (incidentRoute.includes('incidentCache'))
+  throw new Error('Incidencias ha vuelto al bloque JSON antiguo.');
+if (
+  !read('drizzle/0005_individual_incidents.sql').includes(
+    "WHERE `incident_cache`.`scope` = 'all'",
+  )
+) {
+  throw new Error('Falta la migración de las incidencias existentes.');
+}
+
 console.log(
   `Integración PackingList verificada: ${historical.length} listas y ${historicalOrders} pedidos históricos.`,
 );

@@ -53,6 +53,12 @@ try {
     throw "La compilación ha fallado con el código $LASTEXITCODE. No se desplegará nada."
   }
 
+  Write-Host 'Aplicando migraciones aditivas de la base de datos...' -ForegroundColor Cyan
+  & $wrangler d1 migrations apply gestion-unificada-db --remote --config $config
+  if ($LASTEXITCODE -ne 0) {
+    throw "La migración de D1 ha fallado. No se desplegará la aplicación."
+  }
+
   Write-Host 'Compilación correcta. Desplegando el resultado recién generado...' -ForegroundColor Cyan
   & $wrangler deploy --config $config
   if ($LASTEXITCODE -ne 0) {

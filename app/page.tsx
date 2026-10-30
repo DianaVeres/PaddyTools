@@ -96,6 +96,7 @@ type Shipment = {
   file: string;
 };
 type Incident = {
+  id: string;
   orderNumber: string;
   customerName: string;
   customerEmail: string;
@@ -305,7 +306,13 @@ function printStandaloneLabel(lines: string[]) {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   const sizeFor = (text: string) =>
-    text.length > 46 ? 11 : text.length > 40 ? 12.5 : text.length > 34 ? 14.5 : 17;
+    text.length > 46
+      ? 11
+      : text.length > 40
+        ? 12.5
+        : text.length > 34
+          ? 14.5
+          : 17;
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
   frame.style.position = 'fixed';
@@ -385,8 +392,12 @@ function SourceBadge({
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
   const [query, setQuery] = useState('');
-  const [orderSearchMatches, setOrderSearchMatches] = useState<OrderSearchMatch[]>([]);
-  const [incidentSearchMatches, setIncidentSearchMatches] = useState<Incident[]>([]);
+  const [orderSearchMatches, setOrderSearchMatches] = useState<
+    OrderSearchMatch[]
+  >([]);
+  const [incidentSearchMatches, setIncidentSearchMatches] = useState<
+    Incident[]
+  >([]);
   const [order, setOrder] = useState<Order | null>(null);
   const [incident, setIncident] = useState<Incident | null>(null);
   const [mondayRecords, setMondayRecords] = useState<MondayRecord[]>([]);
@@ -396,8 +407,13 @@ export default function Home() {
   const [modal, setModal] = useState<Modal>(null);
   const [saved, setSaved] = useState('');
   const [returnUpdating, setReturnUpdating] = useState(false);
-  const [documentLoading, setDocumentLoading] = useState<'invoice' | 'packing-slip' | null>(null);
-  const [reservationDialogOffset, setReservationDialogOffset] = useState({ x: 0, y: 0 });
+  const [documentLoading, setDocumentLoading] = useState<
+    'invoice' | 'packing-slip' | null
+  >(null);
+  const [reservationDialogOffset, setReservationDialogOffset] = useState({
+    x: 0,
+    y: 0,
+  });
   const reservationDrag = useRef<{
     pointerId: number;
     startX: number;
@@ -433,8 +449,14 @@ export default function Home() {
     const drag = reservationDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     setReservationDialogOffset({
-      x: Math.min(drag.maxX, Math.max(drag.minX, drag.originX + event.clientX - drag.startX)),
-      y: Math.min(drag.maxY, Math.max(drag.minY, drag.originY + event.clientY - drag.startY)),
+      x: Math.min(
+        drag.maxX,
+        Math.max(drag.minX, drag.originX + event.clientX - drag.startX),
+      ),
+      y: Math.min(
+        drag.maxY,
+        Math.max(drag.minY, drag.originY + event.clientY - drag.startY),
+      ),
     });
   }
 
@@ -448,9 +470,11 @@ export default function Home() {
     void fetch('/api/auth/session')
       .then(async (response) => {
         if (!response.ok) throw new Error('Sesión no válida');
-        const data = await response.json() as { user: SessionUser };
+        const data = (await response.json()) as { user: SessionUser };
         setSessionUser(data.user);
-        const initialView = new URLSearchParams(window.location.search).get('view');
+        const initialView = new URLSearchParams(window.location.search).get(
+          'view',
+        );
         if (initialView === 'incidencias') {
           window.history.replaceState({}, '', window.location.pathname);
           await openRegistry('registro');
@@ -461,7 +485,9 @@ export default function Home() {
         if (pendingDelete) {
           window.history.replaceState({}, '', window.location.pathname);
           if (!canDeleteIncidents(data.user)) {
-            window.alert('Tu usuario no tiene permiso para eliminar incidencias.');
+            window.alert(
+              'Tu usuario no tiene permiso para eliminar incidencias.',
+            );
             return;
           }
           if (
@@ -497,14 +523,35 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('cleanup') !== 'f8626767-5497-41dd-8d0a-cc43668155d8') return;
+    if (
+      new URLSearchParams(window.location.search).get('cleanup') !==
+      'f8626767-5497-41dd-8d0a-cc43668155d8'
+    )
+      return;
     void fetch('/api/monday?maintenance=f8626767-5497-41dd-8d0a-cc43668155d8')
       .then(async (response) => {
-        const result = (await response.json()) as { removed?: boolean; message?: string; error?: string };
-        if (!response.ok) throw new Error(result.error || 'No se pudo eliminar la columna ETIQUETA.');
-        setSaved(result.removed ? 'Columna ETIQUETA eliminada de Monday.' : result.message || 'La columna ETIQUETA ya no existe.');
+        const result = (await response.json()) as {
+          removed?: boolean;
+          message?: string;
+          error?: string;
+        };
+        if (!response.ok)
+          throw new Error(
+            result.error || 'No se pudo eliminar la columna ETIQUETA.',
+          );
+        setSaved(
+          result.removed
+            ? 'Columna ETIQUETA eliminada de Monday.'
+            : result.message || 'La columna ETIQUETA ya no existe.',
+        );
       })
-      .catch((error) => setSaved(error instanceof Error ? error.message : 'No se pudo eliminar la columna ETIQUETA.'));
+      .catch((error) =>
+        setSaved(
+          error instanceof Error
+            ? error.message
+            : 'No se pudo eliminar la columna ETIQUETA.',
+        ),
+      );
   }, []);
   const [shipments, setShipments] = useState<Shipment[] | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
@@ -585,12 +632,14 @@ export default function Home() {
   const normalized = useMemo(() => query.trim().replace(/^#/, ''), [query]);
   const mondayUpdateItemIds = useMemo(
     () =>
-      [...new Set(
-        mondayRecords
-          .filter((record) => record.kind === 'reserva')
-          .map((record) => record.id)
-          .filter(Boolean),
-      )]
+      [
+        ...new Set(
+          mondayRecords
+            .filter((record) => record.kind === 'reserva')
+            .map((record) => record.id)
+            .filter(Boolean),
+        ),
+      ]
         .sort()
         .join(','),
     [mondayRecords],
@@ -603,7 +652,19 @@ export default function Home() {
     const articles = reservationOptions?.articles || [];
     const school = folded(reservationDraft.school);
     if (!school) return [];
-    const ignoredWords = new Set(['colegio', 'colegios', 'escuela', 'centro', 'ceip', 'ies', 'san', 'santa', 'del', 'las', 'los']);
+    const ignoredWords = new Set([
+      'colegio',
+      'colegios',
+      'escuela',
+      'centro',
+      'ceip',
+      'ies',
+      'san',
+      'santa',
+      'del',
+      'las',
+      'los',
+    ]);
     const schoolWords = reservationDraft.school
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -612,7 +673,10 @@ export default function Home() {
       .filter((word) => word.length >= 4 && !ignoredWords.has(word));
     const matches = articles.filter((item) => {
       const article = folded(`${item.code} ${item.description}`);
-      return article.includes(school) || schoolWords.some((word) => article.includes(folded(word)));
+      return (
+        article.includes(school) ||
+        schoolWords.some((word) => article.includes(folded(word)))
+      );
     });
     return matches.length ? matches : articles;
   }, [reservationDraft.school, reservationOptions]);
@@ -626,13 +690,16 @@ export default function Home() {
     if (draft.delivery === 'tienda') {
       return `Hola ${draft.customerName}, le comunicamos que ya tenemos su ${draft.recordKind} ${draft.reference} disponible para recoger en nuestra tienda de Paddy. Recuerde que ya estamos en el horario habitual (Mañanas de Lunes a Viernes de 10.00 a 14.00 y Tardes sólo Martes y Jueves de 15.00 a 19.00). Puede pasar cuando quiera a recogerlo. Gracias, un saludo`;
     }
-    const trackingUrl = draft.carrier === 'dhl'
-      ? 'https://www.dhl.com/'
-      : 'https://viaxpress.es/envios/';
+    const trackingUrl =
+      draft.carrier === 'dhl'
+        ? 'https://www.dhl.com/'
+        : 'https://viaxpress.es/envios/';
     return `Su pedido está preparado para ser enviado. El número de envío es ${draft.trackingNumber || '[Nº ENVÍO]'}. Podrá hacer el seguimiento en el siguiente enlace: ${trackingUrl}`;
   }
 
-  function openEmailComposer(input: Omit<EmailDraft, 'subject' | 'body' | 'carrier' | 'trackingNumber'>) {
+  function openEmailComposer(
+    input: Omit<EmailDraft, 'subject' | 'body' | 'carrier' | 'trackingNumber'>,
+  ) {
     const draft: EmailDraft = {
       ...input,
       carrier: 'viaxpress',
@@ -661,13 +728,18 @@ export default function Home() {
       : method.includes('recog') || method.includes('tienda')
         ? 'tienda'
         : 'domicilio';
-    const linkedReservation = mondayRecords.find((record) => record.kind === 'reserva');
+    const linkedReservation = mondayRecords.find(
+      (record) => record.kind === 'reserva',
+    );
     let school = linkedReservation?.school || '';
     // En los pedidos de colegio, PackingList es la fuente principal del colegio.
     if (delivery === 'colegio' && !school) {
       try {
-        const response = await fetch(`/api/shipping?order=${encodeURIComponent(order.number)}`, { cache: 'no-store' });
-        const data = await response.json() as { matches?: Shipment[] };
+        const response = await fetch(
+          `/api/shipping?order=${encodeURIComponent(order.number)}`,
+          { cache: 'no-store' },
+        );
+        const data = (await response.json()) as { matches?: Shipment[] };
         school = data.matches?.[0]?.school || '';
       } catch {
         // El colegio seguirá siendo editable si PackingList no responde.
@@ -708,7 +780,9 @@ export default function Home() {
       await navigator.clipboard.writeText(emailDraft.body);
       setSaved('Texto del email copiado.');
     } catch {
-      setSaved('No se pudo copiar automáticamente. Puedes seleccionar el texto en el cuadro.');
+      setSaved(
+        'No se pudo copiar automáticamente. Puedes seleccionar el texto en el cuadro.',
+      );
     }
   }
 
@@ -718,7 +792,10 @@ export default function Home() {
       setSaved('Indica un email válido del cliente.');
       return;
     }
-    const params = new URLSearchParams({ subject: emailDraft.subject, body: emailDraft.body });
+    const params = new URLSearchParams({
+      subject: emailDraft.subject,
+      body: emailDraft.body,
+    });
     window.location.href = `mailto:${emailDraft.to.trim()}?${params.toString()}`;
   }
 
@@ -728,12 +805,18 @@ export default function Home() {
     if (phone.startsWith('00')) phone = phone.slice(2);
     if (phone.length === 9) phone = `34${phone}`;
     if (phone.length < 11) {
-      setSaved('Indica un teléfono válido del cliente, incluyendo el prefijo si no es español.');
+      setSaved(
+        'Indica un teléfono válido del cliente, incluyendo el prefijo si no es español.',
+      );
       return;
     }
     window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(emailDraft.body)}`;
   }
-  async function search(event?: FormEvent, selectedOrderNumber?: string) {
+  async function search(
+    event?: FormEvent,
+    selectedOrderNumber?: string,
+    selectedIncidentId?: string,
+  ) {
     event?.preventDefault();
     const searchTerm = (selectedOrderNumber || normalized).trim();
     if (!searchTerm) {
@@ -761,30 +844,55 @@ export default function Home() {
         selectedLinkedOrderNumber.replace(/^#/, ''),
       );
       if (!isWooOrder && !isExactReference && !selectedOrderNumber) {
-        const [wooResponse, mondayResponse, incidentsResponse] = await Promise.all([
-          fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, { cache: 'no-store' }),
-          fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, { cache: 'no-store' }),
-          fetch('/api/incidents?scope=all', { cache: 'no-store' }),
-        ]);
-        const wooData = await wooResponse.json() as { matches?: OrderSearchMatch[]; error?: string };
-        const mondayData = await mondayResponse.json() as { records?: MondayRecord[]; error?: string };
-        const incidentsData = await incidentsResponse.json() as { rows?: Incident[]; error?: string };
+        const [wooResponse, mondayResponse, incidentsResponse] =
+          await Promise.all([
+            fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, {
+              cache: 'no-store',
+            }),
+            fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, {
+              cache: 'no-store',
+            }),
+            fetch('/api/incidents?scope=all', { cache: 'no-store' }),
+          ]);
+        const wooData = (await wooResponse.json()) as {
+          matches?: OrderSearchMatch[];
+          error?: string;
+        };
+        const mondayData = (await mondayResponse.json()) as {
+          records?: MondayRecord[];
+          error?: string;
+        };
+        const incidentsData = (await incidentsResponse.json()) as {
+          rows?: Incident[];
+          error?: string;
+        };
         const wooMatches = wooResponse.ok ? wooData.matches || [] : [];
         const mondayMatches = mondayResponse.ok ? mondayData.records || [] : [];
         const queryDigits = searchTerm.replace(/\D/g, '');
         const incidentMatches = incidentsResponse.ok
           ? (incidentsData.rows || []).filter((row) => {
-              const nameMatches = folded(row.customerName).includes(folded(searchTerm));
+              const nameMatches = folded(row.customerName).includes(
+                folded(searchTerm),
+              );
               const phone = row.customerPhone.replace(/\D/g, '');
-              const phoneMatches = queryDigits.length >= 5 && Boolean(phone) && (phone.includes(queryDigits) || queryDigits.includes(phone));
+              const phoneMatches =
+                queryDigits.length >= 5 &&
+                Boolean(phone) &&
+                (phone.includes(queryDigits) || queryDigits.includes(phone));
               return nameMatches || phoneMatches;
             })
           : [];
         setOrderSearchMatches(wooMatches);
         setMondayRecords(mondayMatches);
         setIncidentSearchMatches(incidentMatches);
-        if (!wooMatches.length && !mondayMatches.length && !incidentMatches.length)
-          setError(`No se encontraron pedidos, reservas, prendas ni incidencias para “${searchTerm}”.`);
+        if (
+          !wooMatches.length &&
+          !mondayMatches.length &&
+          !incidentMatches.length
+        )
+          setError(
+            `No se encontraron pedidos, reservas, prendas ni incidencias para “${searchTerm}”.`,
+          );
         return;
       }
       const [wooResponse, incidentResponse, mondayResponse, ticketResponse] =
@@ -798,14 +906,19 @@ export default function Home() {
               )
             : Promise.resolve(null),
           fetch(
-            `/api/incidents?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
+            selectedIncidentId
+              ? `/api/incidents?id=${encodeURIComponent(selectedIncidentId)}`
+              : `/api/incidents?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
             {
               cache: 'no-store',
             },
           ),
-          fetch(`/api/monday?number=${encodeURIComponent(selectedLinkedOrderNumber)}`, {
-            cache: 'no-store',
-          }),
+          fetch(
+            `/api/monday?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
+            {
+              cache: 'no-store',
+            },
+          ),
           fetch(`/api/tickets?number=${encodeURIComponent(searchTerm)}`, {
             cache: 'no-store',
           }),
@@ -896,11 +1009,24 @@ export default function Home() {
         returnAttended?: boolean;
         error?: string;
       };
-      if (!response.ok) throw new Error(data.error || 'No se pudo actualizar la devolución.');
-      setOrder((current) => current ? { ...current, returnAttended: Boolean(data.returnAttended) } : current);
-      setSaved(attended ? 'Devolución marcada como atendida en WooCommerce.' : 'Devolución marcada como pendiente en WooCommerce.');
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudo actualizar la devolución.');
+      setOrder((current) =>
+        current
+          ? { ...current, returnAttended: Boolean(data.returnAttended) }
+          : current,
+      );
+      setSaved(
+        attended
+          ? 'Devolución marcada como atendida en WooCommerce.'
+          : 'Devolución marcada como pendiente en WooCommerce.',
+      );
     } catch (error) {
-      setSaved(error instanceof Error ? error.message : 'No se pudo actualizar la devolución.');
+      setSaved(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo actualizar la devolución.',
+      );
     } finally {
       setReturnUpdating(false);
     }
@@ -910,10 +1036,16 @@ export default function Home() {
     setDocumentLoading(type);
     setSaved('');
     try {
-      const params = new URLSearchParams({ orderId: String(order.id), orderNumber: order.number, type });
-      const response = await fetch(`/api/order-documents?${params}`, { cache: 'no-store' });
+      const params = new URLSearchParams({
+        orderId: String(order.id),
+        orderNumber: order.number,
+        type,
+      });
+      const response = await fetch(`/api/order-documents?${params}`, {
+        cache: 'no-store',
+      });
       if (!response.ok) {
-        const data = await response.json() as { error?: string };
+        const data = (await response.json()) as { error?: string };
         throw new Error(data.error || 'No se pudo descargar el documento.');
       }
       const url = URL.createObjectURL(await response.blob());
@@ -924,9 +1056,17 @@ export default function Home() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setSaved(type === 'invoice' ? 'Factura descargada.' : 'Albarán de devolución descargado.');
+      setSaved(
+        type === 'invoice'
+          ? 'Factura descargada.'
+          : 'Albarán de devolución descargado.',
+      );
     } catch (error) {
-      setSaved(error instanceof Error ? error.message : 'No se pudo descargar el documento.');
+      setSaved(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo descargar el documento.',
+      );
     } finally {
       setDocumentLoading(null);
     }
@@ -957,7 +1097,9 @@ export default function Home() {
         throw new Error(data.error || 'No se pudo guardar la nota.');
       setOrderNotes((notes) => [data.note!, ...notes]);
       setNoteDraft('');
-      setSaved(order ? 'Nota guardada en el pedido.' : 'Nota guardada en la reserva.');
+      setSaved(
+        order ? 'Nota guardada en el pedido.' : 'Nota guardada en la reserva.',
+      );
     } catch (error) {
       setSaved(
         error instanceof Error ? error.message : 'No se pudo guardar la nota.',
@@ -978,13 +1120,20 @@ export default function Home() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: note.id, orderNumber: noteReference }),
       });
-      const data = await response.json() as { deleted?: boolean; error?: string };
+      const data = (await response.json()) as {
+        deleted?: boolean;
+        error?: string;
+      };
       if (!response.ok || !data.deleted)
         throw new Error(data.error || 'No se pudo eliminar la nota.');
-      setOrderNotes((notes) => notes.filter((current) => current.id !== note.id));
+      setOrderNotes((notes) =>
+        notes.filter((current) => current.id !== note.id),
+      );
       setSaved('Nota eliminada.');
     } catch (error) {
-      setSaved(error instanceof Error ? error.message : 'No se pudo eliminar la nota.');
+      setSaved(
+        error instanceof Error ? error.message : 'No se pudo eliminar la nota.',
+      );
     } finally {
       setNoteDeletingId('');
     }
@@ -1013,7 +1162,9 @@ export default function Home() {
           error?: string;
         };
         if (!response.ok)
-          throw new Error(data.error || 'No se pudieron cargar los comentarios de Monday.');
+          throw new Error(
+            data.error || 'No se pudieron cargar los comentarios de Monday.',
+          );
         if (!cancelled) setMondayUpdates(data.updates || []);
       })
       .catch((error) => {
@@ -1132,17 +1283,26 @@ export default function Home() {
       };
       if (!response.ok) throw new Error(data.error);
       const reservationsData = reservationsResponse.ok
-        ? await reservationsResponse.json() as { records?: MondayRecord[] }
+        ? ((await reservationsResponse.json()) as { records?: MondayRecord[] })
         : { records: [] };
-      const recoveredArticles = (reservationsData.records || []).flatMap((record) =>
-        (record.articleIds || []).map((id) => ({
-          id,
-          code: record.code || '',
-          description: [record.articleDescription || record.article, record.school].filter(Boolean).join(' · '),
-        })),
+      const recoveredArticles = (reservationsData.records || []).flatMap(
+        (record) =>
+          (record.articleIds || []).map((id) => ({
+            id,
+            code: record.code || '',
+            description: [
+              record.articleDescription || record.article,
+              record.school,
+            ]
+              .filter(Boolean)
+              .join(' · '),
+          })),
       );
       const articleMap = new Map(
-        [...(data.articles || []), ...recoveredArticles].map((article) => [article.id, article]),
+        [...(data.articles || []), ...recoveredArticles].map((article) => [
+          article.id,
+          article,
+        ]),
       );
       setReservationOptions({ ...data, articles: [...articleMap.values()] });
       const customer = data.customers.find(
@@ -1177,13 +1337,22 @@ export default function Home() {
     setRegistryFilter('');
     setReservationsLoading(true);
     try {
-      const response = await fetch('/api/monday?mode=reservations', { cache: 'no-store' });
-      const data = (await response.json()) as { records?: MondayRecord[]; error?: string };
+      const response = await fetch('/api/monday?mode=reservations', {
+        cache: 'no-store',
+      });
+      const data = (await response.json()) as {
+        records?: MondayRecord[];
+        error?: string;
+      };
       if (!response.ok) throw new Error(data.error);
       setReservationRows(data.records || []);
     } catch (error) {
       setReservationRows([]);
-      setSaved(error instanceof Error ? error.message : 'No se pudieron cargar las reservas.');
+      setSaved(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron cargar las reservas.',
+      );
     } finally {
       setReservationsLoading(false);
     }
@@ -1303,6 +1472,7 @@ export default function Home() {
             incident_school_name: incidentDraft.school,
             is_recurrence: incidentDraft.recurrence ? 1 : 0,
             source_type: 'pedido',
+            record_id: incidentDraft.recurrence ? '' : incident?.id || '',
           }),
         });
       } else {
@@ -1322,27 +1492,32 @@ export default function Home() {
         }
         const linkedCustomerFromSearch = Boolean(
           order?.customer.name ||
-            incident?.customerName ||
-            mondayRecords[0]?.customer,
+          incident?.customerName ||
+          mondayRecords[0]?.customer,
         );
         if (
           !reservationDraft.customerId &&
           !newReservationCustomer &&
           !linkedCustomerFromSearch
         ) {
-          setSaved('Selecciona un cliente del desplegable o pulsa Nuevo para crearlo.');
+          setSaved(
+            'Selecciona un cliente del desplegable o pulsa Nuevo para crearlo.',
+          );
           return;
         }
         if (
           newReservationCustomer &&
-          (!reservationDraft.phone.trim() || !reservationDraft.customerEmail.trim())
+          (!reservationDraft.phone.trim() ||
+            !reservationDraft.customerEmail.trim())
         ) {
           setSaved('Para un cliente nuevo, completa teléfono y e-mail.');
           return;
         }
         if (
           newReservationCustomer &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reservationDraft.customerEmail.trim())
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            reservationDraft.customerEmail.trim(),
+          )
         ) {
           setSaved('El e-mail del cliente nuevo no tiene un formato válido.');
           return;
@@ -1368,7 +1543,10 @@ export default function Home() {
         const data = (await response.json()) as { error?: string };
         throw new Error(data.error);
       }
-      const record = (await response.json()) as { id?: string; formula?: string };
+      const record = (await response.json()) as {
+        id?: string;
+        formula?: string;
+      };
       setSaved(
         kind === 'reserva'
           ? editingReservationId
@@ -1403,8 +1581,12 @@ export default function Home() {
           status: reservationDraft.status,
           observations: reservationDraft.observations,
           specialDetails: '',
-          articleIds: reservationDraft.articleId ? [reservationDraft.articleId] : [],
-          customerIds: reservationDraft.customerId ? [reservationDraft.customerId] : [],
+          articleIds: reservationDraft.articleId
+            ? [reservationDraft.articleId]
+            : [],
+          customerIds: reservationDraft.customerId
+            ? [reservationDraft.customerId]
+            : [],
           endDate: reservationDraft.endDate,
           productionDate: reservationDraft.productionDate,
           estimatedProduction: reservationDraft.estimatedProduction,
@@ -1415,7 +1597,9 @@ export default function Home() {
         setCreatedReservation(savedReservation);
         if (editingReservationId) {
           setReservationRows((rows) =>
-            rows.map((item) => item.id === editingReservationId ? savedReservation : item),
+            rows.map((item) =>
+              item.id === editingReservationId ? savedReservation : item,
+            ),
           );
           setEditingReservationId('');
           setModal('reservas');
@@ -1548,6 +1732,7 @@ export default function Home() {
     if (incidentDraft.pickupNotes.trim())
       pickupDetails.push(`Observaciones: ${incidentDraft.pickupNotes.trim()}`);
     const row: Incident = {
+      id: incident?.id || '',
       orderNumber:
         order?.number ||
         incident?.orderNumber ||
@@ -1586,13 +1771,17 @@ export default function Home() {
       const response = await fetch('/api/incidents', {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ orderNumber: row.orderNumber, received }),
+        body: JSON.stringify({
+          id: row.id,
+          orderNumber: row.orderNumber,
+          received,
+        }),
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error);
       setRegistryRows((rows) =>
         rows.map((item) =>
-          item.orderNumber === row.orderNumber
+          item.id === row.id
             ? {
                 ...item,
                 pickupReceived: received,
@@ -1601,7 +1790,7 @@ export default function Home() {
             : item,
         ),
       );
-      if (incident?.orderNumber === row.orderNumber)
+      if (incident?.id === row.id)
         setIncident({
           ...incident,
           pickupReceived: received,
@@ -1625,7 +1814,11 @@ export default function Home() {
       const response = await fetch('/api/incidents', {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ orderNumber: row.orderNumber, solved }),
+        body: JSON.stringify({
+          id: row.id,
+          orderNumber: row.orderNumber,
+          solved,
+        }),
       });
       const data = (await response.json()) as {
         error?: string;
@@ -1638,13 +1831,10 @@ export default function Home() {
         solvedAt: solved ? new Date().toISOString() : '',
       };
       setRegistryRows((rows) =>
-        rows.map((item) =>
-          item.orderNumber === row.orderNumber ? updated : item,
-        ),
+        rows.map((item) => (item.id === row.id ? updated : item)),
       );
-      if (incident?.orderNumber === row.orderNumber) setIncident(updated);
-      if (selectedIncident?.orderNumber === row.orderNumber)
-        setSelectedIncident(updated);
+      if (incident?.id === row.id) setIncident(updated);
+      if (selectedIncident?.id === row.id) setSelectedIncident(updated);
       setSaved(
         solved
           ? `Incidencia #${row.orderNumber} cerrada correctamente.`
@@ -1670,17 +1860,17 @@ export default function Home() {
       const response = await fetch('/api/incidents', {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ orderNumber: row.orderNumber }),
+        body: JSON.stringify({ id: row.id, orderNumber: row.orderNumber }),
       });
-      const data = (await response.json()) as { deleted?: boolean; error?: string };
+      const data = (await response.json()) as {
+        deleted?: boolean;
+        error?: string;
+      };
       if (!response.ok || !data.deleted)
         throw new Error(data.error || 'No se pudo eliminar la incidencia.');
-      setRegistryRows((rows) =>
-        rows.filter((item) => item.orderNumber !== row.orderNumber),
-      );
-      if (incident?.orderNumber === row.orderNumber) setIncident(null);
-      if (selectedIncident?.orderNumber === row.orderNumber)
-        setSelectedIncident(null);
+      setRegistryRows((rows) => rows.filter((item) => item.id !== row.id));
+      if (incident?.id === row.id) setIncident(null);
+      if (selectedIncident?.id === row.id) setSelectedIncident(null);
       setSaved(`Incidencia #${row.orderNumber} eliminada correctamente.`);
     } catch (error) {
       setSaved(
@@ -1764,15 +1954,20 @@ export default function Home() {
   });
   const visibleReservationRows = reservationRows.filter((row) => {
     const term = folded(registryFilter);
-    return !term || folded([
-      row.reference,
-      row.customer,
-      row.phone,
-      row.school,
-      row.articleDescription,
-      row.size,
-      row.status,
-    ].join(' ')).includes(term);
+    return (
+      !term ||
+      folded(
+        [
+          row.reference,
+          row.customer,
+          row.phone,
+          row.school,
+          row.articleDescription,
+          row.size,
+          row.status,
+        ].join(' '),
+      ).includes(term)
+    );
   });
 
   return (
@@ -1831,8 +2026,19 @@ export default function Home() {
             <CalendarDays /> Generar reserva
           </Button>
           <span className="divider" />
-          <button className="user-chip" onClick={() => void logout()} title="Cerrar sesión">
-            <span>{sessionUser?.displayName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '··'}</span>
+          <button
+            className="user-chip"
+            onClick={() => void logout()}
+            title="Cerrar sesión"
+          >
+            <span>
+              {sessionUser?.displayName
+                .split(/\s+/)
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase() || '··'}
+            </span>
             <b>{sessionUser?.displayName || 'Usuario'}</b>
             <LogOut size={15} />
           </button>
@@ -1865,7 +2071,11 @@ export default function Home() {
           </form>
           {orderSearchMatches.length > 0 && (
             <div className="order-search-results" aria-live="polite">
-              <p>{orderSearchMatches.length} pedido{orderSearchMatches.length === 1 ? '' : 's'} encontrado{orderSearchMatches.length === 1 ? '' : 's'}. Selecciona uno:</p>
+              <p>
+                {orderSearchMatches.length} pedido
+                {orderSearchMatches.length === 1 ? '' : 's'} encontrado
+                {orderSearchMatches.length === 1 ? '' : 's'}. Selecciona uno:
+              </p>
               {orderSearchMatches.map((match) => (
                 <button
                   type="button"
@@ -1875,26 +2085,58 @@ export default function Home() {
                     void search(undefined, match.number);
                   }}
                 >
-                  <span><b>{match.number}</b> · {match.customerName || 'Cliente sin nombre'}</span>
-                  <small>{[match.phone, match.email, match.dateCreated ? fmt(match.dateCreated) : '', match.total, match.statusLabel].filter(Boolean).join(' · ')}</small>
+                  <span>
+                    <b>{match.number}</b> ·{' '}
+                    {match.customerName || 'Cliente sin nombre'}
+                  </span>
+                  <small>
+                    {[
+                      match.phone,
+                      match.email,
+                      match.dateCreated ? fmt(match.dateCreated) : '',
+                      match.total,
+                      match.statusLabel,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </small>
                 </button>
               ))}
             </div>
           )}
           {incidentSearchMatches.length > 0 && (
-            <div className="order-search-results incident-search-results" aria-live="polite">
-              <p>{incidentSearchMatches.length} incidencia{incidentSearchMatches.length === 1 ? '' : 's'} encontrada{incidentSearchMatches.length === 1 ? '' : 's'}. Selecciona una:</p>
+            <div
+              className="order-search-results incident-search-results"
+              aria-live="polite"
+            >
+              <p>
+                {incidentSearchMatches.length} incidencia
+                {incidentSearchMatches.length === 1 ? '' : 's'} encontrada
+                {incidentSearchMatches.length === 1 ? '' : 's'}. Selecciona una:
+              </p>
               {incidentSearchMatches.map((match) => (
                 <button
                   type="button"
-                  key={`${match.orderNumber}-${match.incidentDate}`}
+                  key={match.id}
                   onClick={() => {
                     setQuery(match.orderNumber);
-                    void search(undefined, match.orderNumber);
+                    void search(undefined, match.orderNumber, match.id);
                   }}
                 >
-                  <span><b>{match.orderNumber}</b> · {match.customerName || 'Cliente sin nombre'}</span>
-                  <small>{[match.customerPhone, match.customerEmail, match.incidentDate, match.solved ? 'Resuelta' : 'Pendiente'].filter(Boolean).join(' · ')}</small>
+                  <span>
+                    <b>{match.orderNumber}</b> ·{' '}
+                    {match.customerName || 'Cliente sin nombre'}
+                  </span>
+                  <small>
+                    {[
+                      match.customerPhone,
+                      match.customerEmail,
+                      match.incidentDate,
+                      match.solved ? 'Resuelta' : 'Pendiente',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </small>
                 </button>
               ))}
             </div>
@@ -1941,7 +2183,9 @@ export default function Home() {
         <div className="empty-state">
           <RefreshCw className="spin" />
           <h2>Consultando WooCommerce, Monday e incidencias</h2>
-          <p>Estamos buscando todos los pedidos, reservas, prendas e incidencias.</p>
+          <p>
+            Estamos buscando todos los pedidos, reservas, prendas e incidencias.
+          </p>
         </div>
       )}
       {order && (
@@ -1960,11 +2204,29 @@ export default function Home() {
               <p>Actualizado {fmt(order.dateModified)}</p>
             </div>
             <div className="result-actions">
-              <Button variant="outline" disabled={Boolean(documentLoading)} onClick={() => void downloadOrderDocument('invoice')}>
-                {documentLoading === 'invoice' ? <RefreshCw className="spin" /> : <Download />} Factura
+              <Button
+                variant="outline"
+                disabled={Boolean(documentLoading)}
+                onClick={() => void downloadOrderDocument('invoice')}
+              >
+                {documentLoading === 'invoice' ? (
+                  <RefreshCw className="spin" />
+                ) : (
+                  <Download />
+                )}{' '}
+                Factura
               </Button>
-              <Button variant="outline" disabled={Boolean(documentLoading)} onClick={() => void downloadOrderDocument('packing-slip')}>
-                {documentLoading === 'packing-slip' ? <RefreshCw className="spin" /> : <FileText />} Albarán devolución
+              <Button
+                variant="outline"
+                disabled={Boolean(documentLoading)}
+                onClick={() => void downloadOrderDocument('packing-slip')}
+              >
+                {documentLoading === 'packing-slip' ? (
+                  <RefreshCw className="spin" />
+                ) : (
+                  <FileText />
+                )}{' '}
+                Albarán devolución
               </Button>
               <Button variant="outline" onClick={() => void search()}>
                 <RefreshCw /> Actualizar
@@ -2058,11 +2320,17 @@ export default function Home() {
                           type="checkbox"
                           checked={order.returnAttended}
                           disabled={returnUpdating}
-                          onChange={(event) => void updateReturnAttended(event.target.checked)}
+                          onChange={(event) =>
+                            void updateReturnAttended(event.target.checked)
+                          }
                         />
                         <span>
                           <b>Devolución atendida</b>
-                          <small>{returnUpdating ? 'Actualizando WooCommerce…' : 'Sincronizado con WooCommerce'}</small>
+                          <small>
+                            {returnUpdating
+                              ? 'Actualizando WooCommerce…'
+                              : 'Sincronizado con WooCommerce'}
+                          </small>
                         </span>
                       </label>
                     </article>
@@ -2112,7 +2380,10 @@ export default function Home() {
                       <Mail />
                       <div>
                         <h3>Avisar al cliente por email</h3>
-                        <p>El texto se adapta al tipo de entrega y se puede editar antes de enviarlo.</p>
+                        <p>
+                          El texto se adapta al tipo de entrega y se puede
+                          editar antes de enviarlo.
+                        </p>
                       </div>
                     </div>
                     <Button onClick={openOrderEmail}>
@@ -2188,12 +2459,18 @@ export default function Home() {
                                     aria-label="Eliminar nota"
                                     title="Eliminar nota"
                                   >
-                                    {noteDeletingId === note.id ? <RefreshCw className="spin" /> : <Trash2 />}
+                                    {noteDeletingId === note.id ? (
+                                      <RefreshCw className="spin" />
+                                    ) : (
+                                      <Trash2 />
+                                    )}
                                   </button>
                                 </span>
                               </div>
                               <p>{note.content}</p>
-                              {note.authorName && <small>Por {note.authorName}</small>}
+                              {note.authorName && (
+                                <small>Por {note.authorName}</small>
+                              )}
                             </div>
                           </article>
                         ))
@@ -2314,7 +2591,9 @@ export default function Home() {
                               : 'Nota de seguimiento'}
                         </b>
                         <span>{note.content}</span>
-                        {note.authorName && <small>Por {note.authorName}</small>}
+                        {note.authorName && (
+                          <small>Por {note.authorName}</small>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -2755,10 +3034,12 @@ export default function Home() {
       >
         <DialogContent
           className="form-dialog reservation-dialog"
-          style={{
-            '--reservation-drag-x': `${reservationDialogOffset.x}px`,
-            '--reservation-drag-y': `${reservationDialogOffset.y}px`,
-          } as CSSProperties}
+          style={
+            {
+              '--reservation-drag-x': `${reservationDialogOffset.x}px`,
+              '--reservation-drag-y': `${reservationDialogOffset.y}px`,
+            } as CSSProperties
+          }
         >
           <DialogHeader
             className="reservation-drag-handle"
@@ -2770,7 +3051,9 @@ export default function Home() {
             <div className="modal-icon green">
               <CalendarDays />
             </div>
-            <DialogTitle>{editingReservationId ? 'Completar reserva' : 'Generar reserva'}</DialogTitle>
+            <DialogTitle>
+              {editingReservationId ? 'Completar reserva' : 'Generar reserva'}
+            </DialogTitle>
             <DialogDescription>
               {editingReservationId
                 ? 'Rellena o corrige los campos y guarda los cambios directamente en Monday.'
@@ -2792,7 +3075,10 @@ export default function Home() {
                 <Input
                   value={reservationDraft.reference}
                   onChange={(e) =>
-                    setReservationDraft({ ...reservationDraft, reference: e.target.value.toUpperCase() })
+                    setReservationDraft({
+                      ...reservationDraft,
+                      reference: e.target.value.toUpperCase(),
+                    })
                   }
                   placeholder="Ej. PA12345 o RPA12345"
                   disabled={Boolean(editingReservationId)}
@@ -2816,7 +3102,9 @@ export default function Home() {
                         phone: match?.phone || '',
                         customerEmail: match?.email || '',
                         school: match?.school || '',
-                        articleId: match?.school ? '' : reservationDraft.articleId,
+                        articleId: match?.school
+                          ? ''
+                          : reservationDraft.articleId,
                       });
                     }}
                     placeholder="Selecciona un cliente de Monday"
@@ -2830,9 +3118,13 @@ export default function Home() {
                       setReservationDraft({
                         ...reservationDraft,
                         customerId: '',
-                        customerName: active ? '' : reservationDraft.customerName,
+                        customerName: active
+                          ? ''
+                          : reservationDraft.customerName,
                         phone: active ? '' : reservationDraft.phone,
-                        customerEmail: active ? '' : reservationDraft.customerEmail,
+                        customerEmail: active
+                          ? ''
+                          : reservationDraft.customerEmail,
                       });
                     }}
                   >
@@ -2849,10 +3141,12 @@ export default function Home() {
                 <Field label="Nombre del nuevo cliente">
                   <Input
                     value={reservationDraft.customerName}
-                    onChange={(e) => setReservationDraft({
-                      ...reservationDraft,
-                      customerName: e.target.value,
-                    })}
+                    onChange={(e) =>
+                      setReservationDraft({
+                        ...reservationDraft,
+                        customerName: e.target.value,
+                      })
+                    }
                     placeholder="Nombre y apellidos"
                   />
                 </Field>
@@ -2872,10 +3166,12 @@ export default function Home() {
                 <Input
                   type="email"
                   value={reservationDraft.customerEmail}
-                  onChange={(e) => setReservationDraft({
-                    ...reservationDraft,
-                    customerEmail: e.target.value,
-                  })}
+                  onChange={(e) =>
+                    setReservationDraft({
+                      ...reservationDraft,
+                      customerEmail: e.target.value,
+                    })
+                  }
                   placeholder="cliente@email.com"
                 />
               </Field>
@@ -3120,58 +3416,125 @@ export default function Home() {
       >
         <DialogContent className="email-dialog">
           <DialogHeader>
-            <div className="modal-icon blue"><Mail /></div>
+            <div className="modal-icon blue">
+              <Mail />
+            </div>
             <DialogTitle>Preparar aviso al cliente</DialogTitle>
             <DialogDescription>
-              Revisa los datos y elige si quieres abrir el mensaje en el correo o en WhatsApp.
+              Revisa los datos y elige si quieres abrir el mensaje en el correo
+              o en WhatsApp.
             </DialogDescription>
           </DialogHeader>
           {emailDraft && (
             <div className="email-form">
               <Field label="Tipo de entrega">
-                <select value={emailDraft.delivery} onChange={(event) => updateGeneratedEmail({ delivery: event.target.value as DeliveryEmailKind })}>
+                <select
+                  value={emailDraft.delivery}
+                  onChange={(event) =>
+                    updateGeneratedEmail({
+                      delivery: event.target.value as DeliveryEmailKind,
+                    })
+                  }
+                >
                   <option value="colegio">Entrega en colegio</option>
                   <option value="domicilio">Envío a domicilio</option>
                   <option value="tienda">Recogida en tienda</option>
                 </select>
               </Field>
               <Field label="Email del cliente">
-                <Input type="email" value={emailDraft.to} onChange={(event) => setEmailDraft({ ...emailDraft, to: event.target.value })} placeholder="cliente@email.com" />
+                <Input
+                  type="email"
+                  value={emailDraft.to}
+                  onChange={(event) =>
+                    setEmailDraft({ ...emailDraft, to: event.target.value })
+                  }
+                  placeholder="cliente@email.com"
+                />
               </Field>
               <Field label="Teléfono del cliente">
-                <Input type="tel" value={emailDraft.phone} onChange={(event) => setEmailDraft({ ...emailDraft, phone: event.target.value })} placeholder="Ej. 612345678" />
+                <Input
+                  type="tel"
+                  value={emailDraft.phone}
+                  onChange={(event) =>
+                    setEmailDraft({ ...emailDraft, phone: event.target.value })
+                  }
+                  placeholder="Ej. 612345678"
+                />
               </Field>
               {emailDraft.delivery === 'colegio' && (
                 <Field label="Colegio">
-                  <Input value={emailDraft.school} onChange={(event) => updateGeneratedEmail({ school: event.target.value })} placeholder="Nombre del colegio" />
+                  <Input
+                    value={emailDraft.school}
+                    onChange={(event) =>
+                      updateGeneratedEmail({ school: event.target.value })
+                    }
+                    placeholder="Nombre del colegio"
+                  />
                 </Field>
               )}
               {emailDraft.delivery === 'domicilio' && (
                 <div className="email-home-fields">
                   <Field label="Empresa de transporte">
-                    <select value={emailDraft.carrier} onChange={(event) => updateGeneratedEmail({ carrier: event.target.value as EmailDraft['carrier'] })}>
+                    <select
+                      value={emailDraft.carrier}
+                      onChange={(event) =>
+                        updateGeneratedEmail({
+                          carrier: event.target.value as EmailDraft['carrier'],
+                        })
+                      }
+                    >
                       <option value="viaxpress">ViaXpress</option>
                       <option value="dhl">DHL</option>
                     </select>
                   </Field>
                   <Field label="Número de envío">
-                    <Input value={emailDraft.trackingNumber} onChange={(event) => updateGeneratedEmail({ trackingNumber: event.target.value })} placeholder="Introduce el nº de envío" />
+                    <Input
+                      value={emailDraft.trackingNumber}
+                      onChange={(event) =>
+                        updateGeneratedEmail({
+                          trackingNumber: event.target.value,
+                        })
+                      }
+                      placeholder="Introduce el nº de envío"
+                    />
                   </Field>
                 </div>
               )}
               <Field label="Asunto">
-                <Input value={emailDraft.subject} onChange={(event) => setEmailDraft({ ...emailDraft, subject: event.target.value })} />
+                <Input
+                  value={emailDraft.subject}
+                  onChange={(event) =>
+                    setEmailDraft({
+                      ...emailDraft,
+                      subject: event.target.value,
+                    })
+                  }
+                />
               </Field>
               <Field label="Mensaje">
-                <Textarea value={emailDraft.body} onChange={(event) => setEmailDraft({ ...emailDraft, body: event.target.value })} rows={7} />
+                <Textarea
+                  value={emailDraft.body}
+                  onChange={(event) =>
+                    setEmailDraft({ ...emailDraft, body: event.target.value })
+                  }
+                  rows={7}
+                />
               </Field>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button variant="outline" onClick={() => void copyEmailText()}>Copiar texto</Button>
-            <Button className="whatsapp-action" onClick={launchWhatsApp}><Phone /> Abrir WhatsApp</Button>
-            <Button onClick={launchEmail}><Mail /> Abrir correo</Button>
+            <Button variant="outline" onClick={() => setModal(null)}>
+              Cancelar
+            </Button>
+            <Button variant="outline" onClick={() => void copyEmailText()}>
+              Copiar texto
+            </Button>
+            <Button className="whatsapp-action" onClick={launchWhatsApp}>
+              <Phone /> Abrir WhatsApp
+            </Button>
+            <Button onClick={launchEmail}>
+              <Mail /> Abrir correo
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3289,10 +3652,13 @@ export default function Home() {
       >
         <DialogContent className="registry-dialog reservation-registry-dialog">
           <DialogHeader>
-            <div className="modal-icon green"><CalendarDays /></div>
+            <div className="modal-icon green">
+              <CalendarDays />
+            </div>
             <DialogTitle>Reservas</DialogTitle>
             <DialogDescription>
-              Consulta las reservas de Monday y completa desde aquí cualquier casilla pendiente.
+              Consulta las reservas de Monday y completa desde aquí cualquier
+              casilla pendiente.
             </DialogDescription>
           </DialogHeader>
           <div className="registry-tools">
@@ -3307,23 +3673,53 @@ export default function Home() {
           </div>
           <div className="registry-list">
             {reservationsLoading ? (
-              <div className="registry-empty"><RefreshCw className="spin" /> Cargando reservas…</div>
+              <div className="registry-empty">
+                <RefreshCw className="spin" /> Cargando reservas…
+              </div>
             ) : visibleReservationRows.length ? (
               <div className="reservation-table-wrap">
                 <table className="reservation-table">
-                  <thead><tr>
-                    {['Nº RESERVA', 'CLIENTE', 'TELÉFONO', 'COLEGIO', 'FECHA RESERVA', 'CÓDIGO ART.', 'DESCRIPCIÓN ARTÍCULO', 'TALLA', 'UDS.', 'U. ENVIADAS', 'U. PENDIENTES', 'PAGADA', 'OBSERVACIONES', 'ESTADO', 'FECHA FIN', 'ENTREGA ESTIMADA PRODUCCIÓN', 'FÓRMULA', 'EDITAR', 'ETIQUETA'].map((heading) => <th key={heading}>{heading}</th>)}
-                  </tr></thead>
+                  <thead>
+                    <tr>
+                      {[
+                        'Nº RESERVA',
+                        'CLIENTE',
+                        'TELÉFONO',
+                        'COLEGIO',
+                        'FECHA RESERVA',
+                        'CÓDIGO ART.',
+                        'DESCRIPCIÓN ARTÍCULO',
+                        'TALLA',
+                        'UDS.',
+                        'U. ENVIADAS',
+                        'U. PENDIENTES',
+                        'PAGADA',
+                        'OBSERVACIONES',
+                        'ESTADO',
+                        'FECHA FIN',
+                        'ENTREGA ESTIMADA PRODUCCIÓN',
+                        'FÓRMULA',
+                        'EDITAR',
+                        'ETIQUETA',
+                      ].map((heading) => (
+                        <th key={heading}>{heading}</th>
+                      ))}
+                    </tr>
+                  </thead>
                   <tbody>
                     {visibleReservationRows.map((row) => (
                       <tr key={row.id}>
-                        <td><b>{row.reference || row.id}</b></td>
+                        <td>
+                          <b>{row.reference || row.id}</b>
+                        </td>
                         <td>{row.customer || 'Pendiente'}</td>
                         <td>{row.phone || 'Pendiente'}</td>
                         <td>{row.school || 'Pendiente'}</td>
                         <td>{row.date || 'Pendiente'}</td>
                         <td>{row.code || 'Pendiente'}</td>
-                        <td>{row.articleDescription || row.article || 'Pendiente'}</td>
+                        <td>
+                          {row.articleDescription || row.article || 'Pendiente'}
+                        </td>
                         <td>{row.size || 'Pendiente'}</td>
                         <td>{row.units || 'Pendiente'}</td>
                         <td>{row.sentUnits || 'Pendiente'}</td>
@@ -3335,10 +3731,19 @@ export default function Home() {
                         <td>{row.estimatedProduction || 'Pendiente'}</td>
                         <td>{row.formula || 'Calculada en Monday'}</td>
                         <td className="reservation-table-edit">
-                          <Button onClick={() => void openReservation(row)}>Completar / editar</Button>
+                          <Button onClick={() => void openReservation(row)}>
+                            Completar / editar
+                          </Button>
                         </td>
                         <td className="reservation-table-actions">
-                          <Button variant="outline" onClick={() => requestReservationPrint(row, 'label')}><Printer /> Imprimir etiqueta</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              requestReservationPrint(row, 'label')
+                            }
+                          >
+                            <Printer /> Imprimir etiqueta
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -3346,11 +3751,17 @@ export default function Home() {
                 </table>
               </div>
             ) : (
-              <div className="registry-empty"><Archive /><b>No hay reservas para mostrar</b><span>Prueba a cambiar la búsqueda.</span></div>
+              <div className="registry-empty">
+                <Archive />
+                <b>No hay reservas para mostrar</b>
+                <span>Prueba a cambiar la búsqueda.</span>
+              </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>Cerrar</Button>
+            <Button variant="outline" onClick={() => setModal(null)}>
+              Cerrar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3459,7 +3870,9 @@ export default function Home() {
                           <Printer /> Reimprimir
                         </Button>
                         {!row.solved && (
-                          <Button onClick={() => void setIncidentSolved(row, true)}>
+                          <Button
+                            onClick={() => void setIncidentSolved(row, true)}
+                          >
                             <Check /> Cerrar incidencia
                           </Button>
                         )}
@@ -3805,10 +4218,7 @@ function IncidentCard({
   onPrintIncident,
 }: {
   incident: Incident;
-  onPrintIncident: (
-    incident: Incident,
-    mode?: 'document' | 'label',
-  ) => void;
+  onPrintIncident: (incident: Incident, mode?: 'document' | 'label') => void;
 }) {
   return (
     <article className="linked-card incident-live">
@@ -3983,7 +4393,10 @@ function MondayCards({
                 <Button onClick={() => onPrintReservation(record, 'card')}>
                   <Printer /> Imprimir
                 </Button>
-                <Button variant="outline" onClick={() => onEmailReservation(record)}>
+                <Button
+                  variant="outline"
+                  onClick={() => onEmailReservation(record)}
+                >
                   <Mail /> Preparar email
                 </Button>
               </div>
@@ -4054,7 +4467,9 @@ function ReservationNotesCard({
             ))}
           </div>
         ) : (
-          <p className="notes-empty">Esta reserva no tiene comentarios en Monday.</p>
+          <p className="notes-empty">
+            Esta reserva no tiene comentarios en Monday.
+          </p>
         )}
       </section>
       <div className="notes-source-title paddytools-notes-title">
