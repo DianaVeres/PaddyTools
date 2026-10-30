@@ -43,6 +43,14 @@ import {
   parsePackingBoxes,
 } from '@/lib/packing-references';
 import {
+  archiveStartDate,
+  displayDate,
+  monthName,
+  packingRecordsByWeek as recordsByWeek,
+  today,
+  type PackingRecordSummary as RecordSummary,
+} from '@/lib/packing-dates';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -67,14 +75,6 @@ type Order = {
   phone: string;
   box: string;
   schoolMismatch: boolean;
-};
-type RecordSummary = {
-  id: string;
-  school: string;
-  shippingDate: string;
-  orderYear: number;
-  orderMonth: number;
-  createdAt: string;
 };
 type PackingList = RecordSummary & { orders: Array<Order & { id: string }> };
 type Activity = { id: string; action: 'creado' | 'modificado' | 'eliminado'; entityId: string; description: string; createdAt: string };
@@ -106,55 +106,6 @@ async function readResponseJson<T>(response: Response): Promise<T> {
   }
 }
 
-// Utilidades para fechas y comparación de textos sin tildes, signos ni
-// diferencias entre mayúsculas y minúsculas.
-const today = () => new Date().toLocaleDateString('en-CA');
-const monthName = (month: number) =>
-  new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(
-    new Date(2026, month - 1, 1),
-  );
-const displayDate = (date: string) =>
-  new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(
-    new Date(`${date}T12:00:00`),
-  );
-const isoLocalDate = (date: Date) => {
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
-const archiveStartDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 56);
-  return isoLocalDate(date);
-};
-const weekStart = (value: string) => {
-  const date = new Date(`${value}T12:00:00`);
-  const day = date.getDay() || 7;
-  date.setDate(date.getDate() - day + 1);
-  return isoLocalDate(date);
-};
-const weekLabel = (start: string) => {
-  const first = new Date(`${start}T12:00:00`);
-  const last = new Date(first);
-  last.setDate(last.getDate() + 6);
-  const formatter = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' });
-  return `Semana del ${formatter.format(first)} al ${formatter.format(last)} de ${last.getFullYear()}`;
-};
-const recordsByWeek = (items: RecordSummary[]) => {
-  const grouped = new Map<string, RecordSummary[]>();
-  for (const item of items) {
-    const start = weekStart(item.shippingDate);
-    grouped.set(start, [...(grouped.get(start) || []), item]);
-  }
-  return [...grouped.entries()]
-    .sort(([left], [right]) => right.localeCompare(left))
-    .map(([start, rows]) => ({
-      start,
-      label: weekLabel(start),
-      rows: rows.sort((left, right) =>
-        right.shippingDate.localeCompare(left.shippingDate) ||
-        right.createdAt.localeCompare(left.createdAt)),
-    }));
-};
 // Componente principal: controla las vistas, el formulario, las consultas a
 // WooCommerce/Monday/Incidencias, el archivo y la impresión.
 export default function Home() {
