@@ -115,6 +115,7 @@ import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-c
 import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
+import { OrderDocuments } from '@/components/dashboard/order-documents';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -2178,45 +2179,11 @@ export default function Home() {
                   <OrderMovements order={order} />
                 </TabsContent>
                 <TabsContent value="documentos" className="tab-body">
-                  <article className="info-card documents-card">
-                    <div className="card-title">
-                      <FileText />
-                      <div>
-                        <h3>Documentos del pedido</h3>
-                        <p>Incidencias generadas y listas para reimprimir</p>
-                      </div>
-                    </div>
-                    {incident ? (
-                      <div className="document-row">
-                        <span className="document-icon">
-                          <FileText />
-                        </span>
-                        <div>
-                          <b>Incidencia #{incident.orderNumber}</b>
-                          <small>
-                            {incident.incidentDate || 'Fecha no indicada'} ·{' '}
-                            {incident.solved ? 'Resuelta' : 'Pendiente'}
-                          </small>
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => showIncidentDocument(incident)}
-                        >
-                          Ver
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => printIncidentDocument(incident)}
-                        >
-                          <Printer /> Reimprimir
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="documents-empty">
-                        Este pedido todavía no tiene documentos de incidencia.
-                      </p>
-                    )}
-                  </article>
+                  <OrderDocuments
+                    incident={incident}
+                    onView={showIncidentDocument}
+                    onPrint={printIncidentDocument}
+                  />
                 </TabsContent>
               </Tabs>
             </section>
