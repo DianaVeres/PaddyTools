@@ -9,12 +9,10 @@ import { env } from 'cloudflare:workers';
 import {
   allMondayBoardItems as allBoardItems,
   mondayRequest as monday,
-  type MondayColumnValue as ColumnValue,
   type MondayItem,
 } from '@/lib/monday-client';
 import {
   MONDAY_BOARDS as BOARDS,
-  MONDAY_RESERVATION_COLUMNS as RESERVATION_COLUMNS,
   MONDAY_RESERVATION_OPTIONS as RESERVATION_OPTIONS,
 } from '@/lib/monday-config';
 import {
@@ -25,9 +23,12 @@ import {
 } from '@/lib/monday-mapping';
 import {
   loadMondayCustomerContacts as customerContacts,
-  loadMondayItemFormula as itemFormula,
 } from '@/lib/monday-read';
 import { loadMondayUpdates } from '@/lib/monday-updates';
+import {
+  createMondayReservation,
+  updateMondayReservation,
+} from '@/lib/monday-write';
 
 const cleanKey = searchKey;
 const digits = searchDigits;
@@ -348,107 +349,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function reservationValues(
-  body: Record<string, unknown>,
-  token: string,
-) {
-  const columnValues: Record<string, unknown> = {};
-  const put = (key: keyof typeof RESERVATION_COLUMNS, value: unknown) => {
-    if (value !== undefined && value !== null && value !== '')
-      columnValues[RESERVATION_COLUMNS[key]] = value;
-  };
-  let customerId = String(body.customerId || '');
-  if (!customerId && body.createCustomer && body.customerName) {
-    const customerBoard = '5098189262';
-    const boardData = (await monday(
-      `query ($id:[ID!]!){boards(ids:$id){columns{id title type}}}`,
-      { id: [customerBoard] },
-      token,
-    )) as { boards?: Array<{ columns?: Array<{ id: string; title: string; type: string }> }> };
-    const phoneColumn = boardData.boards?.[0]?.columns?.find(
-      (column) => cleanKey(column.title) === 'TELEFONO',
-    );
-    const emailColumn = boardData.boards?.[0]?.columns?.find(
-      (column) => ['E MAIL', 'EMAIL'].includes(cleanKey(column.title)),
-    );
-    const schoolColumn = boardData.boards?.[0]?.columns?.find(
-      (column) => cleanKey(column.title) === 'COLEGIO',
-    );
-    const values: Record<string, unknown> = {};
-    if (phoneColumn && body.phone)
-      values[phoneColumn.id] = phoneColumn.type === 'phone'
-        ? { phone: String(body.phone), countryShortName: 'ES' }
-        : String(body.phone);
-    if (emailColumn && body.customerEmail)
-      values[emailColumn.id] = emailColumn.type === 'email'
-        ? { email: String(body.customerEmail), text: String(body.customerEmail) }
-        : String(body.customerEmail);
-    if (schoolColumn && body.school) {
-      // Una columna de relación no acepta el nombre del colegio como texto.
-      // La omitimos en ese caso para que Monday pueda crear el cliente.
-      if (schoolColumn.type === 'status' || schoolColumn.type === 'color') {
-        values[schoolColumn.id] = { label: String(body.school) };
-      } else if (schoolColumn.type === 'dropdown') {
-        values[schoolColumn.id] = { labels: [String(body.school)] };
-      } else if (['text', 'long_text'].includes(schoolColumn.type)) {
-        values[schoolColumn.id] = String(body.school);
-      }
-    }
-    const created = (await monday(
-      `mutation ($board:ID!,$name:String!,$values:JSON!){create_item(board_id:$board,item_name:$name,column_values:$values){id}}`,
-      { board: customerBoard, name: String(body.customerName), values: JSON.stringify(values) },
-      token,
-    )) as { create_item?: { id?: string } };
-    customerId = created.create_item?.id || '';
-    if (!customerId)
-      throw new Error('Monday no devolvió el identificador del cliente nuevo.');
-  }
-  if (!customerId)
-    throw new Error('Selecciona un cliente existente o crea uno nuevo.');
-  put('customer', customerId ? { item_ids: [Number(customerId)] } : undefined);
-  put('school', body.school ? { label: String(body.school) } : undefined);
-  put('date', body.date ? { date: String(body.date) } : undefined);
-  put('article', body.articleId ? { item_ids: [Number(body.articleId)] } : undefined);
-  put('size', body.size);
-  put('units', body.units ? Number(body.units) : undefined);
-  put('paid', body.paid ? { label: String(body.paid) } : undefined);
-  put('observations', body.observations ? { labels: [String(body.observations)] } : undefined);
-  put('status', body.status ? { label: String(body.status) } : undefined);
-  put('endDate', body.endDate ? { date: String(body.endDate) } : undefined);
-  put('productionDate', body.productionDate ? { date: String(body.productionDate) } : undefined);
-  const extras = [
-    { labels: ['U ENVIADAS'], value: body.sentUnits },
-    { labels: ['U PENDIENTES'], value: body.pending },
-    { labels: ['ENTREGA ESTIMADA PRODUCCION'], value: body.estimatedProduction },
-  ].filter((entry) => entry.value !== undefined && entry.value !== null && entry.value !== '');
-  if (extras.length) {
-    const schema = (await monday(
-      `query ($id:[ID!]!){boards(ids:$id){columns{id title type}}}`,
-      { id: [BOARDS[0].id] },
-      token,
-    )) as { boards?: Array<{ columns?: Array<{ id: string; title: string; type: string }> }> };
-    const columns = schema.boards?.[0]?.columns || [];
-    for (const extra of extras) {
-      const column = columns.find((candidate) =>
-        extra.labels.includes(cleanKey(candidate.title)),
-      );
-      if (!column || column.type === 'formula') continue;
-      const raw = String(extra.value);
-      columnValues[column.id] =
-        column.type === 'numbers'
-          ? Number(raw)
-          : column.type === 'date'
-            ? { date: raw }
-            : column.type === 'checkbox'
-              ? { checked: ['1', 'SI', 'SÍ', 'TRUE', 'YES'].includes(cleanKey(raw)) }
-              : column.type === 'status' || column.type === 'color'
-                ? { label: raw }
-                : raw;
-    }
-  }
-  return columnValues;
-}
-
 export async function POST(request: NextRequest) {
   const token = (env as unknown as Record<string, string>).MONDAY_API_TOKEN;
   if (!token)
@@ -467,22 +367,9 @@ export async function POST(request: NextRequest) {
     ? rawReference
     : `R${rawReference}`;
   try {
-    const board = BOARDS[0];
-    const columnValues = await reservationValues(body, token);
-    const mutation = `mutation ($board:ID!,$name:String!,$values:JSON!){create_item(board_id:$board,item_name:$name,column_values:$values){id}}`;
-    const result = (await monday(
-      mutation,
-      {
-        board: board.id,
-        name: reference,
-        values: JSON.stringify(columnValues),
-      },
-      token,
-    )) as { create_item?: { id?: string } };
-    const createdId = result.create_item?.id || '';
-    const formula = await itemFormula(createdId, token);
+    const result = await createMondayReservation(reference, body, token);
     return NextResponse.json(
-      { id: createdId, board: board.name, formula },
+      result,
       { status: 201 },
     );
   } catch (error) {
@@ -505,15 +392,8 @@ export async function PUT(request: NextRequest) {
   const id = String(body.id || '').trim();
   if (!id) return NextResponse.json({ error: 'Falta la reserva que quieres actualizar.' }, { status: 400 });
   try {
-    const columnValues = await reservationValues(body, token);
-    const result = (await monday(
-      `mutation ($board:ID!,$item:ID!,$values:JSON!){change_multiple_column_values(board_id:$board,item_id:$item,column_values:$values){id}}`,
-      { board: BOARDS[0].id, item: id, values: JSON.stringify(columnValues) },
-      token,
-    )) as { change_multiple_column_values?: { id?: string } };
-    const updatedId = result.change_multiple_column_values?.id || id;
-    const formula = await itemFormula(updatedId, token);
-    return NextResponse.json({ id: updatedId, formula });
+    const result = await updateMondayReservation(id, body, token);
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? `No se pudo actualizar la reserva en Monday: ${error.message}` : 'No se pudo actualizar la reserva en Monday.' },
