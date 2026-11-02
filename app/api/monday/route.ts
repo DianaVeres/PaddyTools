@@ -27,6 +27,7 @@ import {
   loadMondayCustomerContacts as customerContacts,
   loadMondayItemFormula as itemFormula,
 } from '@/lib/monday-read';
+import { loadMondayUpdates } from '@/lib/monday-updates';
 
 const cleanKey = searchKey;
 const digits = searchDigits;
@@ -43,33 +44,7 @@ export async function GET(request: NextRequest) {
     .filter(Boolean);
   if (updateIds.length) {
     try {
-      const data = (await monday(
-        `query ($ids:[ID!]!){items(ids:$ids){id updates(limit:100){id text_body created_at creator{id name email}}}}`,
-        { ids: updateIds },
-        token,
-      )) as {
-        items?: Array<{
-          id: string;
-          updates?: Array<{
-            id: string;
-            text_body?: string | null;
-            created_at?: string | null;
-            creator?: { id?: string; name?: string; email?: string } | null;
-          }>;
-        }>;
-      };
-      const updates = (data.items || [])
-        .flatMap((item) =>
-          (item.updates || []).map((update) => ({
-            id: update.id,
-            itemId: item.id,
-            text: String(update.text_body || '').trim(),
-            createdAt: String(update.created_at || ''),
-            author: String(update.creator?.name || update.creator?.email || 'Monday'),
-          })),
-        )
-        .filter((update) => update.text)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const updates = await loadMondayUpdates(updateIds, token);
       return NextResponse.json({ updates });
     } catch (error) {
       return NextResponse.json(

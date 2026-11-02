@@ -173,14 +173,19 @@ requireAll(
     '@/lib/monday-config',
     '@/lib/monday-mapping',
     '@/lib/monday-read',
+    '@/lib/monday-updates',
     'updatesFor',
-    'updates(limit:100)',
     'mondayReferenceCandidates',
     'normalizeReferenceInput',
     'searchKey',
     'searchDigits',
   ],
   'La integración de Monday',
+);
+requireAll(
+  'lib/monday-updates.ts',
+  ['updates(limit:100)', 'normalizeMondayUpdates'],
+  'Los comentarios de Monday',
 );
 
 // Factura, hoja de devolución y devolución atendida deben usar una única
