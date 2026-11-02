@@ -113,6 +113,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/components/dashboard/print-components'],
+  'Los impresos compartidos del panel principal',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
