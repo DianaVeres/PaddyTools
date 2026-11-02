@@ -95,8 +95,6 @@ import {
 } from '@/components/dashboard/common';
 import {
   IncidentDocument,
-  IncidentLabel,
-  ReservationLabel,
   ReservationPrintCard,
 } from '@/components/dashboard/print-components';
 import { OrderItems as Items } from '@/components/dashboard/order-items';
@@ -113,6 +111,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { GlobalSearchPanel } from '@/components/dashboard/global-search-panel';
 import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 import { ConnectedResults } from '@/components/dashboard/connected-results';
+import { PrintSheets } from '@/components/dashboard/print-sheets';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -3049,28 +3048,12 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {printIncident && (
-        <div
-          className={`print-sheet ${printMode === 'label' ? 'print-label-sheet' : ''}`}
-        >
-          {printMode === 'label' ? (
-            <IncidentLabel incident={printIncident} />
-          ) : (
-            <IncidentDocument incident={printIncident} />
-          )}
-        </div>
-      )}
-      {printReservation && (
-        <div
-          className={`print-sheet ${reservationPrintMode === 'label' ? 'reservation-label-sheet' : 'reservation-print-sheet'}`}
-        >
-          {reservationPrintMode === 'label' ? (
-            <ReservationLabel record={printReservation} />
-          ) : (
-            <ReservationPrintCard record={printReservation} />
-          )}
-        </div>
-      )}
+      <PrintSheets
+        incident={printIncident}
+        incidentMode={printMode}
+        reservation={printReservation}
+        reservationMode={reservationPrintMode}
+      />
     </main>
   );
 }

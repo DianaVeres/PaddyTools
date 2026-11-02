@@ -456,6 +456,11 @@ requireAll(
   ['@/components/dashboard/connected-results', 'ConnectedResults'],
   'Los resultados conectados',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/print-sheets', 'PrintSheets'],
+  'Las hojas de impresión',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
