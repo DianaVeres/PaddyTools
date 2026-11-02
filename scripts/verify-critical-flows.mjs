@@ -382,6 +382,12 @@ forbid(
   'Las incidencias individuales',
 );
 
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/reservation-notes-card', 'ReservationNotesCard'],
+  'La tarjeta de notas de reservas',
+);
+
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
 requireAll(
