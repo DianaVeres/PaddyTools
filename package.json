@@ -42,6 +42,7 @@
     "test:dashboard-order-documents": "node scripts/test-dashboard-order-documents.mjs",
     "test:dashboard-order-notes": "node scripts/test-dashboard-order-notes.mjs",
     "test:dashboard-order-follow-up": "node scripts/test-dashboard-order-follow-up.mjs",
+    "test:dashboard-order-summary": "node scripts/test-dashboard-order-summary.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

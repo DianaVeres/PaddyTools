@@ -417,6 +417,11 @@ requireAll(
   ['@/components/dashboard/order-follow-up', 'OrderFollowUp'],
   'El seguimiento del pedido',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/order-summary', 'OrderSummary'],
+  'El resumen del pedido',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
