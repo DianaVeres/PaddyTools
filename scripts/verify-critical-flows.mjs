@@ -197,6 +197,7 @@ requireAll(
     '@/lib/monday-read',
     '@/lib/monday-updates',
     '@/lib/monday-write',
+    '@/lib/monday-options',
     'updatesFor',
     'mondayReferenceCandidates',
     'normalizeReferenceInput',
@@ -204,6 +205,16 @@ requireAll(
     'searchDigits',
   ],
   'La integración de Monday',
+);
+requireAll(
+  'lib/monday-options.ts',
+  [
+    'loadMondayReservationOptions',
+    'MONDAY_RESERVATION_OPTIONS',
+    'mondayColumnPhone',
+    'mondayColumnEmail',
+  ],
+  'Las opciones del formulario de reservas',
 );
 requireAll(
   'lib/monday-updates.ts',

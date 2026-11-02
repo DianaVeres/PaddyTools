@@ -11,13 +11,8 @@ import {
   mondayRequest as monday,
   type MondayItem,
 } from '@/lib/monday-client';
+import { MONDAY_BOARDS as BOARDS } from '@/lib/monday-config';
 import {
-  MONDAY_BOARDS as BOARDS,
-  MONDAY_RESERVATION_OPTIONS as RESERVATION_OPTIONS,
-} from '@/lib/monday-config';
-import {
-  mondayColumnEmail as columnEmail,
-  mondayColumnPhone as columnPhone,
   mondayReservationBaseReference as reservationBaseReference,
   normalizeMondayItem as normalizeItem,
 } from '@/lib/monday-mapping';
@@ -29,6 +24,7 @@ import {
   createMondayReservation,
   updateMondayReservation,
 } from '@/lib/monday-write';
+import { loadMondayReservationOptions } from '@/lib/monday-options';
 
 const cleanKey = searchKey;
 const digits = searchDigits;
@@ -86,58 +82,7 @@ export async function GET(request: NextRequest) {
   }
   if (request.nextUrl.searchParams.get('mode') === 'reservation-options') {
     try {
-      const [customerItems, articleItems] = await Promise.all([
-        allBoardItems('5098189262', token),
-        allBoardItems('5098177612', token),
-      ]);
-      const customers = customerItems
-        .map((item) => {
-          const phoneColumn = (item.column_values || []).find((value) =>
-            /TELEFONO|MOVIL|MOBILE|PHONE/.test(
-              cleanKey(value.column?.title || value.id),
-            ),
-          );
-          const emailColumn = (item.column_values || []).find((value) =>
-            /EMAIL|E MAIL|CORREO|MAIL/.test(
-              cleanKey(value.column?.title || value.id),
-            ),
-          );
-          const schoolColumn = (item.column_values || []).find((value) =>
-            /COLEGIO|CENTRO|ESCUELA|SCHOOL/.test(
-              cleanKey(value.column?.title || value.id),
-            ),
-          );
-          const rawSchool = String(
-            schoolColumn?.text || schoolColumn?.display_value || '',
-          ).trim();
-          const school = RESERVATION_OPTIONS.schools.find(
-            (option) => cleanKey(option) === cleanKey(rawSchool),
-          ) || rawSchool;
-          return {
-            id: item.id,
-            name: item.name,
-            phone: columnPhone(phoneColumn),
-            email: columnEmail(emailColumn),
-            school,
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name, 'es'));
-      const articles = articleItems
-        .map((item) => {
-          const values: Record<string, string> = {};
-          for (const value of item.column_values || [])
-            values[cleanKey(value.column?.title || value.id)] = String(
-              value.text || '',
-            );
-          return {
-            id: item.id,
-            code: item.name,
-            description:
-              values['DESCRIPCION ARTICULO'] || values['DESCRIPCION'] || '',
-          };
-        })
-        .sort((a, b) => a.code.localeCompare(b.code, 'es'));
-      return NextResponse.json({ ...RESERVATION_OPTIONS, customers, articles });
+      return NextResponse.json(await loadMondayReservationOptions(token));
     } catch (error) {
       return NextResponse.json(
         {
