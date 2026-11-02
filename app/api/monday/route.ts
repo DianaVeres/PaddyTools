@@ -23,52 +23,13 @@ import {
   mondayReservationBaseReference as reservationBaseReference,
   normalizeMondayItem as normalizeItem,
 } from '@/lib/monday-mapping';
+import {
+  loadMondayCustomerContacts as customerContacts,
+  loadMondayItemFormula as itemFormula,
+} from '@/lib/monday-read';
 
 const cleanKey = searchKey;
 const digits = searchDigits;
-async function customerContacts(
-  records: Array<{ customerIds: string[] }>,
-  token: string,
-) {
-  const customerIds = [
-    ...new Set(records.flatMap((record) => record.customerIds)),
-  ];
-  const contacts = new Map<string, { phone: string; email: string }>();
-  for (let start = 0; start < customerIds.length; start += 100) {
-    const customerData = (await monday(
-      `query ($ids:[ID!]!){items(ids:$ids){id column_values{id text value column{title}}}}`,
-      { ids: customerIds.slice(start, start + 100) },
-      token,
-    )) as { items?: MondayItem[] };
-    for (const customer of customerData.items || []) {
-      const phoneColumn = (customer.column_values || []).find((value) =>
-        cleanKey(value.column?.title || value.id).includes('TELEFONO'),
-      );
-      const emailColumn = (customer.column_values || []).find((value) =>
-        ['EMAIL', 'E MAIL'].includes(cleanKey(value.column?.title || value.id)),
-      );
-      contacts.set(String(customer.id), {
-        phone: columnPhone(phoneColumn),
-        email: columnEmail(emailColumn),
-      });
-    }
-  }
-  return contacts;
-}
-
-async function itemFormula(itemId: string, token: string) {
-  if (!itemId) return '';
-  const data = (await monday(
-    `query ($ids:[ID!]!){items(ids:$ids){column_values{id text ... on FormulaValue {display_value} column{title}}}}`,
-    { ids: [itemId] },
-    token,
-  )) as { items?: Array<{ column_values?: ColumnValue[] }> };
-  const formula = (data.items?.[0]?.column_values || []).find(
-    (value) => cleanKey(value.column?.title || value.id) === 'FORMULA',
-  );
-  return String(formula?.display_value || formula?.text || '').trim();
-}
-
 export async function GET(request: NextRequest) {
   const token = (env as unknown as Record<string, string>).MONDAY_API_TOKEN;
   if (!token)

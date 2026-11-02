@@ -172,6 +172,7 @@ requireAll(
     '@/lib/monday-client',
     '@/lib/monday-config',
     '@/lib/monday-mapping',
+    '@/lib/monday-read',
     'updatesFor',
     'updates(limit:100)',
     'mondayReferenceCandidates',
