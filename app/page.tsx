@@ -16,8 +16,6 @@ import {
   Check,
   ChevronRight,
   ClipboardList,
-  Download,
-  ExternalLink,
   FileText,
   LogOut,
   Mail,
@@ -116,6 +114,7 @@ import { OrderDocuments } from '@/components/dashboard/order-documents';
 import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
 import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 import { OrderSummary } from '@/components/dashboard/order-summary';
+import { OrderHeading } from '@/components/dashboard/order-heading';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1883,55 +1882,13 @@ export default function Home() {
       )}
       {order && (
         <div className="workspace">
-          <div className="result-heading">
-            <div>
-              <span className="result-label">Resultado en WooCommerce</span>
-              <div className="title-row">
-                <h2>Pedido #{order.number}</h2>
-                <span
-                  className={`status ${['completed', 'processing'].includes(order.status) ? 'status-green' : 'status-amber'}`}
-                >
-                  {order.statusLabel}
-                </span>
-              </div>
-              <p>Actualizado {fmt(order.dateModified)}</p>
-            </div>
-            <div className="result-actions">
-              <Button
-                variant="outline"
-                disabled={Boolean(documentLoading)}
-                onClick={() => void downloadOrderDocument('invoice')}
-              >
-                {documentLoading === 'invoice' ? (
-                  <RefreshCw className="spin" />
-                ) : (
-                  <Download />
-                )}{' '}
-                Factura
-              </Button>
-              <Button
-                variant="outline"
-                disabled={Boolean(documentLoading)}
-                onClick={() => void downloadOrderDocument('packing-slip')}
-              >
-                {documentLoading === 'packing-slip' ? (
-                  <RefreshCw className="spin" />
-                ) : (
-                  <FileText />
-                )}{' '}
-                Albarán devolución
-              </Button>
-              <Button variant="outline" onClick={() => void search()}>
-                <RefreshCw /> Actualizar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.open(order.wooUrl, '_blank')}
-              >
-                <ExternalLink /> Abrir en WooCommerce
-              </Button>
-            </div>
-          </div>
+          <OrderHeading
+            order={order}
+            documentLoading={documentLoading}
+            onDownloadDocument={(type) => void downloadOrderDocument(type)}
+            onRefresh={() => void search()}
+            onOpenWooCommerce={() => window.open(order.wooUrl, '_blank')}
+          />
           <div className="content-grid">
             <section className="main-column">
               <Tabs defaultValue="resumen" className="record-tabs">
