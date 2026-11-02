@@ -34,6 +34,7 @@
     "test:dashboard-print": "node scripts/test-dashboard-print.mjs",
     "test:dashboard-order-items": "node scripts/test-dashboard-order-items.mjs",
     "test:dashboard-incident-card": "node scripts/test-dashboard-incident-card.mjs",
+    "test:dashboard-monday-cards": "node scripts/test-dashboard-monday-cards.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

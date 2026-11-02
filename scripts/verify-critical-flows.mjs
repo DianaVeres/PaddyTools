@@ -128,6 +128,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/components/dashboard/monday-cards'],
+  'Las tarjetas compartidas de Monday',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
