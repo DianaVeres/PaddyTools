@@ -199,13 +199,24 @@ requireAll(
     '@/lib/monday-write',
     '@/lib/monday-options',
     '@/lib/monday-reservations',
+    '@/lib/monday-search',
     'updatesFor',
     'mondayReferenceCandidates',
     'normalizeReferenceInput',
     'searchKey',
-    'searchDigits',
   ],
   'La integración de Monday',
+);
+requireAll(
+  'lib/monday-search.ts',
+  [
+    'searchMondayRecords',
+    'MONDAY_BOARDS.map',
+    'loadMondayCustomerContacts',
+    'searchKey(record.customer)',
+    'searchDigits(record.phone)',
+  ],
+  'La búsqueda por clientes y teléfonos en Monday',
 );
 requireAll(
   'lib/monday-reservations.ts',

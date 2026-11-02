@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   mondayReferenceCandidates,
   normalizeReferenceInput,
-  searchDigits,
   searchKey,
 } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
@@ -26,9 +25,9 @@ import {
 } from '@/lib/monday-write';
 import { loadMondayReservationOptions } from '@/lib/monday-options';
 import { loadAllMondayReservations } from '@/lib/monday-reservations';
+import { searchMondayRecords } from '@/lib/monday-search';
 
 const cleanKey = searchKey;
-const digits = searchDigits;
 export async function GET(request: NextRequest) {
   const token = (env as unknown as Record<string, string>).MONDAY_API_TOKEN;
   if (!token)
@@ -111,43 +110,7 @@ export async function GET(request: NextRequest) {
   const searchText = request.nextUrl.searchParams.get('query')?.trim();
   if (searchText) {
     try {
-      const rawRecords = (
-        await Promise.all(
-          BOARDS.map(async (board) => {
-            return (await allBoardItems(board.id, token)).map((item) =>
-              normalizeItem(item, board),
-            );
-          }),
-        )
-      ).flat();
-      const contactsByCustomer = await customerContacts(rawRecords, token);
-      const needle = cleanKey(searchText);
-      const phoneNeedle = digits(searchText);
-      const records = rawRecords
-        .map((record) => ({
-          ...record,
-          phone:
-            record.phone ||
-            record.customerIds
-              .map((id) => contactsByCustomer.get(id)?.phone)
-              .find(Boolean) ||
-            '',
-          customerEmail:
-            record.customerIds
-              .map((id) => contactsByCustomer.get(id)?.email)
-              .find(Boolean) ||
-            '',
-        }))
-        .filter((record) => {
-          const nameMatches = cleanKey(record.customer).includes(needle);
-          const recordPhone = digits(record.phone);
-          const phoneMatches =
-            phoneNeedle.length >= 5 &&
-            Boolean(recordPhone) &&
-            (recordPhone.includes(phoneNeedle) || phoneNeedle.includes(recordPhone));
-          return nameMatches || phoneMatches;
-        })
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      const records = await searchMondayRecords(searchText, token);
       return NextResponse.json({ found: records.length > 0, records });
     } catch (error) {
       return NextResponse.json(
