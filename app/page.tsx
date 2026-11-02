@@ -85,154 +85,19 @@ import {
   type OrderNoteRecord as OrderNote,
 } from '@/lib/order-note';
 import type { StoreTicketRecord as StoreTicket } from '@/lib/store-ticket';
-
-type Modal =
-  | 'incidencia'
-  | 'reserva'
-  | 'registro'
-  | 'reservas'
-  | 'recogidas'
-  | 'detalle-incidencia'
-  | 'reserva-creada'
-  | 'email'
-  | null;
-type Order = {
-  id: number;
-  number: string;
-  status: string;
-  statusLabel: string;
-  dateCreated: string;
-  dateModified: string;
-  total: string;
-  payment: string;
-  transactionId: string;
-  returnAttended: boolean;
-  shippingMethod: string;
-  wooUrl: string;
-  movements: Array<{
-    id: number;
-    author: string;
-    date: string;
-    text: string;
-    customerVisible: boolean;
-  }>;
-  customer: { name: string; phone: string; email: string; address: string };
-  items: Array<{
-    id: number;
-    name: string;
-    sku: string;
-    quantity: number;
-    size: string;
-    total: string;
-  }>;
-};
-type Shipment = {
-  order: string;
-  date: string;
-  school: string;
-  box: string;
-  file: string;
-};
-type MondayRecord = {
-  id: string;
-  kind: 'reserva' | 'prenda';
-  board: string;
-  reference: string;
-  customer: string;
-  phone: string;
-  customerEmail: string;
-  school: string;
-  date: string;
-  article: string;
-  articleDescription: string;
-  code: string;
-  size: string;
-  units: string;
-  sentUnits?: string;
-  pending: string;
-  paid: string;
-  status: string;
-  observations: string;
-  specialDetails: string;
-  articleIds?: string[];
-  customerIds?: string[];
-  endDate?: string;
-  productionDate?: string;
-  estimatedProduction?: string;
-  formula?: string;
-  updatedAt: string;
-};
-type IncidentDraft = {
-  date: string;
-  school: string;
-  text: string;
-  customerEmail: string;
-  observations: string;
-  pickup: boolean;
-  pickupSchool: string;
-  pickupNotes: string;
-  recurrence: boolean;
-  solved: boolean;
-  sent: boolean;
-  pickupItems: Record<
-    number,
-    { selected: boolean; size: string; units: number }
-  >;
-};
-type SchoolProduct = { id: number; name: string; sku: string };
-type ReservationDraft = {
-  reference: string;
-  customerId: string;
-  customerName: string;
-  phone: string;
-  customerEmail: string;
-  school: string;
-  date: string;
-  articleId: string;
-  size: string;
-  units: number;
-  sentUnits: number;
-  pending: number;
-  paid: string;
-  observations: string;
-  status: string;
-  endDate: string;
-  productionDate: string;
-  estimatedProduction: string;
-  formula: string;
-};
-type ReservationOptions = {
-  customers: Array<{
-    id: string;
-    name: string;
-    phone: string;
-    email: string;
-    school: string;
-  }>;
-  articles: Array<{ id: string; code: string; description: string }>;
-  schools: string[];
-  paid: string[];
-  observations: string[];
-  status: string[];
-};
-type MondayUpdate = {
-  id: string;
-  itemId: string;
-  text: string;
-  createdAt: string;
-  author: string;
-};
-type OrderSearchMatch = {
-  id: number;
-  number: string;
-  customerName: string;
-  phone: string;
-  email: string;
-  dateCreated: string;
-  total: string;
-  statusLabel: string;
-};
-type SessionUser = { email: string; displayName: string };
+import type {
+  DashboardModal as Modal,
+  DashboardMondayRecord as MondayRecord,
+  DashboardOrder as Order,
+  DashboardShipment as Shipment,
+  IncidentDraft,
+  MondayUpdate,
+  OrderSearchMatch,
+  ReservationDraft,
+  ReservationOptions,
+  SchoolProduct,
+  SessionUser,
+} from '@/lib/dashboard-types';
 
 const fmt = (date: string) =>
   new Intl.DateTimeFormat('es-ES', {

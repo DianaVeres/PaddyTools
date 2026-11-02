@@ -29,6 +29,7 @@
     "test:label-print": "node scripts/test-label-print.mjs",
     "test:delivery-message": "node scripts/test-delivery-message.mjs",
     "test:contact-links": "node scripts/test-contact-links.mjs",
+    "test:dashboard-types": "node scripts/test-dashboard-types.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

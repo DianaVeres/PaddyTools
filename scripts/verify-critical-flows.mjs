@@ -103,6 +103,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/lib/dashboard-types'],
+  'Los modelos compartidos del panel principal',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
