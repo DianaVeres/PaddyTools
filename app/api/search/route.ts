@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchDigits, wooSearchVariants } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
 import { wooFetch, wooIsConfigured, wooRoot } from '@/lib/woocommerce';
+import { searchWooOrdersByCustomer } from '@/lib/woo-customer-search';
 
 type WooLine = {
   id: number;
@@ -59,14 +59,6 @@ type WooOrderNote = {
   note?: string;
   customer_note?: boolean;
 };
-type WooCustomer = {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  billing?: { phone?: string };
-};
-
 const statusLabels: Record<string, string> = {
   pending: 'Pendiente de pago',
   processing: 'Procesando',
@@ -81,12 +73,6 @@ const clean = (value: unknown) =>
   String(value ?? '')
     .replace(/<[^>]*>/g, '')
     .trim();
-const digits = searchDigits;
-const folded = (value: unknown) =>
-  clean(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
 const returnAttendedMeta = (order: WooOrder) =>
   order.meta_data?.find((meta) => {
     const key = meta.key
@@ -101,22 +87,6 @@ const checkedValue = (value: unknown) =>
       .trim()
       .toLowerCase(),
   );
-
-function searchMatch(order: WooOrder) {
-  const currency = order.currency_symbol || '€';
-  return {
-    id: order.id,
-    number: order.number,
-    customerName: clean(
-      `${order.billing.first_name ?? ''} ${order.billing.last_name ?? ''}`,
-    ),
-    phone: clean(order.billing.phone),
-    email: clean(order.billing.email),
-    dateCreated: order.date_created,
-    total: `${order.total} ${currency}`,
-    statusLabel: statusLabels[order.status] ?? order.status,
-  };
-}
 
 // Los nombres de los artículos son la fuente más fiable para identificar el
 // colegio de un pedido PA. Solo añadimos metadatos que indiquen expresamente
@@ -174,83 +144,13 @@ export async function GET(request: NextRequest) {
     );
   try {
     if (query) {
-      const phoneQuery = searchDigits(query);
-      const words = query.split(/\s+/).filter((word) => word.length >= 3);
-      const searchVariants = wooSearchVariants(query);
-      const orderSearches = searchVariants.map(async (value) => {
-        const response = await wooFetch(
-          `orders?search=${encodeURIComponent(value)}&status=any&per_page=100&orderby=date&order=desc`,
+      return NextResponse.json({
+        matches: await searchWooOrdersByCustomer(
+          query,
           config,
-        );
-        return response.ok ? ((await response.json()) as WooOrder[]) : [];
+          statusLabels,
+        ),
       });
-      const customerSearches = await Promise.all(
-        searchVariants.map(async (value) => {
-          const response = await wooFetch(
-            `customers?search=${encodeURIComponent(value)}&per_page=100`,
-            config,
-          );
-          return response.ok ? ((await response.json()) as WooCustomer[]) : [];
-        }),
-      );
-      const customers = [
-        ...new Map(
-          customerSearches.flat().map((customer) => [customer.id, customer]),
-        ).values(),
-      ];
-      const customerOrders = await Promise.all(
-        customers.map(async (customer) => {
-          const response = await wooFetch(
-            `orders?customer=${customer.id}&status=any&per_page=100&orderby=date&order=desc`,
-            config,
-          );
-          return response.ok ? ((await response.json()) as WooOrder[]) : [];
-        }),
-      );
-      let orders = [
-        ...new Map(
-          (await Promise.all(orderSearches))
-            .flat()
-            .concat(customerOrders.flat())
-            .map((order) => [order.id, order]),
-        ).values(),
-      ];
-      // Algunas instalaciones con HPOS no incluyen nombre/teléfono en el
-      // índice `search`. Si no devuelve nada, se revisan los pedidos recientes
-      // y se comparan directamente los datos de facturación.
-      if (!orders.length) {
-        const pages = await Promise.all(
-          Array.from({ length: 10 }, (_, index) => index + 1).map(
-            async (page) => {
-              const pageResponse = await wooFetch(
-                `orders?status=any&per_page=100&page=${page}&orderby=date&order=desc`,
-                config,
-              );
-              if (!pageResponse.ok) return [] as WooOrder[];
-              return (await pageResponse.json()) as WooOrder[];
-            },
-          ),
-        );
-        orders = pages.flat();
-      }
-      const textQuery = folded(query);
-      const textWords = words.map(folded);
-      const matches = orders.filter((order) => {
-        const phone = digits(order.billing.phone);
-        if (phoneQuery.length >= 5)
-          return (
-            Boolean(phone) &&
-            (phone.includes(phoneQuery) || phoneQuery.includes(phone))
-          );
-        const customer = folded(
-          `${order.billing.first_name ?? ''} ${order.billing.last_name ?? ''} ${order.billing.email ?? ''}`,
-        );
-        return (
-          customer.includes(textQuery) ||
-          textWords.every((word) => customer.includes(word))
-        );
-      });
-      return NextResponse.json({ matches: matches.map(searchMatch) });
     }
     // Si no entramos en la búsqueda por texto, la validación inicial garantiza
     // que existe un número de pedido.

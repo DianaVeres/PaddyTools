@@ -154,14 +154,23 @@ requireAll(
 requireAll(
   'app/api/search/route.ts',
   [
+    'schoolCandidates:',
+    '@/lib/woocommerce',
+    '@/lib/woo-customer-search',
+    'searchWooOrdersByCustomer',
+  ],
+  'La búsqueda global',
+);
+requireAll(
+  'lib/woo-customer-search.ts',
+  [
     'wooSearchVariants',
     'searchDigits',
     'customers?search=',
     'orders?customer=',
-    'schoolCandidates:',
-    '@/lib/woocommerce',
+    'Array.from({ length: 10 }',
   ],
-  'La búsqueda global',
+  'La búsqueda de clientes en WooCommerce',
 );
 
 // Las reservas e incidencias relacionadas deben admitir las variantes que usa
