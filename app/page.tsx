@@ -114,6 +114,7 @@ import { MondayCards } from '@/components/dashboard/monday-cards';
 import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-card';
 import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
+import { OrderMovements } from '@/components/dashboard/order-movements';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -2174,47 +2175,7 @@ export default function Home() {
                   </article>
                 </TabsContent>
                 <TabsContent value="movimientos" className="tab-body">
-                  <article className="info-card notes-card">
-                    <div className="card-title">
-                      <ClipboardList />
-                      <div>
-                        <h3>Movimientos de WooCommerce</h3>
-                        <p>
-                          El historial que aparece en el margen derecho del
-                          pedido
-                        </p>
-                      </div>
-                    </div>
-                    <div className="woo-movements">
-                      {order.movements?.length ? (
-                        order.movements.map((movement) => (
-                          <article className="woo-movement" key={movement.id}>
-                            <span className="woo-movement-dot" />
-                            <div>
-                              <div className="note-head">
-                                <b>{movement.author}</b>
-                                <time>
-                                  {movement.date
-                                    ? fmt(movement.date)
-                                    : 'Sin fecha'}
-                                </time>
-                              </div>
-                              <p>
-                                {movement.text || 'Movimiento sin descripción'}
-                              </p>
-                              {movement.customerVisible && (
-                                <small>Nota visible para el cliente</small>
-                              )}
-                            </div>
-                          </article>
-                        ))
-                      ) : (
-                        <p className="notes-empty">
-                          WooCommerce no tiene movimientos para este pedido.
-                        </p>
-                      )}
-                    </div>
-                  </article>
+                  <OrderMovements order={order} />
                 </TabsContent>
                 <TabsContent value="documentos" className="tab-body">
                   <article className="info-card documents-card">

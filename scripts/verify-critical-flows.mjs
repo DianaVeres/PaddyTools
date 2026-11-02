@@ -397,6 +397,11 @@ requireAll(
   ['@/components/dashboard/order-activity', 'OrderActivity'],
   'La actividad del pedido',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/order-movements', 'OrderMovements'],
+  'Los movimientos del pedido',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
