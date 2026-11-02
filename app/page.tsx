@@ -26,7 +26,6 @@ import {
   Tag,
   Trash2,
   Truck,
-  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +92,6 @@ import type {
 import {
   DashboardField as Field,
   formatDashboardDate as fmt,
-  SourceBadge,
 } from '@/components/dashboard/common';
 import {
   IncidentDocument,
@@ -115,6 +113,7 @@ import { OrderSummary } from '@/components/dashboard/order-summary';
 import { OrderHeading } from '@/components/dashboard/order-heading';
 import { OrderLinkedRecords } from '@/components/dashboard/order-linked-records';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+import { GlobalSearchPanel } from '@/components/dashboard/global-search-panel';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1675,112 +1674,22 @@ export default function Home() {
         onCreateReservation={() => void openReservation()}
         onLogout={() => void logout()}
       />
-      <section className="search-band">
-        <div className="search-wrap">
-          <p className="eyebrow">Consulta global</p>
-          <h1>¿Qué necesitas localizar?</h1>
-          <form onSubmit={search} className="search-box">
-            <Search />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Número de pedido, nombre o teléfono…"
-              aria-label="Buscar pedido por número, nombre o teléfono"
-            />
-            {query && (
-              <button
-                type="button"
-                className="clear"
-                onClick={() => setQuery('')}
-              >
-                <X />
-              </button>
-            )}
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Buscando…' : 'Buscar'}
-            </Button>
-          </form>
-          {orderSearchMatches.length > 0 && (
-            <div className="order-search-results" aria-live="polite">
-              <p>
-                {orderSearchMatches.length} pedido
-                {orderSearchMatches.length === 1 ? '' : 's'} encontrado
-                {orderSearchMatches.length === 1 ? '' : 's'}. Selecciona uno:
-              </p>
-              {orderSearchMatches.map((match) => (
-                <button
-                  type="button"
-                  key={match.id}
-                  onClick={() => {
-                    setQuery(match.number);
-                    void search(undefined, match.number);
-                  }}
-                >
-                  <span>
-                    <b>{match.number}</b> ·{' '}
-                    {match.customerName || 'Cliente sin nombre'}
-                  </span>
-                  <small>
-                    {[
-                      match.phone,
-                      match.email,
-                      match.dateCreated ? fmt(match.dateCreated) : '',
-                      match.total,
-                      match.statusLabel,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </small>
-                </button>
-              ))}
-            </div>
-          )}
-          {incidentSearchMatches.length > 0 && (
-            <div
-              className="order-search-results incident-search-results"
-              aria-live="polite"
-            >
-              <p>
-                {incidentSearchMatches.length} incidencia
-                {incidentSearchMatches.length === 1 ? '' : 's'} encontrada
-                {incidentSearchMatches.length === 1 ? '' : 's'}. Selecciona una:
-              </p>
-              {incidentSearchMatches.map((match) => (
-                <button
-                  type="button"
-                  key={match.id}
-                  onClick={() => {
-                    setQuery(match.orderNumber);
-                    void search(undefined, match.orderNumber, match.id);
-                  }}
-                >
-                  <span>
-                    <b>{match.orderNumber}</b> ·{' '}
-                    {match.customerName || 'Cliente sin nombre'}
-                  </span>
-                  <small>
-                    {[
-                      match.customerPhone,
-                      match.customerEmail,
-                      match.incidentDate,
-                      match.solved ? 'Resuelta' : 'Pendiente',
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </small>
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="source-row">
-            <SourceBadge color="#7c3aed">WooCommerce conectado</SourceBadge>
-            <SourceBadge color="#ea580c">Incidencias conectado</SourceBadge>
-            <SourceBadge color="#16a34a">Monday Reservas conectado</SourceBadge>
-            <SourceBadge color="#db2777">Monday Prendas conectado</SourceBadge>
-            <SourceBadge color="#0284c7">DetalWPF sincronizado</SourceBadge>
-          </div>
-        </div>
-      </section>
+      <GlobalSearchPanel
+        query={query}
+        loading={loading}
+        orderMatches={orderSearchMatches}
+        incidentMatches={incidentSearchMatches}
+        onQueryChange={setQuery}
+        onSubmit={search}
+        onSelectOrder={(match) => {
+          setQuery(match.number);
+          void search(undefined, match.number);
+        }}
+        onSelectIncident={(match) => {
+          setQuery(match.orderNumber);
+          void search(undefined, match.orderNumber, match.id);
+        }}
+      />
       {saved && (
         <div className="success-toast">
           <Check />
