@@ -27,5 +27,8 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "app/api/packing-lists/route (1).ts"
+  ]
 }

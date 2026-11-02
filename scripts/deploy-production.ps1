@@ -36,11 +36,12 @@ $labelPrintCheck = Join-Path $officialRoot 'scripts\test-label-print.mjs'
 $deliveryMessageCheck = Join-Path $officialRoot 'scripts\test-delivery-message.mjs'
 $contactLinksCheck = Join-Path $officialRoot 'scripts\test-contact-links.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
+$storeTicketCheck = Join-Path $officialRoot 'scripts\test-store-ticket.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -113,6 +114,10 @@ try {
   & $node $orderNoteCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Las notas internas han fallado. No se desplegará nada."
+  }
+  & $node $storeTicketCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "Los tickets de tienda han fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {

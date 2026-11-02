@@ -84,6 +84,7 @@ import {
   type OrderNoteKind,
   type OrderNoteRecord as OrderNote,
 } from '@/lib/order-note';
+import type { StoreTicketRecord as StoreTicket } from '@/lib/store-ticket';
 
 type Modal =
   | 'incidencia'
@@ -179,25 +180,6 @@ type IncidentDraft = {
   >;
 };
 type SchoolProduct = { id: number; name: string; sku: string };
-type StoreTicket = {
-  number: string;
-  date: string;
-  customer: string;
-  store: string;
-  operator: string;
-  total: string;
-  payment: string;
-  items: Array<{
-    name?: string;
-    article?: string;
-    size?: string;
-    color?: string;
-    units?: number;
-    price?: string;
-    total?: string;
-  }>;
-  syncedAt: number;
-};
 type ReservationDraft = {
   reference: string;
   customerId: string;

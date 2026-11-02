@@ -42,3 +42,4 @@ next-env.d.ts
 /.tmp-*.js
 /.tmp-*.bin
 **/.tmp-packing-dry-run/
+/app/api/packing-lists/route (1).ts

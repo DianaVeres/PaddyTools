@@ -83,6 +83,13 @@ for (const path of ['app/page.tsx', 'app/api/order-notes/route.ts']) {
     'Las notas internas compartidas',
   );
 }
+for (const path of ['app/page.tsx', 'app/api/tickets/route.ts']) {
+  requireAll(
+    path,
+    ['@/lib/store-ticket'],
+    'Los tickets de tienda compartidos',
+  );
+}
 requireAll(
   'app/page.tsx',
   [

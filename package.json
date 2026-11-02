@@ -24,6 +24,7 @@
     "test:delivery-message": "node scripts/test-delivery-message.mjs",
     "test:contact-links": "node scripts/test-contact-links.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
+    "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "backup:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup-production.ps1",
     "deploy:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",

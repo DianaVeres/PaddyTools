@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from 'cloudflare:workers';
+import { normalizeTicketNumber, parseTicketItems } from '@/lib/store-ticket';
 
 export async function GET(request: NextRequest) {
-  const number = request.nextUrl.searchParams
-    .get('number')
-    ?.trim()
-    .replace(/^#/, '');
+  const number = normalizeTicketNumber(
+    request.nextUrl.searchParams.get('number'),
+  );
   if (!number)
     return NextResponse.json(
       { error: 'Introduce un número de ticket.' },
@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
     .bind(number)
     .first<Record<string, unknown>>();
   if (!row) return NextResponse.json({ found: false, ticket: null });
-  let items: unknown[] = [];
-  try {
-    items = JSON.parse(String(row.items_json || '[]'));
-  } catch {}
+  const items = parseTicketItems(row.items_json);
   return NextResponse.json({
     found: true,
     ticket: {
@@ -46,7 +43,7 @@ export async function POST(request: NextRequest) {
   )
     return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
   const body = (await request.json()) as Record<string, unknown>;
-  const number = String(body.ticket_number || body.number || '').trim();
+  const number = normalizeTicketNumber(body.ticket_number || body.number);
   if (!number)
     return NextResponse.json(
       { error: 'Falta el número de ticket.' },
