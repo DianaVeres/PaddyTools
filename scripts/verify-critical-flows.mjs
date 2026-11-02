@@ -392,6 +392,11 @@ requireAll(
   ['@/components/dashboard/store-ticket-card', 'StoreTicketCard'],
   'La tarjeta de tickets de tienda',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/order-activity', 'OrderActivity'],
+  'La actividad del pedido',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
