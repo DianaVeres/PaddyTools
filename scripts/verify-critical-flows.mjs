@@ -108,6 +108,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/components/dashboard/common'],
+  'Los elementos comunes del panel principal',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
