@@ -169,6 +169,9 @@ requireAll(
 requireAll(
   'app/api/monday/route.ts',
   [
+    '@/lib/monday-client',
+    '@/lib/monday-config',
+    '@/lib/monday-mapping',
     'updatesFor',
     'updates(limit:100)',
     'mondayReferenceCandidates',

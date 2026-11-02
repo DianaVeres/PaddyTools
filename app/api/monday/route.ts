@@ -6,200 +6,26 @@ import {
   searchKey,
 } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
+import {
+  allMondayBoardItems as allBoardItems,
+  mondayRequest as monday,
+  type MondayColumnValue as ColumnValue,
+  type MondayItem,
+} from '@/lib/monday-client';
+import {
+  MONDAY_BOARDS as BOARDS,
+  MONDAY_RESERVATION_COLUMNS as RESERVATION_COLUMNS,
+  MONDAY_RESERVATION_OPTIONS as RESERVATION_OPTIONS,
+} from '@/lib/monday-config';
+import {
+  mondayColumnEmail as columnEmail,
+  mondayColumnPhone as columnPhone,
+  mondayReservationBaseReference as reservationBaseReference,
+  normalizeMondayItem as normalizeItem,
+} from '@/lib/monday-mapping';
 
-const BOARDS = [
-  { id: '5098167633', kind: 'reserva', name: 'REGISTRO RESERVAS' },
-  { id: '5098279909', kind: 'prenda', name: 'REGISTRO PRENDAS ESPECIALES' },
-] as const;
-const RESERVATION_COLUMNS = {
-  customer: 'board_relation_mm458cjj',
-  school: 'color_mm45f745',
-  date: 'date_mm45b8rj',
-  article: 'board_relation_mm45m9w9',
-  size: 'text_mm45ag8c',
-  units: 'numeric_mm4574r6',
-  paid: 'color_mm45vsc8',
-  observations: 'dropdown_mm45zpss',
-  status: 'color_mm455nq5',
-  endDate: 'date_mm458zp2',
-  productionDate: 'date_mm51g99g',
-} as const;
-const RESERVATION_OPTIONS = {
-  schools: [
-    'SPF',
-    'BCLC',
-    'SAN ENRIQUE',
-    'CLARET',
-    'SAGE',
-    'SAN JUAN BOSCO',
-    'ESCOLANÍA',
-    'SHACKLETON',
-    'BENAGUASIL',
-    'SAN RAFAEL',
-    'TEATINAS PINTO',
-    'ALBORXÍ',
-    'TORREALEDUA',
-    'RIBARROJA',
-    'JOSE LLUCH',
-    'PURISIMA',
-    'SAGRADO CORAZÓN',
-  ],
-  paid: ['SÍ', 'NO'],
-  observations: ['ENVÍO A DOMICILIO', 'ENTREGA COLEGIO', 'RECOGIDA EN TIENDA'],
-  status: [
-    'PARA PREPARAR',
-    'ENTREGADO/ENVIADO',
-    'ENTREGA PARCIAL',
-    'BLOQUEADO',
-    'EN PRODUCCIÓN',
-  ],
-};
-
-type ColumnValue = {
-  id: string;
-  text?: string | null;
-  value?: string | null;
-  display_value?: string | null;
-  linked_item_ids?: Array<string | number> | null;
-  column?: { title?: string | null };
-};
-type MondayItem = {
-  id: string;
-  name: string;
-  updated_at?: string;
-  column_values: ColumnValue[];
-};
 const cleanKey = searchKey;
 const digits = searchDigits;
-const reservationBaseReference = (value: string) =>
-  value.trim().replace(/(?:\s*\(copy\))+\s*$/gi, '').trim().toUpperCase();
-const columnPhone = (value?: ColumnValue) => {
-  const visible = String(value?.text || value?.display_value || '').trim();
-  if (visible) return visible;
-  if (!value?.value) return '';
-  try {
-    const raw = JSON.parse(value.value) as { phone?: unknown; number?: unknown };
-    return String(raw.phone ?? raw.number ?? '').trim();
-  } catch {
-    return '';
-  }
-};
-const columnEmail = (value?: ColumnValue) => {
-  const visible = String(value?.text || value?.display_value || '').trim();
-  if (visible) return visible;
-  if (!value?.value) return '';
-  try {
-    const raw = JSON.parse(value.value) as { email?: unknown; text?: unknown };
-    return String(raw.email ?? raw.text ?? '').trim();
-  } catch {
-    return '';
-  }
-};
-
-async function monday(
-  query: string,
-  variables: Record<string, unknown>,
-  token: string,
-) {
-  const response = await fetch('https://api.monday.com/v2', {
-    method: 'POST',
-    headers: {
-      authorization: token,
-      'content-type': 'application/json',
-      'api-version': '2025-04',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  if (!response.ok) throw new Error(`Monday respondió ${response.status}`);
-  const result = (await response.json()) as {
-    data?: Record<string, unknown>;
-    errors?: Array<{ message?: string }>;
-  };
-  if (result.errors?.length)
-    throw new Error(
-      result.errors
-        .map((error) => error.message)
-        .filter(Boolean)
-        .join(', '),
-    );
-  return result.data || {};
-}
-
-const MONDAY_ITEM_FIELDS = `id name updated_at column_values{id text value ... on BoardRelationValue {display_value linked_item_ids} ... on MirrorValue {display_value} ... on FormulaValue {display_value} column{title}}`;
-
-async function allBoardItems(boardId: string, token: string) {
-  const firstPage = (await monday(
-    `query ($board:[ID!]!){boards(ids:$board){items_page(limit:500){cursor items{${MONDAY_ITEM_FIELDS}}}}}`,
-    { board: [boardId] },
-    token,
-  )) as {
-    boards?: Array<{
-      items_page?: { cursor?: string | null; items?: MondayItem[] };
-    }>;
-  };
-  const items = [...(firstPage.boards?.[0]?.items_page?.items || [])];
-  let cursor = firstPage.boards?.[0]?.items_page?.cursor || '';
-
-  while (cursor) {
-    const nextPage = (await monday(
-      `query ($cursor:String!){next_items_page(limit:500,cursor:$cursor){cursor items{${MONDAY_ITEM_FIELDS}}}}`,
-      { cursor },
-      token,
-    )) as {
-      next_items_page?: { cursor?: string | null; items?: MondayItem[] };
-    };
-    items.push(...(nextPage.next_items_page?.items || []));
-    cursor = nextPage.next_items_page?.cursor || '';
-  }
-
-  return items;
-}
-
-function normalizeItem(item: MondayItem, board: (typeof BOARDS)[number]) {
-  const values: Record<string, string> = {};
-  for (const value of item.column_values || [])
-    values[cleanKey(value.column?.title || value.id)] = String(
-      value.text || value.display_value || '',
-    ).trim();
-  const first = (...labels: string[]) =>
-    labels.map((label) => values[cleanKey(label)]).find(Boolean) || '';
-  const articleRelation = (item.column_values || []).find(
-    (value) =>
-      value.id === RESERVATION_COLUMNS.article ||
-      cleanKey(value.column?.title || '') === 'ARTICULO',
-  );
-  const customerRelation = (item.column_values || []).find(
-    (value) => value.id === RESERVATION_COLUMNS.customer,
-  );
-  return {
-    id: item.id,
-    kind: board.kind,
-    board: board.name,
-    reference: item.name,
-    customer: first('CLIENTE'),
-    phone: first('TELEFONO'),
-    school: first('COLEGIO'),
-    date: first('FECHA RESERVA', 'FECHA'),
-    article: first('DESCRIPCION ARTICULO', 'ARTICULO'),
-    articleIds: (articleRelation?.linked_item_ids || []).map(String),
-    customerIds: (customerRelation?.linked_item_ids || []).map(String),
-    code: first('CODIGO ART.'),
-    size: first('TALLA'),
-    units: first('UDS.'),
-    sentUnits: first('U.ENVIADAS', 'U ENVIADAS'),
-    pending: first('U. PENDIENTES'),
-    paid: first('PAGADA'),
-    status: first('ESTADO'),
-    observations: first('OBSERVACIONES'),
-    endDate: first('FECHA FIN'),
-    productionDate: first('FECHA PRODUCCION', 'FECHA PRODUCCIÓN'),
-    estimatedProduction: first('ENTREGA ESTIMADA PRODUCCION', 'ENTREGA ESTIMADA PRODUCCIÓN'),
-    formula: first('FORMULA', 'FÓRMULA'),
-    specialDetails: first('DATOS PRENDA ESPECIAL'),
-    updatedAt: item.updated_at || '',
-  };
-}
-
 async function customerContacts(
   records: Array<{ customerIds: string[] }>,
   token: string,

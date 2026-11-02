@@ -37,11 +37,13 @@ $deliveryMessageCheck = Join-Path $officialRoot 'scripts\test-delivery-message.m
 $contactLinksCheck = Join-Path $officialRoot 'scripts\test-contact-links.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
 $storeTicketCheck = Join-Path $officialRoot 'scripts\test-store-ticket.mjs'
+$mondayClientCheck = Join-Path $officialRoot 'scripts\test-monday-client.mjs'
+$mondayMappingCheck = Join-Path $officialRoot 'scripts\test-monday-mapping.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -118,6 +120,14 @@ try {
   & $node $storeTicketCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los tickets de tienda han fallado. No se desplegará nada."
+  }
+  & $node $mondayClientCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El cliente de Monday ha fallado. No se desplegará nada."
+  }
+  & $node $mondayMappingCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El mapeo de Monday ha fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {
