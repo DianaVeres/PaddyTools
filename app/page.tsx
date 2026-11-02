@@ -100,9 +100,6 @@ import {
   ReservationPrintCard,
 } from '@/components/dashboard/print-components';
 import { OrderItems as Items } from '@/components/dashboard/order-items';
-import { IncidentCard } from '@/components/dashboard/incident-card';
-import { MondayCards } from '@/components/dashboard/monday-cards';
-import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-card';
 import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
@@ -115,6 +112,7 @@ import { OrderLinkedRecords } from '@/components/dashboard/order-linked-records'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { GlobalSearchPanel } from '@/components/dashboard/global-search-panel';
 import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
+import { ConnectedResults } from '@/components/dashboard/connected-results';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1794,45 +1792,24 @@ export default function Home() {
         </div>
       )}
       {!order && (incident || mondayRecords.length > 0) && (
-        <div className="workspace">
-          <div className="result-heading">
-            <div>
-              <span className="result-label">Resultado encontrado</span>
-              <div className="title-row">
-                <h2>
-                  Pedido #{incident?.orderNumber || mondayRecords[0]?.reference}
-                </h2>
-              </div>
-              <p>Registros conectados</p>
-            </div>
-          </div>
-          {incident && (
-            <IncidentCard
-              incident={incident}
-              onPrintIncident={printIncidentDocument}
-            />
-          )}
-          <MondayCards
-            records={mondayRecords}
-            onPrintReservation={requestReservationPrint}
-            onEmailReservation={openReservationEmail}
-          />
-          {mondayRecords.some((record) => record.kind === 'reserva') && (
-            <ReservationNotesCard
-              notes={orderNotes}
-              loading={notesLoading}
-              mondayUpdates={mondayUpdates}
-              mondayLoading={mondayUpdatesLoading}
-              kind={noteKind}
-              draft={noteDraft}
-              deletingId={noteDeletingId}
-              onKindChange={setNoteKind}
-              onDraftChange={setNoteDraft}
-              onSave={() => void saveOrderNote()}
-              onDelete={(note) => void deleteOrderNote(note)}
-            />
-          )}
-        </div>
+        <ConnectedResults
+          incident={incident}
+          mondayRecords={mondayRecords}
+          notes={orderNotes}
+          notesLoading={notesLoading}
+          mondayUpdates={mondayUpdates}
+          mondayUpdatesLoading={mondayUpdatesLoading}
+          noteKind={noteKind}
+          noteDraft={noteDraft}
+          noteDeletingId={noteDeletingId}
+          onPrintIncident={printIncidentDocument}
+          onPrintReservation={requestReservationPrint}
+          onEmailReservation={openReservationEmail}
+          onNoteKindChange={setNoteKind}
+          onNoteDraftChange={setNoteDraft}
+          onSaveNote={() => void saveOrderNote()}
+          onDeleteNote={(note) => void deleteOrderNote(note)}
+        />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}
       <Dialog

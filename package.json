@@ -48,6 +48,7 @@
     "test:dashboard-header": "node scripts/test-dashboard-header.mjs",
     "test:dashboard-global-search-panel": "node scripts/test-dashboard-global-search-panel.mjs",
     "test:dashboard-feedback": "node scripts/test-dashboard-feedback.mjs",
+    "test:dashboard-connected-results": "node scripts/test-dashboard-connected-results.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

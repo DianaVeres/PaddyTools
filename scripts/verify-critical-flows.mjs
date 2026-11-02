@@ -122,14 +122,18 @@ requireAll(
   'La tarjeta compartida de artículos del pedido',
 );
 requireAll(
-  'app/page.tsx',
-  ['@/components/dashboard/incident-card'],
-  'La tarjeta compartida de incidencias',
+  'components/dashboard/order-linked-records.tsx',
+  ['@/components/dashboard/incident-card', '@/components/dashboard/monday-cards'],
+  'Las tarjetas conectadas del pedido WooCommerce',
 );
 requireAll(
-  'app/page.tsx',
-  ['@/components/dashboard/monday-cards'],
-  'Las tarjetas compartidas de Monday',
+  'components/dashboard/connected-results.tsx',
+  [
+    '@/components/dashboard/incident-card',
+    '@/components/dashboard/monday-cards',
+    '@/components/dashboard/reservation-notes-card',
+  ],
+  'Las tarjetas conectadas sin pedido WooCommerce',
 );
 requireAll(
   'app/page.tsx',
@@ -383,7 +387,7 @@ forbid(
 );
 
 requireAll(
-  'app/page.tsx',
+  'components/dashboard/connected-results.tsx',
   ['@/components/dashboard/reservation-notes-card', 'ReservationNotesCard'],
   'La tarjeta de notas de reservas',
 );
@@ -446,6 +450,11 @@ requireAll(
   'app/page.tsx',
   ['@/components/dashboard/dashboard-feedback', 'DashboardFeedback'],
   'Los estados de consulta',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/connected-results', 'ConnectedResults'],
+  'Los resultados conectados',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
