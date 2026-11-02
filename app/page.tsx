@@ -116,6 +116,7 @@ import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
 import { OrderDocuments } from '@/components/dashboard/order-documents';
 import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
+import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -2059,30 +2060,10 @@ export default function Home() {
                   <Items order={order} units={units} />
                 </TabsContent>
                 <TabsContent value="seguimiento" className="tab-body">
-                  <article className="info-card">
-                    <div className="card-title">
-                      <PackageCheck />
-                      <div>
-                        <h3>{order.shippingMethod}</h3>
-                        <p>Método de envío registrado en WooCommerce</p>
-                      </div>
-                    </div>
-                  </article>
-                  <article className="email-action-card">
-                    <div className="card-title">
-                      <Mail />
-                      <div>
-                        <h3>Avisar al cliente por email</h3>
-                        <p>
-                          El texto se adapta al tipo de entrega y se puede
-                          editar antes de enviarlo.
-                        </p>
-                      </div>
-                    </div>
-                    <Button onClick={openOrderEmail}>
-                      <Mail /> Preparar email
-                    </Button>
-                  </article>
+                  <OrderFollowUp
+                    order={order}
+                    onPrepareEmail={() => void openOrderEmail()}
+                  />
                 </TabsContent>
                 <TabsContent value="notas" className="tab-body">
                   <OrderNotesCard
