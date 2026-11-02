@@ -63,7 +63,7 @@ const incidentServices = [
   read('lib/incident-write.ts'),
 ].join('\n');
 if (
-  !incidentRoute.includes('@/lib/incident-store') ||
+  !incidentRoute.includes('@/lib/incident-query') ||
   !incidentServices.includes('incidentRecords')
 )
   throw new Error('Incidencias no utiliza la tabla individual.');

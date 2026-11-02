@@ -287,12 +287,23 @@ requireAll(
 requireAll(
   'app/api/incidents/route.ts',
   [
-    'incidentReferenceCandidates',
     'normalizeReferenceInput',
     '@/lib/incident-write',
+    '@/lib/incident-query',
     'saveIncident(incoming)',
   ],
   'Las incidencias individuales',
+);
+requireAll(
+  'lib/incident-query.ts',
+  [
+    'listIncidents',
+    'findIncidents',
+    'readAllIncidentRows',
+    'incidentReferenceCandidates',
+    'pickup_school',
+  ],
+  'La lectura compartida de incidencias',
 );
 requireAll(
   'lib/incident-write.ts',
@@ -309,9 +320,9 @@ requireAll(
 requireAll(
   'app/api/incidents/route.ts',
   [
-    '@/lib/incident-store',
-    'readAllIncidentRows as readAllRows',
-    'mapStoredIncident as mapIncident',
+    '@/lib/incident-query',
+    'findIncidents',
+    'listIncidents',
   ],
   'El almacenamiento compartido de incidencias',
 );

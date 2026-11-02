@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { canDeleteIncidents } from '@/lib/permissions';
 import {
-  incidentReferenceCandidates,
   normalizeReferenceInput,
 } from '@/lib/global-search';
-import {
-  incidentTextValue as textValue,
-  mapStoredIncident as mapIncident,
-  readAllIncidentRows as readAllRows,
-} from '@/lib/incident-store';
 import {
   deleteStoredIncident,
   updateIncidentStatus,
@@ -19,6 +13,7 @@ import {
   IncidentValidationError,
   saveIncident,
 } from '@/lib/incident-write';
+import { findIncidents, listIncidents } from '@/lib/incident-query';
 
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
@@ -32,30 +27,10 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   try {
-    const rows = await readAllRows();
     if (scope === 'all' || scope === 'pickups') {
-      const selected =
-        scope === 'pickups'
-          ? rows.filter((row) => Boolean(Number(row.data.pickup_school)))
-          : rows;
-      return NextResponse.json({
-        rows: selected.map((row) => mapIncident(row)),
-      });
+      return NextResponse.json({ rows: await listIncidents(scope) });
     }
-    const matches = id
-      ? rows.filter((row) => row.id === id)
-      : rows.filter((row) =>
-          incidentReferenceCandidates(number || '').includes(
-            textValue(row.data.order_number).toUpperCase(),
-          ),
-        );
-    if (!matches.length)
-      return NextResponse.json({ found: false, incident: null, incidents: [] });
-    return NextResponse.json({
-      found: true,
-      incident: mapIncident(matches[0], number),
-      incidents: matches.map((row) => mapIncident(row, number)),
-    });
+    return NextResponse.json(await findIncidents(id || '', number));
   } catch (error) {
     return NextResponse.json(
       {

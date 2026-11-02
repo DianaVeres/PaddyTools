@@ -21,9 +21,9 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "@/lib/incident-store",
-  'readAllIncidentRows as readAllRows',
-  'mapStoredIncident as mapIncident',
+  "@/lib/incident-query",
+  'findIncidents',
+  'listIncidents',
 ]) {
   if (!route.includes(fragment))
     throw new Error(`La ruta de incidencias no usa el servicio: ${fragment}`);
