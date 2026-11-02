@@ -34,6 +34,7 @@ $permissionsCheck = Join-Path $officialRoot 'scripts\test-permissions.mjs'
 $apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $globalSearchCheck = Join-Path $officialRoot 'scripts\test-global-search.mjs'
 $wooCustomerSearchCheck = Join-Path $officialRoot 'scripts\test-woo-customer-search.mjs'
+$wooOrderDetailCheck = Join-Path $officialRoot 'scripts\test-woo-order-detail.mjs'
 $labelPrintCheck = Join-Path $officialRoot 'scripts\test-label-print.mjs'
 $deliveryMessageCheck = Join-Path $officialRoot 'scripts\test-delivery-message.mjs'
 $contactLinksCheck = Join-Path $officialRoot 'scripts\test-contact-links.mjs'
@@ -48,7 +49,7 @@ $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -113,6 +114,10 @@ try {
   & $node $wooCustomerSearchCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La búsqueda de clientes en WooCommerce ha fallado. No se desplegará nada."
+  }
+  & $node $wooOrderDetailCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El detalle de pedidos WooCommerce ha fallado. No se desplegará nada."
   }
   & $node $labelPrintCheck
   if ($LASTEXITCODE -ne 0) {

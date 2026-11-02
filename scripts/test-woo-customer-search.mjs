@@ -24,7 +24,7 @@ for (const fragment of [
 for (const fragment of [
   '@/lib/woo-customer-search',
   'searchWooOrdersByCustomer',
-  'statusLabels',
+  'wooStatusLabels',
 ]) {
   if (!route.includes(fragment))
     throw new Error(`La ruta global no usa el servicio: ${fragment}`);

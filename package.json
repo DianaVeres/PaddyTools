@@ -22,6 +22,7 @@
     "test:api-access": "node scripts/test-api-access.mjs",
     "test:global-search": "node scripts/test-global-search.mjs",
     "test:woo-customer-search": "node scripts/test-woo-customer-search.mjs",
+    "test:woo-order-detail": "node scripts/test-woo-order-detail.mjs",
     "test:label-print": "node scripts/test-label-print.mjs",
     "test:delivery-message": "node scripts/test-delivery-message.mjs",
     "test:contact-links": "node scripts/test-contact-links.mjs",

@@ -154,10 +154,11 @@ requireAll(
 requireAll(
   'app/api/search/route.ts',
   [
-    'schoolCandidates:',
-    '@/lib/woocommerce',
+    'wooIsConfigured',
     '@/lib/woo-customer-search',
     'searchWooOrdersByCustomer',
+    '@/lib/woo-order-detail',
+    'loadWooOrderDetail',
   ],
   'La búsqueda global',
 );
@@ -171,6 +172,18 @@ requireAll(
     'Array.from({ length: 10 }',
   ],
   'La búsqueda de clientes en WooCommerce',
+);
+requireAll(
+  'lib/woo-order-detail.ts',
+  [
+    '@/lib/woocommerce',
+    'context=edit',
+    '/notes?per_page=100',
+    'schoolCandidates:',
+    'returnAttended:',
+    'wooOrderSchoolCandidates',
+  ],
+  'El detalle de pedidos WooCommerce',
 );
 
 // Las reservas e incidencias relacionadas deben admitir las variantes que usa
