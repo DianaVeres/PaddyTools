@@ -15,6 +15,10 @@ import {
   nextAutomaticIncidentId,
   readAllIncidentRows as readAllRows,
 } from '@/lib/incident-store';
+import {
+  deleteStoredIncident,
+  updateIncidentStatus,
+} from '@/lib/incident-actions';
 
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
@@ -88,43 +92,13 @@ export async function PATCH(request: NextRequest) {
         { error: 'No se ha indicado ningún cambio.' },
         { status: 400 },
       );
-    const rows = await readAllRows();
-    const references = incidentReferenceCandidates(body.orderNumber || '').map((value) =>
-      value.toUpperCase(),
-    );
-    const stored = rows.find((row) =>
-      body.id
-        ? row.id === body.id
-        : references.includes(textValue(row.data.order_number).toUpperCase()),
-    );
-    if (!stored)
+    const incident = await updateIncidentStatus(body);
+    if (!incident)
       return NextResponse.json(
         { error: 'No se encontró la incidencia para actualizarla.' },
         { status: 404 },
       );
-    const now = new Date().toISOString();
-    const data = {
-      ...stored.data,
-      ...(typeof body.received === 'boolean'
-        ? {
-            pickup_received: body.received ? 1 : 0,
-            pickup_received_at: body.received ? now : '',
-          }
-        : {}),
-      ...(typeof body.solved === 'boolean'
-        ? { solved: body.solved ? 1 : 0, solved_at: body.solved ? now : '' }
-        : {}),
-      ...(typeof body.sent === 'boolean' ? { sent: body.sent ? 1 : 0 } : {}),
-      updated_at: now,
-    };
-    await getDb()
-      .update(incidentRecords)
-      .set(incidentFieldsFor(stored.id, data))
-      .where(eq(incidentRecords.id, stored.id));
-    return NextResponse.json({
-      ok: true,
-      incident: mapIncident({ id: stored.id, data }, body.orderNumber),
-    });
+    return NextResponse.json({ ok: true, incident });
   } catch (error) {
     return NextResponse.json(
       {
@@ -240,28 +214,13 @@ export async function DELETE(request: NextRequest) {
       id?: string;
       orderNumber?: string;
     };
-    const rows = await readAllRows();
-    const references = incidentReferenceCandidates(body.orderNumber || '').map((value) =>
-      value.toUpperCase(),
-    );
-    const stored = rows.find((row) =>
-      body.id
-        ? row.id === body.id
-        : references.includes(textValue(row.data.order_number).toUpperCase()),
-    );
-    if (!stored)
+    const deleted = await deleteStoredIncident(body);
+    if (!deleted)
       return NextResponse.json(
         { error: 'No se encontró la incidencia para eliminarla.' },
         { status: 404 },
       );
-    await getDb()
-      .delete(incidentRecords)
-      .where(eq(incidentRecords.id, stored.id));
-    return NextResponse.json({
-      deleted: true,
-      id: stored.id,
-      orderNumber: textValue(stored.data.order_number),
-    });
+    return NextResponse.json(deleted);
   } catch (error) {
     return NextResponse.json(
       {

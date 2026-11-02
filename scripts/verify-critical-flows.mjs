@@ -291,7 +291,6 @@ requireAll(
     'record_id',
     'incidentRecords.id',
     '.insert(incidentRecords)',
-    '.delete(incidentRecords)',
     'incidentReferenceCandidates',
     'normalizeReferenceInput',
   ],
@@ -307,6 +306,26 @@ requireAll(
     'nextAutomaticIncidentId',
   ],
   'El almacenamiento compartido de incidencias',
+);
+requireAll(
+  'app/api/incidents/route.ts',
+  [
+    '@/lib/incident-actions',
+    'updateIncidentStatus(body)',
+    'deleteStoredIncident(body)',
+  ],
+  'Las acciones compartidas de incidencias',
+);
+requireAll(
+  'lib/incident-actions.ts',
+  [
+    'findStoredIncident',
+    'incidentReferenceCandidates',
+    'pickup_received_at:',
+    'solved_at:',
+    '.delete(incidentRecords)',
+  ],
+  'La actualización y eliminación de incidencias',
 );
 forbid(
   'app/api/incidents/route.ts',
