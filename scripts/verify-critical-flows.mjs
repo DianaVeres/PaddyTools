@@ -123,6 +123,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/components/dashboard/incident-card'],
+  'La tarjeta compartida de incidencias',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
