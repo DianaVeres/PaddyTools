@@ -93,10 +93,7 @@ import {
   DashboardField as Field,
   formatDashboardDate as fmt,
 } from '@/components/dashboard/common';
-import {
-  IncidentDocument,
-  ReservationPrintCard,
-} from '@/components/dashboard/print-components';
+import { ReservationPrintCard } from '@/components/dashboard/print-components';
 import { OrderItems as Items } from '@/components/dashboard/order-items';
 import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
@@ -112,6 +109,7 @@ import { GlobalSearchPanel } from '@/components/dashboard/global-search-panel';
 import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
+import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -3020,34 +3018,12 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog
+      <IncidentDocumentDialog
         open={modal === 'detalle-incidencia'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="incident-document-dialog">
-          <DialogHeader>
-            <DialogTitle>
-              Incidencia #{selectedIncident?.orderNumber}
-            </DialogTitle>
-            <DialogDescription>
-              Documento guardado en el registro compartido.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedIncident && <IncidentDocument incident={selectedIncident} />}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cerrar
-            </Button>
-            <Button
-              onClick={() =>
-                selectedIncident && printIncidentDocument(selectedIncident)
-              }
-            >
-              <Printer /> Imprimir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        incident={selectedIncident}
+        onClose={() => setModal(null)}
+        onPrint={printIncidentDocument}
+      />
       <PrintSheets
         incident={printIncident}
         incidentMode={printMode}

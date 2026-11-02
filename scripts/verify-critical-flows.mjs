@@ -461,6 +461,14 @@ requireAll(
   ['@/components/dashboard/print-sheets', 'PrintSheets'],
   'Las hojas de impresión',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/incident-document-dialog',
+    'IncidentDocumentDialog',
+  ],
+  'El diálogo de documento de incidencia',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
