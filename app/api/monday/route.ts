@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  mondayReferenceCandidates,
-  normalizeReferenceInput,
-  searchKey,
-} from '@/lib/global-search';
+import { normalizeReferenceInput, searchKey } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
 import {
-  allMondayBoardItems as allBoardItems,
   mondayRequest as monday,
-  type MondayItem,
 } from '@/lib/monday-client';
 import { MONDAY_BOARDS as BOARDS } from '@/lib/monday-config';
-import {
-  mondayReservationBaseReference as reservationBaseReference,
-  normalizeMondayItem as normalizeItem,
-} from '@/lib/monday-mapping';
-import {
-  loadMondayCustomerContacts as customerContacts,
-} from '@/lib/monday-read';
 import { loadMondayUpdates } from '@/lib/monday-updates';
 import {
   createMondayReservation,
@@ -26,6 +13,7 @@ import {
 import { loadMondayReservationOptions } from '@/lib/monday-options';
 import { loadAllMondayReservations } from '@/lib/monday-reservations';
 import { searchMondayRecords } from '@/lib/monday-search';
+import { lookupMondayRecords } from '@/lib/monday-lookup';
 
 const cleanKey = searchKey;
 export async function GET(request: NextRequest) {
@@ -127,91 +115,8 @@ export async function GET(request: NextRequest) {
       { error: 'Introduce un número de pedido.' },
       { status: 400 },
     );
-  const numbers = mondayReferenceCandidates(number);
-  const query = `query ($board: ID!, $numbers: [String]!) { items_page_by_column_values(board_id:$board, limit:100, columns:[{column_id:"name",column_values:$numbers}]) { items { id name updated_at column_values { id text ... on BoardRelationValue { display_value linked_item_ids } ... on FormulaValue { display_value } column { title } } } } }`;
   try {
-    const exactRecords = (
-      await Promise.all(
-        BOARDS.map(async (board) => {
-          const data = (await monday(
-            query,
-            { board: board.id, numbers },
-            token,
-          )) as { items_page_by_column_values?: { items?: MondayItem[] } };
-          return (data.items_page_by_column_values?.items || []).map((item) =>
-            normalizeItem(item, board),
-          );
-        }),
-      )
-    ).flat();
-    const requestedReservation = reservationBaseReference(number);
-    let relatedRecords: ReturnType<typeof normalizeItem>[] = [];
-    if (/^R\d+$/i.test(requestedReservation)) {
-      relatedRecords = (
-        await Promise.all(
-          BOARDS.map(async (board) => {
-            return (await allBoardItems(board.id, token))
-              .filter(
-                (item) =>
-                  reservationBaseReference(item.name) === requestedReservation,
-              )
-              .map((item) => normalizeItem(item, board));
-          }),
-        )
-      ).flat();
-    }
-    const rawRecords = [
-      ...new Map(
-        [...exactRecords, ...relatedRecords].map((record) => [record.id, record]),
-      ).values(),
-    ];
-    const articleIds = [
-      ...new Set(rawRecords.flatMap((record) => record.articleIds)),
-    ];
-    const articleDetails = new Map<
-      string,
-      { code: string; description: string }
-    >();
-    if (articleIds.length) {
-      const articleQuery = `query ($ids:[ID!]!){items(ids:$ids){id name column_values{id text column{title}}}}`;
-      const articleData = (await monday(
-        articleQuery,
-        { ids: articleIds },
-        token,
-      )) as { items?: MondayItem[] };
-      for (const item of articleData.items || []) {
-        const values: Record<string, string> = {};
-        for (const value of item.column_values || [])
-          values[cleanKey(value.column?.title || value.id)] = String(
-            value.text || '',
-          ).trim();
-        articleDetails.set(item.id, {
-          code: item.name,
-          description:
-            values['DESCRIPCION ARTICULO'] || values['DESCRIPCION'] || '',
-        });
-      }
-    }
-    const contactsByCustomer = await customerContacts(rawRecords, token);
-    const records = rawRecords.map(({ articleIds: ids, ...record }) => {
-      const detail = ids.map((id) => articleDetails.get(id)).find(Boolean);
-      return {
-        ...record,
-        phone:
-          record.phone ||
-          record.customerIds
-            .map((id) => contactsByCustomer.get(id)?.phone)
-            .find(Boolean) ||
-          '',
-        customerEmail:
-          record.customerIds
-            .map((id) => contactsByCustomer.get(id)?.email)
-            .find(Boolean) ||
-          '',
-        code: record.code || detail?.code || '',
-        articleDescription: detail?.description || record.article || '',
-      };
-    });
+    const records = await lookupMondayRecords(number, token);
     return NextResponse.json({ found: records.length > 0, records });
   } catch (error) {
     return NextResponse.json(

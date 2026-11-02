@@ -193,19 +193,28 @@ requireAll(
   [
     '@/lib/monday-client',
     '@/lib/monday-config',
-    '@/lib/monday-mapping',
-    '@/lib/monday-read',
     '@/lib/monday-updates',
     '@/lib/monday-write',
     '@/lib/monday-options',
     '@/lib/monday-reservations',
     '@/lib/monday-search',
+    '@/lib/monday-lookup',
     'updatesFor',
-    'mondayReferenceCandidates',
     'normalizeReferenceInput',
     'searchKey',
   ],
   'La integración de Monday',
+);
+requireAll(
+  'lib/monday-lookup.ts',
+  [
+    'lookupMondayRecords',
+    'mondayReferenceCandidates',
+    'items_page_by_column_values',
+    'mondayReservationBaseReference',
+    'enrichMondayReservations',
+  ],
+  'La búsqueda exacta de referencias en Monday',
 );
 requireAll(
   'lib/monday-search.ts',
