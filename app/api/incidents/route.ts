@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { getDb } from '@/db';
-import { incidentRecords } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
 import { canDeleteIncidents } from '@/lib/permissions';
 import {
@@ -9,16 +6,19 @@ import {
   normalizeReferenceInput,
 } from '@/lib/global-search';
 import {
-  incidentFieldsFor,
   incidentTextValue as textValue,
   mapStoredIncident as mapIncident,
-  nextAutomaticIncidentId,
   readAllIncidentRows as readAllRows,
 } from '@/lib/incident-store';
 import {
   deleteStoredIncident,
   updateIncidentStatus,
 } from '@/lib/incident-actions';
+import {
+  allocateAutomaticIncidentId,
+  IncidentValidationError,
+  saveIncident,
+} from '@/lib/incident-write';
 
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
@@ -115,76 +115,14 @@ export async function PATCH(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const incoming = (await request.json()) as Record<string, unknown>;
-    const rows = await readAllRows();
     if (Boolean(incoming.allocate_id_only))
       return NextResponse.json({
-        generatedId: await nextAutomaticIncidentId(rows),
+        generatedId: await allocateAutomaticIncidentId(),
       });
-    let originalReference = textValue(incoming.order_number)
-      .trim()
-      .toUpperCase();
-    if (!originalReference && Boolean(incoming.auto_generate_id))
-      originalReference = await nextAutomaticIncidentId(rows);
-    if (!originalReference)
-      return NextResponse.json(
-        { error: 'Falta el número de pedido.' },
-        { status: 400 },
-      );
-    const record: Record<string, unknown> = {
-      ...incoming,
-      order_number: /^I/.test(originalReference)
-        ? originalReference
-        : `I${originalReference}`,
-    };
-    if (!textValue(record.incident_school_name).trim())
-      return NextResponse.json(
-        { error: 'Selecciona el colegio de la incidencia.' },
-        { status: 400 },
-      );
-    if (!textValue(record.incident_text).trim())
-      return NextResponse.json(
-        { error: 'Describe la incidencia antes de guardar.' },
-        { status: 400 },
-      );
-    const requestedId = textValue(incoming.record_id).trim();
-    const previous = requestedId
-      ? rows.find((row) => row.id === requestedId)
-      : undefined;
-    const now = new Date().toISOString();
-    const saved: Record<string, unknown> = {
-      ...previous?.data,
-      ...record,
-      source_type:
-        textValue(record.source_type) ||
-        textValue(previous?.data.source_type) ||
-        'order',
-      products_json:
-        typeof record.products_json === 'string'
-          ? record.products_json
-          : JSON.stringify(record.products_json || []),
-      created_at: textValue(previous?.data.created_at) || now,
-      updated_at: now,
-      recurrence_count:
-        Number(previous?.data.recurrence_count || 0) +
-        (Boolean(record.is_recurrence) ? 1 : 0),
-    };
-    const id = previous?.id || `INC-${crypto.randomUUID()}`;
-    if (previous)
-      await getDb()
-        .update(incidentRecords)
-        .set(incidentFieldsFor(id, saved))
-        .where(eq(incidentRecords.id, id));
-    else
-      await getDb()
-        .insert(incidentRecords)
-        .values(incidentFieldsFor(id, saved));
-    return NextResponse.json({
-      ok: true,
-      id,
-      row: { ...saved, record_id: id },
-      incident: mapIncident({ id, data: saved }),
-    });
+    return NextResponse.json(await saveIncident(incoming));
   } catch (error) {
+    if (error instanceof IncidentValidationError)
+      return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(
       {
         error:

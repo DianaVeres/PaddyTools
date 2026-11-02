@@ -57,9 +57,20 @@ for (const route of wooRoutes) {
 }
 
 const incidentRoute = read('app/api/incidents/route.ts');
-if (!incidentRoute.includes('incidentRecords'))
+const incidentServices = [
+  read('lib/incident-store.ts'),
+  read('lib/incident-actions.ts'),
+  read('lib/incident-write.ts'),
+].join('\n');
+if (
+  !incidentRoute.includes('@/lib/incident-store') ||
+  !incidentServices.includes('incidentRecords')
+)
   throw new Error('Incidencias no utiliza la tabla individual.');
-if (incidentRoute.includes('incidentCache'))
+if (
+  incidentRoute.includes('incidentCache') ||
+  incidentServices.includes('incidentCache')
+)
   throw new Error('Incidencias ha vuelto al bloque JSON antiguo.');
 if (
   !read('drizzle/0005_individual_incidents.sql').includes(

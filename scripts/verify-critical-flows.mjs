@@ -287,14 +287,24 @@ requireAll(
 requireAll(
   'app/api/incidents/route.ts',
   [
-    'incidentRecords',
-    'record_id',
-    'incidentRecords.id',
-    '.insert(incidentRecords)',
     'incidentReferenceCandidates',
     'normalizeReferenceInput',
+    '@/lib/incident-write',
+    'saveIncident(incoming)',
   ],
   'Las incidencias individuales',
+);
+requireAll(
+  'lib/incident-write.ts',
+  [
+    'record_id',
+    'auto_generate_id',
+    'nextAutomaticIncidentId',
+    'recurrence_count:',
+    '.insert(incidentRecords)',
+    '.update(incidentRecords)',
+  ],
+  'El guardado individual de incidencias',
 );
 requireAll(
   'app/api/incidents/route.ts',
@@ -302,8 +312,6 @@ requireAll(
     '@/lib/incident-store',
     'readAllIncidentRows as readAllRows',
     'mapStoredIncident as mapIncident',
-    'incidentFieldsFor',
-    'nextAutomaticIncidentId',
   ],
   'El almacenamiento compartido de incidencias',
 );

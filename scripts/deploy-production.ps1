@@ -31,6 +31,7 @@ $httpResponseCheck = Join-Path $officialRoot 'scripts\test-http-response.mjs'
 $incidentRecordCheck = Join-Path $officialRoot 'scripts\test-incident-record.mjs'
 $incidentStoreCheck = Join-Path $officialRoot 'scripts\test-incident-store.mjs'
 $incidentActionsCheck = Join-Path $officialRoot 'scripts\test-incident-actions.mjs'
+$incidentWriteCheck = Join-Path $officialRoot 'scripts\test-incident-write.mjs'
 $permissionsCheck = Join-Path $officialRoot 'scripts\test-permissions.mjs'
 $apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $globalSearchCheck = Join-Path $officialRoot 'scripts\test-global-search.mjs'
@@ -55,7 +56,7 @@ $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $incidentWriteCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -108,6 +109,10 @@ try {
   & $node $incidentActionsCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Las acciones de incidencias han fallado. No se desplegará nada."
+  }
+  & $node $incidentWriteCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El guardado de incidencias ha fallado. No se desplegará nada."
   }
   & $node $permissionsCheck
   if ($LASTEXITCODE -ne 0) {

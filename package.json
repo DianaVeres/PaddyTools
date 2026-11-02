@@ -19,6 +19,7 @@
     "test:incident-record": "node scripts/test-incident-record.mjs",
     "test:incident-store": "node scripts/test-incident-store.mjs",
     "test:incident-actions": "node scripts/test-incident-actions.mjs",
+    "test:incident-write": "node scripts/test-incident-write.mjs",
     "test:permissions": "node scripts/test-permissions.mjs",
     "test:api-access": "node scripts/test-api-access.mjs",
     "test:global-search": "node scripts/test-global-search.mjs",
