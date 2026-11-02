@@ -191,19 +191,27 @@ requireAll(
 requireAll(
   'app/api/monday/route.ts',
   [
-    '@/lib/monday-client',
-    '@/lib/monday-config',
     '@/lib/monday-updates',
     '@/lib/monday-write',
     '@/lib/monday-options',
     '@/lib/monday-reservations',
     '@/lib/monday-search',
     '@/lib/monday-lookup',
+    '@/lib/monday-maintenance',
     'updatesFor',
     'normalizeReferenceInput',
-    'searchKey',
   ],
   'La integración de Monday',
+);
+requireAll(
+  'lib/monday-maintenance.ts',
+  [
+    'MONDAY_MAINTENANCE_KEY',
+    'isMondayMaintenanceKey',
+    'removeMondayLabelColumn',
+    'delete_column',
+  ],
+  'El mantenimiento protegido de Monday',
 );
 requireAll(
   'lib/monday-lookup.ts',

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { normalizeReferenceInput, searchKey } from '@/lib/global-search';
+import { normalizeReferenceInput } from '@/lib/global-search';
 import { env } from 'cloudflare:workers';
-import {
-  mondayRequest as monday,
-} from '@/lib/monday-client';
-import { MONDAY_BOARDS as BOARDS } from '@/lib/monday-config';
 import { loadMondayUpdates } from '@/lib/monday-updates';
 import {
   createMondayReservation,
@@ -14,8 +10,11 @@ import { loadMondayReservationOptions } from '@/lib/monday-options';
 import { loadAllMondayReservations } from '@/lib/monday-reservations';
 import { searchMondayRecords } from '@/lib/monday-search';
 import { lookupMondayRecords } from '@/lib/monday-lookup';
+import {
+  isMondayMaintenanceKey,
+  removeMondayLabelColumn,
+} from '@/lib/monday-maintenance';
 
-const cleanKey = searchKey;
 export async function GET(request: NextRequest) {
   const token = (env as unknown as Record<string, string>).MONDAY_API_TOKEN;
   if (!token)
@@ -43,24 +42,9 @@ export async function GET(request: NextRequest) {
       );
     }
   }
-  if (request.nextUrl.searchParams.get('maintenance') === 'f8626767-5497-41dd-8d0a-cc43668155d8') {
+  if (isMondayMaintenanceKey(request.nextUrl.searchParams.get('maintenance'))) {
     try {
-      const schema = (await monday(
-        `query ($id:[ID!]!){boards(ids:$id){columns{id title}}}`,
-        { id: [BOARDS[0].id] },
-        token,
-      )) as { boards?: Array<{ columns?: Array<{ id: string; title: string }> }> };
-      const column = schema.boards?.[0]?.columns?.find(
-        (candidate) => cleanKey(candidate.title) === 'ETIQUETA',
-      );
-      if (!column)
-        return NextResponse.json({ removed: false, message: 'La columna ETIQUETA ya no existe.' });
-      await monday(
-        `mutation ($board:ID!,$column:String!){delete_column(board_id:$board,column_id:$column){id}}`,
-        { board: BOARDS[0].id, column: column.id },
-        token,
-      );
-      return NextResponse.json({ removed: true, column: 'ETIQUETA' });
+      return NextResponse.json(await removeMondayLabelColumn(token));
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? `No se pudo eliminar la columna ETIQUETA: ${error.message}` : 'No se pudo eliminar la columna ETIQUETA.' },
@@ -185,7 +169,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (request.headers.get('x-maintenance-key') !== 'f8626767-5497-41dd-8d0a-cc43668155d8')
+  if (!isMondayMaintenanceKey(request.headers.get('x-maintenance-key')))
     return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
   const token = (env as unknown as Record<string, string>).MONDAY_API_TOKEN;
   if (!token)
@@ -194,22 +178,7 @@ export async function DELETE(request: NextRequest) {
       { status: 503 },
     );
   try {
-    const schema = (await monday(
-      `query ($id:[ID!]!){boards(ids:$id){columns{id title}}}`,
-      { id: [BOARDS[0].id] },
-      token,
-    )) as { boards?: Array<{ columns?: Array<{ id: string; title: string }> }> };
-    const column = schema.boards?.[0]?.columns?.find(
-      (candidate) => cleanKey(candidate.title) === 'ETIQUETA',
-    );
-    if (!column)
-      return NextResponse.json({ removed: false, message: 'La columna ETIQUETA ya no existe.' });
-    await monday(
-      `mutation ($board:ID!,$column:String!){delete_column(board_id:$board,column_id:$column){id}}`,
-      { board: BOARDS[0].id, column: column.id },
-      token,
-    );
-    return NextResponse.json({ removed: true, column: 'ETIQUETA' });
+    return NextResponse.json(await removeMondayLabelColumn(token));
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? `No se pudo eliminar la columna ETIQUETA: ${error.message}` : 'No se pudo eliminar la columna ETIQUETA.' },

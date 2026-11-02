@@ -49,11 +49,12 @@ $mondayOptionsCheck = Join-Path $officialRoot 'scripts\test-monday-options.mjs'
 $mondayReservationsCheck = Join-Path $officialRoot 'scripts\test-monday-reservations.mjs'
 $mondaySearchCheck = Join-Path $officialRoot 'scripts\test-monday-search.mjs'
 $mondayLookupCheck = Join-Path $officialRoot 'scripts\test-monday-lookup.mjs'
+$mondayMaintenanceCheck = Join-Path $officialRoot 'scripts\test-monday-maintenance.mjs'
 $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -178,6 +179,10 @@ try {
   & $node $mondayLookupCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La consulta exacta de Monday ha fallado. No se desplegará nada."
+  }
+  & $node $mondayMaintenanceCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El mantenimiento de Monday ha fallado. No se desplegará nada."
   }
   & $typeScript --noEmit
   if ($LASTEXITCODE -ne 0) {
