@@ -17,6 +17,7 @@
     "test:packing-export": "node scripts/test-packing-export.mjs",
     "test:http-response": "node scripts/test-http-response.mjs",
     "test:incident-record": "node scripts/test-incident-record.mjs",
+    "test:incident-store": "node scripts/test-incident-store.mjs",
     "test:permissions": "node scripts/test-permissions.mjs",
     "test:api-access": "node scripts/test-api-access.mjs",
     "test:global-search": "node scripts/test-global-search.mjs",

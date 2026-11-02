@@ -224,6 +224,17 @@ requireAll(
   ],
   'Las incidencias individuales',
 );
+requireAll(
+  'app/api/incidents/route.ts',
+  [
+    '@/lib/incident-store',
+    'readAllIncidentRows as readAllRows',
+    'mapStoredIncident as mapIncident',
+    'incidentFieldsFor',
+    'nextAutomaticIncidentId',
+  ],
+  'El almacenamiento compartido de incidencias',
+);
 forbid(
   'app/api/incidents/route.ts',
   ['incidentCache'],

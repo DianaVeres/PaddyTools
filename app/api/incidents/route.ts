@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
-import { env } from 'cloudflare:workers';
+import { eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
@@ -9,123 +8,13 @@ import {
   incidentReferenceCandidates,
   normalizeReferenceInput,
 } from '@/lib/global-search';
-
-const textValue = (value: unknown) =>
-  typeof value === 'string' || typeof value === 'number' ? String(value) : '';
-
-type StoredIncident = { id: string; data: Record<string, unknown> };
-
-function decodeRow(row: typeof incidentRecords.$inferSelect): StoredIncident {
-  try {
-    return {
-      id: row.id,
-      data: JSON.parse(row.rawJson) as Record<string, unknown>,
-    };
-  } catch {
-    return { id: row.id, data: {} };
-  }
-}
-
-async function readAllRows() {
-  return (
-    await getDb()
-      .select()
-      .from(incidentRecords)
-      .orderBy(desc(incidentRecords.updatedAt))
-  ).map(decodeRow);
-}
-
-function mapIncident(stored: StoredIncident, fallback = '') {
-  const row = stored.data;
-  let products: unknown[] = [];
-  try {
-    products = JSON.parse(textValue(row.products_json) || '[]');
-  } catch {
-    products = [];
-  }
-  const storedText = textValue(row.incident_text);
-  const observationMatch = storedText.match(/\n\nOBSERVACIONES:\s*([\s\S]*)$/i);
-  const storedSource = textValue(row.source_type).toLowerCase();
-  const sourceType =
-    storedSource === 'store' || storedSource === 'tienda'
-      ? 'tienda'
-      : storedSource === 'manual'
-        ? 'manual'
-        : textValue(row.ticket_number) ||
-            textValue(row.amount) ||
-            textValue(row.ticket_file_id)
-          ? 'tienda'
-          : storedSource || 'order';
-  return {
-    id: stored.id,
-    orderNumber: textValue(row.order_number) || fallback,
-    sourceType,
-    ticketNumber:
-      textValue(row.ticket_number) || textValue(row.order_number) || fallback,
-    customerName: textValue(row.customer_name),
-    customerEmail: textValue(row.customer_email),
-    customerPhone: textValue(row.customer_phone),
-    incidentText: observationMatch
-      ? storedText.slice(0, observationMatch.index).trim()
-      : storedText,
-    observations: observationMatch?.[1]?.trim() || '',
-    incidentDate: textValue(row.incident_date) || textValue(row.created_at),
-    solved: Boolean(Number(row.solved)),
-    sent: Boolean(Number(row.sent)),
-    solvedAt: textValue(row.solved_at),
-    updatedAt: textValue(row.updated_at),
-    pickupSchool: Boolean(Number(row.pickup_school)),
-    pickupSchoolName: textValue(row.pickup_school_name),
-    pickupDetails: textValue(row.pickup_details),
-    pickupReceived: Boolean(Number(row.pickup_received)),
-    pickupReceivedAt: textValue(row.pickup_received_at),
-    school: textValue(row.incident_school_name),
-    amount: textValue(row.amount) || textValue(row.order_total),
-    shippingAddress: textValue(row.shipping_address),
-    ticketFileId: textValue(row.ticket_file_id),
-    isRecurrence: Boolean(Number(row.is_recurrence)),
-    recurrenceCount: Number(row.recurrence_count || 0),
-    products,
-  };
-}
-
-function fieldsFor(id: string, data: Record<string, unknown>) {
-  return {
-    id,
-    orderNumber: textValue(data.order_number).trim().toUpperCase(),
-    sourceType: textValue(data.source_type) || 'order',
-    incidentDate: textValue(data.incident_date) || textValue(data.created_at),
-    updatedAt: textValue(data.updated_at) || new Date().toISOString(),
-    pickupSchool: Boolean(Number(data.pickup_school)),
-    rawJson: JSON.stringify(data),
-  };
-}
-
-async function nextAutomaticIncidentId(rows: StoredIncident[]) {
-  const highestExisting = rows.reduce((highest, row) => {
-    const match = textValue(row.data.order_number)
-      .trim()
-      .toUpperCase()
-      .match(/^I?INC-(\d+)$/);
-    return match ? Math.max(highest, Number(match[1])) : highest;
-  }, 0);
-  await env.DB.prepare(
-    'CREATE TABLE IF NOT EXISTS incident_sequences (name TEXT PRIMARY KEY, value INTEGER NOT NULL)',
-  ).run();
-  await env.DB.prepare(
-    'INSERT INTO incident_sequences(name, value) VALUES(?, ?) ON CONFLICT(name) DO NOTHING',
-  )
-    .bind('incidents', highestExisting)
-    .run();
-  const result = await env.DB.prepare(
-    'UPDATE incident_sequences SET value = MAX(value, ?) + 1 WHERE name = ? RETURNING value',
-  )
-    .bind(highestExisting, 'incidents')
-    .first<{ value: number }>();
-  if (!result?.value)
-    throw new Error('No se pudo generar el número automático.');
-  return `INC-${String(result.value).padStart(6, '0')}`;
-}
+import {
+  incidentFieldsFor,
+  incidentTextValue as textValue,
+  mapStoredIncident as mapIncident,
+  nextAutomaticIncidentId,
+  readAllIncidentRows as readAllRows,
+} from '@/lib/incident-store';
 
 export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get('scope');
@@ -230,7 +119,7 @@ export async function PATCH(request: NextRequest) {
     };
     await getDb()
       .update(incidentRecords)
-      .set(fieldsFor(stored.id, data))
+      .set(incidentFieldsFor(stored.id, data))
       .where(eq(incidentRecords.id, stored.id));
     return NextResponse.json({
       ok: true,
@@ -309,9 +198,12 @@ export async function POST(request: NextRequest) {
     if (previous)
       await getDb()
         .update(incidentRecords)
-        .set(fieldsFor(id, saved))
+        .set(incidentFieldsFor(id, saved))
         .where(eq(incidentRecords.id, id));
-    else await getDb().insert(incidentRecords).values(fieldsFor(id, saved));
+    else
+      await getDb()
+        .insert(incidentRecords)
+        .values(incidentFieldsFor(id, saved));
     return NextResponse.json({
       ok: true,
       id,
