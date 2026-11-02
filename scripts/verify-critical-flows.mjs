@@ -442,6 +442,11 @@ requireAll(
   ['@/components/dashboard/global-search-panel', 'GlobalSearchPanel'],
   'La consulta global',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/dashboard-feedback', 'DashboardFeedback'],
+  'Los estados de consulta',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

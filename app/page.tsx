@@ -114,6 +114,7 @@ import { OrderHeading } from '@/components/dashboard/order-heading';
 import { OrderLinkedRecords } from '@/components/dashboard/order-linked-records';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { GlobalSearchPanel } from '@/components/dashboard/global-search-panel';
+import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1690,44 +1691,19 @@ export default function Home() {
           void search(undefined, match.orderNumber, match.id);
         }}
       />
-      {saved && (
-        <div className="success-toast">
-          <Check />
-          {saved}
-        </div>
-      )}
-      {error && (
-        <div className="error-banner">
-          <AlertTriangle />
-          <div>
-            <b>No hemos podido mostrar el pedido</b>
-            <span>{error}</span>
-          </div>
-        </div>
-      )}
-      {!order &&
-        !incident &&
-        !mondayRecords.length &&
-        !orderSearchMatches.length &&
-        !incidentSearchMatches.length &&
-        !ticket &&
-        !loading &&
-        !error && (
-          <div className="empty-state">
-            <Search />
-            <h2>Busca un pedido, reserva o prenda especial</h2>
-            <p>Consultaremos WooCommerce, incidencias y Monday.</p>
-          </div>
+      <DashboardFeedback
+        saved={saved}
+        error={error}
+        loading={loading}
+        hasContent={Boolean(
+          order ||
+          incident ||
+          mondayRecords.length ||
+          orderSearchMatches.length ||
+          incidentSearchMatches.length ||
+          ticket,
         )}
-      {loading && (
-        <div className="empty-state">
-          <RefreshCw className="spin" />
-          <h2>Consultando WooCommerce, Monday e incidencias</h2>
-          <p>
-            Estamos buscando todos los pedidos, reservas, prendas e incidencias.
-          </p>
-        </div>
-      )}
+      />
       {order && (
         <div className="workspace">
           <OrderHeading
