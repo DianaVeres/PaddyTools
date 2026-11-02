@@ -17,9 +17,7 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
-  LogOut,
   Mail,
-  PackageCheck,
   Phone,
   Printer,
   RefreshCw,
@@ -116,6 +114,7 @@ import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 import { OrderSummary } from '@/components/dashboard/order-summary';
 import { OrderHeading } from '@/components/dashboard/order-heading';
 import { OrderLinkedRecords } from '@/components/dashboard/order-linked-records';
+import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1665,78 +1664,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="topbar">
-        <a className="brand" href="#">
-          <img
-            className="brand-mark"
-            src="/paddy-logo-granate.png"
-            alt="Paddy"
-          />
-          <span>
-            <strong>PaddyTools</strong>
-            <small>Gestión Paddy</small>
-          </span>
-        </a>
-        <div className="top-actions">
-          <Button
-            className="action-button registry"
-            variant="outline"
-            onClick={() => window.location.assign('/packing-list')}
-          >
-            <PackageCheck /> PackingList
-          </Button>
-          <Button
-            className="action-button reservation"
-            variant="outline"
-            onClick={() => void openReservations()}
-          >
-            <CalendarDays /> Reservas
-          </Button>
-          <Button
-            className="action-button pickups"
-            variant="outline"
-            onClick={() => void openRegistry('recogidas')}
-          >
-            <Shirt /> Recogidas
-          </Button>
-          <Button
-            className="action-button shipping"
-            disabled={shippingLoading}
-            onClick={openShipping}
-          >
-            <Truck /> ¿Envío?
-          </Button>
-          <Button
-            className="action-button incident"
-            onClick={() => window.location.assign('/incidencias')}
-          >
-            <AlertTriangle /> Incidencias
-          </Button>
-          <Button
-            className="action-button reservation"
-            onClick={() => void openReservation()}
-          >
-            <CalendarDays /> Generar reserva
-          </Button>
-          <span className="divider" />
-          <button
-            className="user-chip"
-            onClick={() => void logout()}
-            title="Cerrar sesión"
-          >
-            <span>
-              {sessionUser?.displayName
-                .split(/\s+/)
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase() || '··'}
-            </span>
-            <b>{sessionUser?.displayName || 'Usuario'}</b>
-            <LogOut size={15} />
-          </button>
-        </div>
-      </header>
+      <DashboardHeader
+        sessionUser={sessionUser}
+        shippingLoading={shippingLoading}
+        onOpenPackingList={() => window.location.assign('/packing-list')}
+        onOpenReservations={() => void openReservations()}
+        onOpenPickups={() => void openRegistry('recogidas')}
+        onOpenShipping={openShipping}
+        onOpenIncidents={() => window.location.assign('/incidencias')}
+        onCreateReservation={() => void openReservation()}
+        onLogout={() => void logout()}
+      />
       <section className="search-band">
         <div className="search-wrap">
           <p className="eyebrow">Consulta global</p>
