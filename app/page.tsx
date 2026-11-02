@@ -115,6 +115,7 @@ import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
 import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 import { OrderSummary } from '@/components/dashboard/order-summary';
 import { OrderHeading } from '@/components/dashboard/order-heading';
+import { OrderLinkedRecords } from '@/components/dashboard/order-linked-records';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1919,28 +1920,10 @@ export default function Home() {
                     }
                   />
                   <Items order={order} units={units} />
-                  {incident ? (
-                    <IncidentCard
-                      incident={incident}
-                      onPrintIncident={printIncidentDocument}
-                    />
-                  ) : (
-                    <article className="linked-card empty-linked">
-                      <div className="linked-accent">
-                        <Archive />
-                      </div>
-                      <div className="linked-main">
-                        <span className="linked-type">Incidencias</span>
-                        <h3>Este pedido no tiene incidencia registrada</h3>
-                        <p>
-                          No se encontró ninguna coincidencia en el registro
-                          compartido.
-                        </p>
-                      </div>
-                    </article>
-                  )}
-                  <MondayCards
-                    records={mondayRecords}
+                  <OrderLinkedRecords
+                    incident={incident}
+                    mondayRecords={mondayRecords}
+                    onPrintIncident={printIncidentDocument}
                     onPrintReservation={requestReservationPrint}
                     onEmailReservation={openReservationEmail}
                   />
