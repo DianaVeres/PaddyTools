@@ -22,7 +22,6 @@ import {
   FileText,
   LogOut,
   Mail,
-  MessageSquarePlus,
   PackageCheck,
   Phone,
   Printer,
@@ -116,6 +115,7 @@ import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
 import { OrderDocuments } from '@/components/dashboard/order-documents';
+import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -2085,95 +2085,17 @@ export default function Home() {
                   </article>
                 </TabsContent>
                 <TabsContent value="notas" className="tab-body">
-                  <article className="info-card notes-card">
-                    <div className="card-title">
-                      <MessageSquarePlus />
-                      <div>
-                        <h3>Notas de seguimiento</h3>
-                        <p>Llamadas, emails y otras gestiones de este pedido</p>
-                      </div>
-                    </div>
-                    <div className="note-composer">
-                      <select
-                        value={noteKind}
-                        onChange={(e) =>
-                          setNoteKind(e.target.value as OrderNote['kind'])
-                        }
-                        aria-label="Tipo de nota"
-                      >
-                        <option value="nota">Nota</option>
-                        <option value="llamada">Llamada</option>
-                        <option value="email">Email</option>
-                      </select>
-                      <Textarea
-                        value={noteDraft}
-                        onChange={(e) => setNoteDraft(e.target.value)}
-                        placeholder="Ejemplo: Ha llamado para consultar cuándo estará preparado…"
-                        rows={3}
-                      />
-                      <Button
-                        onClick={() => void saveOrderNote()}
-                        disabled={!noteDraft.trim()}
-                      >
-                        Guardar nota
-                      </Button>
-                    </div>
-                    <div className="notes-list">
-                      {notesLoading ? (
-                        <p className="notes-empty">Cargando notas…</p>
-                      ) : orderNotes.length ? (
-                        orderNotes.map((note) => (
-                          <article className="note-row" key={note.id}>
-                            <span className={`note-icon ${note.kind}`}>
-                              {note.kind === 'llamada' ? (
-                                <Phone />
-                              ) : note.kind === 'email' ? (
-                                <Mail />
-                              ) : (
-                                <MessageSquarePlus />
-                              )}
-                            </span>
-                            <div>
-                              <div className="note-head">
-                                <b>
-                                  {note.kind === 'llamada'
-                                    ? 'Llamada'
-                                    : note.kind === 'email'
-                                      ? 'Email'
-                                      : 'Nota'}
-                                </b>
-                                <span className="note-head-actions">
-                                  <time>{fmt(note.createdAt)}</time>
-                                  <button
-                                    type="button"
-                                    className="note-delete"
-                                    onClick={() => void deleteOrderNote(note)}
-                                    disabled={Boolean(noteDeletingId)}
-                                    aria-label="Eliminar nota"
-                                    title="Eliminar nota"
-                                  >
-                                    {noteDeletingId === note.id ? (
-                                      <RefreshCw className="spin" />
-                                    ) : (
-                                      <Trash2 />
-                                    )}
-                                  </button>
-                                </span>
-                              </div>
-                              <p>{note.content}</p>
-                              {note.authorName && (
-                                <small>Por {note.authorName}</small>
-                              )}
-                            </div>
-                          </article>
-                        ))
-                      ) : (
-                        <p className="notes-empty">
-                          Todavía no hay notas en este pedido.
-                        </p>
-                      )}
-                    </div>
-                  </article>
+                  <OrderNotesCard
+                    notes={orderNotes}
+                    loading={notesLoading}
+                    kind={noteKind}
+                    draft={noteDraft}
+                    deletingId={noteDeletingId}
+                    onKindChange={setNoteKind}
+                    onDraftChange={setNoteDraft}
+                    onSave={() => void saveOrderNote()}
+                    onDelete={(note) => void deleteOrderNote(note)}
+                  />
                 </TabsContent>
                 <TabsContent value="movimientos" className="tab-body">
                   <OrderMovements order={order} />

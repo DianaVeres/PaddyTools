@@ -52,6 +52,7 @@ $dashboardStoreTicketCheck = Join-Path $officialRoot 'scripts\test-dashboard-sto
 $dashboardOrderActivityCheck = Join-Path $officialRoot 'scripts\test-dashboard-order-activity.mjs'
 $dashboardOrderMovementsCheck = Join-Path $officialRoot 'scripts\test-dashboard-order-movements.mjs'
 $dashboardOrderDocumentsCheck = Join-Path $officialRoot 'scripts\test-dashboard-order-documents.mjs'
+$dashboardOrderNotesCheck = Join-Path $officialRoot 'scripts\test-dashboard-order-notes.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
 $storeTicketCheck = Join-Path $officialRoot 'scripts\test-store-ticket.mjs'
 $mondayClientCheck = Join-Path $officialRoot 'scripts\test-monday-client.mjs'
@@ -68,7 +69,7 @@ $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $incidentWriteCheck, $incidentQueryCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $dashboardTypesCheck, $dashboardCommonCheck, $dashboardPrintCheck, $dashboardOrderItemsCheck, $dashboardIncidentCardCheck, $dashboardMondayCardsCheck, $dashboardReservationNotesCheck, $dashboardStoreTicketCheck, $dashboardOrderActivityCheck, $dashboardOrderMovementsCheck, $dashboardOrderDocumentsCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $incidentWriteCheck, $incidentQueryCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $dashboardTypesCheck, $dashboardCommonCheck, $dashboardPrintCheck, $dashboardOrderItemsCheck, $dashboardIncidentCardCheck, $dashboardMondayCardsCheck, $dashboardReservationNotesCheck, $dashboardStoreTicketCheck, $dashboardOrderActivityCheck, $dashboardOrderMovementsCheck, $dashboardOrderDocumentsCheck, $dashboardOrderNotesCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -205,6 +206,10 @@ try {
   & $node $dashboardOrderDocumentsCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los documentos del pedido han fallado. No se desplegará nada."
+  }
+  & $node $dashboardOrderNotesCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "Las notas del pedido han fallado. No se desplegará nada."
   }
   & $node $orderNoteCheck
   if ($LASTEXITCODE -ne 0) {
