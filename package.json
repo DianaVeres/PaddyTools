@@ -32,6 +32,7 @@
     "test:dashboard-types": "node scripts/test-dashboard-types.mjs",
     "test:dashboard-common": "node scripts/test-dashboard-common.mjs",
     "test:dashboard-print": "node scripts/test-dashboard-print.mjs",
+    "test:dashboard-order-items": "node scripts/test-dashboard-order-items.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

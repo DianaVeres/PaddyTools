@@ -118,6 +118,11 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
+  ['@/components/dashboard/order-items'],
+  'La tarjeta compartida de artículos del pedido',
+);
+requireAll(
+  'app/page.tsx',
   [
     '@/lib/contact-links',
     'buildEmailLink',
