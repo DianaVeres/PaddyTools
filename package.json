@@ -34,6 +34,7 @@
     "test:monday-updates": "node scripts/test-monday-updates.mjs",
     "test:monday-write": "node scripts/test-monday-write.mjs",
     "test:monday-options": "node scripts/test-monday-options.mjs",
+    "test:monday-reservations": "node scripts/test-monday-reservations.mjs",
     "verify:production": "node scripts/verify-production.mjs",
     "backup:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backup-production.ps1",
     "deploy:production": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-production.ps1",

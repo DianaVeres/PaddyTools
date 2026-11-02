@@ -25,6 +25,7 @@ import {
   updateMondayReservation,
 } from '@/lib/monday-write';
 import { loadMondayReservationOptions } from '@/lib/monday-options';
+import { loadAllMondayReservations } from '@/lib/monday-reservations';
 
 const cleanKey = searchKey;
 const digits = searchDigits;
@@ -97,41 +98,9 @@ export async function GET(request: NextRequest) {
   }
   if (request.nextUrl.searchParams.get('mode') === 'reservations') {
     try {
-      const board = BOARDS[0];
-      const rawRecords = (await allBoardItems(board.id, token))
-        .map((item) => normalizeItem(item, board));
-      const articleIds = [...new Set(rawRecords.flatMap((record) => record.articleIds))];
-      const articleDetails = new Map<string, { code: string; description: string }>();
-      for (let start = 0; start < articleIds.length; start += 100) {
-        const articleData = (await monday(
-          `query ($ids:[ID!]!){items(ids:$ids){id name column_values{id text column{title}}}}`,
-          { ids: articleIds.slice(start, start + 100) },
-          token,
-        )) as { items?: MondayItem[] };
-        for (const item of articleData.items || []) {
-          const values: Record<string, string> = {};
-          for (const value of item.column_values || [])
-            values[cleanKey(value.column?.title || value.id)] = String(value.text || '').trim();
-          articleDetails.set(item.id, {
-            code: item.name,
-            description: values['DESCRIPCION ARTICULO'] || values['DESCRIPCION'] || '',
-          });
-        }
-      }
-      const contactsByCustomer = await customerContacts(rawRecords, token);
-      const records = rawRecords
-        .map((record) => {
-          const detail = record.articleIds.map((id) => articleDetails.get(id)).find(Boolean);
-          return {
-            ...record,
-            phone: record.phone || record.customerIds.map((id) => contactsByCustomer.get(id)?.phone).find(Boolean) || '',
-            customerEmail: record.customerIds.map((id) => contactsByCustomer.get(id)?.email).find(Boolean) || '',
-            code: record.code || detail?.code || '',
-            articleDescription: detail?.description || record.article || '',
-          };
-        })
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-      return NextResponse.json({ records });
+      return NextResponse.json({
+        records: await loadAllMondayReservations(token),
+      });
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'No se pudieron cargar las reservas.' },
