@@ -36,6 +36,10 @@ import {
   filterReservationRegistry,
 } from '@/lib/dashboard-registry-filter';
 import {
+  mondayReservationUpdateItemIds,
+  reservationArticlesForSchool,
+} from '@/lib/dashboard-reservation-options';
+import {
   foldSearchText as folded,
   isExactRecordReference,
   incidentStorageReference,
@@ -348,17 +352,7 @@ export default function Home() {
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
   const normalized = useMemo(() => normalizeReferenceInput(query), [query]);
   const mondayUpdateItemIds = useMemo(
-    () =>
-      [
-        ...new Set(
-          mondayRecords
-            .filter((record) => record.kind === 'reserva')
-            .map((record) => record.id)
-            .filter(Boolean),
-        ),
-      ]
-        .sort()
-        .join(','),
+    () => mondayReservationUpdateItemIds(mondayRecords),
     [mondayRecords],
   );
   const linkedOrderNumber = useMemo(
@@ -367,35 +361,7 @@ export default function Home() {
   );
   const reservationArticles = useMemo(() => {
     const articles = reservationOptions?.articles || [];
-    const school = folded(reservationDraft.school);
-    if (!school) return [];
-    const ignoredWords = new Set([
-      'colegio',
-      'colegios',
-      'escuela',
-      'centro',
-      'ceip',
-      'ies',
-      'san',
-      'santa',
-      'del',
-      'las',
-      'los',
-    ]);
-    const schoolWords = reservationDraft.school
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .split(/[^a-z0-9]+/)
-      .filter((word) => word.length >= 4 && !ignoredWords.has(word));
-    const matches = articles.filter((item) => {
-      const article = folded(`${item.code} ${item.description}`);
-      return (
-        article.includes(school) ||
-        schoolWords.some((word) => article.includes(folded(word)))
-      );
-    });
-    return matches.length ? matches : articles;
+    return reservationArticlesForSchool(articles, reservationDraft.school);
   }, [reservationDraft.school, reservationOptions]);
 
   function openEmailComposer(

@@ -63,6 +63,7 @@
     "test:dashboard-incident-registry-dialog": "node scripts/test-dashboard-incident-registry-dialog.mjs",
     "test:dashboard-reservation-result-dialog": "node scripts/test-dashboard-reservation-result-dialog.mjs",
     "test:dashboard-registry-filter": "node scripts/test-dashboard-registry-filter.mjs",
+    "test:dashboard-reservation-options": "node scripts/test-dashboard-reservation-options.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

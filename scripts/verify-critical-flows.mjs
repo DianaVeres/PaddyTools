@@ -558,6 +558,11 @@ requireAll(
   ['@/lib/dashboard-registry-filter', 'filterIncidentRegistry', 'filterReservationRegistry'],
   'Los filtros compartidos de registros',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-reservation-options', 'mondayReservationUpdateItemIds', 'reservationArticlesForSchool'],
+  'Las opciones compartidas de reservas',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
