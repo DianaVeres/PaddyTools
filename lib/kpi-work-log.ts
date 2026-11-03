@@ -8,6 +8,13 @@ export const KPI_ACTIVITIES = [
   ['otro', 'Otra tarea'],
 ] as const;
 
+// PackingList y Hotline abren y cierran su propio contador. No deben aparecer
+// en el selector manual porque eso duplicaría el tiempo registrado.
+export const AUTOMATIC_KPI_ACTIVITIES = ['packing', 'correos'] as const;
+export const MANUAL_KPI_ACTIVITIES = KPI_ACTIVITIES.filter(
+  ([value]) => !AUTOMATIC_KPI_ACTIVITIES.some((automatic) => automatic === value),
+);
+
 export type KpiActivity = (typeof KPI_ACTIVITIES)[number][0];
 export type KpiWorkLog = {
   id: string;

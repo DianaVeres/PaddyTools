@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { KPI_ACTIVITIES, type KpiActivity } from '@/lib/kpi-work-log';
+import {
+  KPI_ACTIVITIES,
+  MANUAL_KPI_ACTIVITIES,
+  type KpiActivity,
+} from '@/lib/kpi-work-log';
 import { saveKpiWorkLog } from '@/lib/kpi-client';
 import styles from './kpi-timer.module.css';
 
@@ -60,7 +64,7 @@ export function KpiTimer() {
   }
   const name = KPI_ACTIVITIES.find(([value]) => value === active?.activity)?.[1] || '';
   return <aside className={styles.timer} aria-label="Contador de productividad">
-    {!active ? <div className={styles.closed}><select value={activity} onChange={(e) => setActivity(e.target.value as KpiActivity)}>{KPI_ACTIVITIES.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select><button onClick={start}>Iniciar</button></div>
+    {!active ? <div className={styles.closed}><select value={activity} onChange={(e) => setActivity(e.target.value as KpiActivity)}>{MANUAL_KPI_ACTIVITIES.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select><button onClick={start}>Iniciar</button></div>
     : completing ? <div className={styles.form}><h3>Terminar: {name}</h3><p>Indica las unidades realizadas durante {elapsedText(elapsed)}.</p>{(['orders','products','packingLists'] as const).map((field) => <label key={field}>{field === 'orders' ? 'Pedidos' : field === 'products' ? 'Productos' : 'PackingLists'}<input type="number" min={0} value={counts[field]} onChange={(e) => setCounts({ ...counts, [field]: Number(e.target.value) })} /></label>)}<label className={styles.wide}>Observaciones<input value={counts.notes} onChange={(e) => setCounts({ ...counts, notes: e.target.value })} /></label>{error && <p className={styles.error}>{error}</p>}<button className={styles.secondary} onClick={() => setCompleting(false)}>Seguir contando</button><button onClick={() => void finish()}>Guardar y terminar</button></div>
     : <div className={styles.active}><span className={styles.pulse}/><div><span>{name}</span><strong>{elapsedText(elapsed)}</strong></div><button onClick={() => setCompleting(true)}>Terminar</button></div>}
   </aside>;
