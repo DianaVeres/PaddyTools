@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BarChart3,
   CalendarDays,
   LogOut,
   PackageCheck,
@@ -24,6 +25,7 @@ export function DashboardHeader({
   sessionUser,
   shippingLoading,
   onOpenPackingList,
+  onOpenKpis,
   onOpenReservations,
   onOpenPickups,
   onOpenShipping,
@@ -34,6 +36,7 @@ export function DashboardHeader({
   sessionUser: SessionUser | null;
   shippingLoading: boolean;
   onOpenPackingList: () => void;
+  onOpenKpis: () => void;
   onOpenReservations: () => void;
   onOpenPickups: () => void;
   onOpenShipping: () => void;
@@ -57,6 +60,13 @@ export function DashboardHeader({
           onClick={onOpenPackingList}
         >
           <PackageCheck /> PackingList
+        </Button>
+        <Button
+          className="action-button kpis"
+          variant="outline"
+          onClick={onOpenKpis}
+        >
+          <BarChart3 /> KPIs
         </Button>
         <Button
           className="action-button reservation"

@@ -34,6 +34,10 @@ const homeHtml = await home.text();
 if (!homeHtml.includes('PaddyTools') && !homeHtml.includes('Gestión unificada')) {
   throw new Error('La portada no contiene la identidad de PaddyTools.');
 }
+const kpis = await request('/kpis');
+const kpisHtml = await kpis.text();
+if (!kpisHtml.includes('KPIs') && !kpisHtml.includes('Indicadores'))
+  throw new Error('La pantalla de KPI no está disponible en producción.');
 
 // La ruta pública de salud comprueba ambas bases sin exponer datos personales.
 const health = await json('/api/health');
@@ -54,6 +58,7 @@ for (const path of [
   '/api/packing-lists?from=2000-01-01&to=2000-01-02',
   '/api/shipping?order=SMOKE999999999',
   '/api/search?number=SMOKE-INVALID',
+  '/api/kpis?from=2026-11-01&to=2026-11-30',
 ]) {
   const protectedResponse = await json(path, [401]);
   if (typeof protectedResponse.data?.error !== 'string')

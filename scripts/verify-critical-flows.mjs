@@ -602,6 +602,21 @@ requireAll(
   ['@/lib/use-draggable-dialog', 'useDraggableDialog'],
   'El movimiento compartido de ventanas',
 );
+requireAll(
+  'components/dashboard/dashboard-header.tsx',
+  ['onOpenKpis', '<BarChart3 /> KPIs'],
+  'El acceso al módulo KPI',
+);
+requireAll(
+  'app/kpis/page.tsx',
+  ['@/components/kpis/kpi-dashboard', '/api/kpis'],
+  'La pantalla independiente de KPI',
+);
+requireAll(
+  'lib/kpi-service.ts',
+  ['@/lib/kpi-metrics', 'calculateKpiSnapshot'],
+  'El servicio independiente de KPI',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
