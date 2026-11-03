@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const dialog = readFileSync(
+  resolve(root, 'components/dashboard/reservation-form-dialog.tsx'),
+  'utf8',
+);
 
 for (const fragment of [
   'Fecha reserva',
@@ -30,13 +34,15 @@ for (const fragment of [
 for (const fragment of [
   '@/components/dashboard/reservation-details-section',
   '<ReservationDetailsSection',
-  'draft={reservationDraft}',
-  'options={reservationOptions}',
-  'articles={reservationArticles}',
-  'onChange={setReservationDraft}',
+  'draft={draft}',
+  'options={options}',
+  'articles={articles}',
+  'onChange={onDraftChange}',
 ]) {
-  if (!page.includes(fragment))
-    throw new Error(`La pantalla no conecta los detalles de reserva: ${fragment}`);
+  if (!dialog.includes(fragment))
+    throw new Error(`El diálogo no conecta los detalles de reserva: ${fragment}`);
 }
+if (!page.includes('@/components/dashboard/reservation-form-dialog'))
+  throw new Error('La pantalla no conecta el diálogo de reservas.');
 
 console.log('Detalles del formulario de reservas verificados.');

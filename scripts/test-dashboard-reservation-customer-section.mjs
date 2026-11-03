@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const dialog = readFileSync(
+  resolve(root, 'components/dashboard/reservation-form-dialog.tsx'),
+  'utf8',
+);
 
 for (const fragment of [
   'Nº reserva o pedido',
@@ -28,14 +32,16 @@ for (const fragment of [
 for (const fragment of [
   '@/components/dashboard/reservation-customer-section',
   '<ReservationCustomerSection',
-  'draft={reservationDraft}',
-  'options={reservationOptions}',
-  'newCustomer={newReservationCustomer}',
-  'editing={Boolean(editingReservationId)}',
-  'onNewCustomerChange={setNewReservationCustomer}',
+  'draft={draft}',
+  'options={options}',
+  'newCustomer={newCustomer}',
+  'editing={editing}',
+  'onNewCustomerChange={onNewCustomerChange}',
 ]) {
-  if (!page.includes(fragment))
-    throw new Error(`La pantalla no conecta los datos de cliente: ${fragment}`);
+  if (!dialog.includes(fragment))
+    throw new Error(`El diálogo no conecta los datos de cliente: ${fragment}`);
 }
+if (!page.includes('@/components/dashboard/reservation-form-dialog'))
+  throw new Error('La pantalla no conecta el diálogo de reservas.');
 
 console.log('Datos de cliente del formulario de reservas verificados.');

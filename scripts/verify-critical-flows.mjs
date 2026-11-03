@@ -495,7 +495,7 @@ requireAll(
   'El formulario completo de incidencias',
 );
 requireAll(
-  'app/page.tsx',
+  'components/dashboard/reservation-form-dialog.tsx',
   [
     '@/components/dashboard/reservation-customer-section',
     'ReservationCustomerSection',
@@ -503,12 +503,17 @@ requireAll(
   'Los datos de cliente del formulario de reservas',
 );
 requireAll(
-  'app/page.tsx',
+  'components/dashboard/reservation-form-dialog.tsx',
   [
     '@/components/dashboard/reservation-details-section',
     'ReservationDetailsSection',
   ],
   'Los detalles del formulario de reservas',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/reservation-form-dialog', 'ReservationFormDialog'],
+  'El formulario completo de reservas',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

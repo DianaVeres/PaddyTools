@@ -3,7 +3,6 @@
 import {
   FormEvent,
   PointerEvent as ReactPointerEvent,
-  CSSProperties,
   useEffect,
   useMemo,
   useRef,
@@ -110,8 +109,7 @@ import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
-import { ReservationCustomerSection } from '@/components/dashboard/reservation-customer-section';
-import { ReservationDetailsSection } from '@/components/dashboard/reservation-details-section';
+import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1850,83 +1848,24 @@ export default function Home() {
         onPrint={printIncidentDraft}
         onSave={(solved) => void save('incidencia', solved)}
       />
-      <Dialog
+      <ReservationFormDialog
         open={modal === 'reserva'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent
-          className="form-dialog reservation-dialog"
-          style={
-            {
-              '--reservation-drag-x': `${reservationDialogOffset.x}px`,
-              '--reservation-drag-y': `${reservationDialogOffset.y}px`,
-            } as CSSProperties
-          }
-        >
-          <DialogHeader
-            className="reservation-drag-handle"
-            onPointerDown={startReservationDrag}
-            onPointerMove={moveReservationDialog}
-            onPointerUp={stopReservationDrag}
-            onPointerCancel={stopReservationDrag}
-          >
-            <div className="modal-icon green">
-              <CalendarDays />
-            </div>
-            <DialogTitle>
-              {editingReservationId ? 'Completar reserva' : 'Generar reserva'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingReservationId
-                ? 'Rellena o corrige los campos y guarda los cambios directamente en Monday.'
-                : 'Puedes crear una reserva libre o asociarla a un pedido existente.'}
-              .
-            </DialogDescription>
-            <small className="drag-help">
-              Arrastra desde aquí para mover la ventana
-            </small>
-          </DialogHeader>
-          {reservationLoading ? (
-            <div className="reservation-loading">
-              <RefreshCw className="spin" />
-              Cargando campos de Monday…
-            </div>
-          ) : (
-            <div className="form-grid two reservation-grid">
-              <ReservationCustomerSection
-                draft={reservationDraft}
-                options={reservationOptions}
-                newCustomer={newReservationCustomer}
-                editing={Boolean(editingReservationId)}
-                onChange={setReservationDraft}
-                onNewCustomerChange={setNewReservationCustomer}
-              />
-              <ReservationDetailsSection
-                draft={reservationDraft}
-                options={reservationOptions}
-                articles={reservationArticles}
-                onChange={setReservationDraft}
-              />
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cancelar
-            </Button>
-            <Button
-              className="save-reservation"
-              disabled={reservationLoading || reservationSaving}
-              onClick={() => void save('reserva')}
-            >
-              {reservationSaving
-                ? 'Guardando…'
-                : editingReservationId
-                  ? 'Guardar cambios'
-                  : 'Crear en Monday'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        editing={Boolean(editingReservationId)}
+        loading={reservationLoading}
+        saving={reservationSaving}
+        offset={reservationDialogOffset}
+        draft={reservationDraft}
+        options={reservationOptions}
+        articles={reservationArticles}
+        newCustomer={newReservationCustomer}
+        onClose={() => setModal(null)}
+        onDraftChange={setReservationDraft}
+        onNewCustomerChange={setNewReservationCustomer}
+        onSave={() => void save('reserva')}
+        onDragStart={startReservationDrag}
+        onDragMove={moveReservationDialog}
+        onDragStop={stopReservationDrag}
+      />
       <Dialog
         open={modal === 'reserva-creada'}
         onOpenChange={(open) => !open && setModal(null)}
