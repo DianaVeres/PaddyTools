@@ -111,6 +111,7 @@ import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentPickupSection } from '@/components/dashboard/incident-pickup-section';
+import { IncidentDetailsSection } from '@/components/dashboard/incident-details-section';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1830,141 +1831,26 @@ export default function Home() {
             </DialogDescription>
           </DialogHeader>
           <div className="incident-form">
-            <div className="incident-customer">
-              <b>
-                {order?.customer.name ||
-                  incident?.customerName ||
-                  mondayRecords[0]?.customer ||
-                  'Cliente sin nombre'}
-              </b>
-              <span>
-                {order?.customer.email || incident?.customerEmail || ''}
-                {order?.customer.phone ||
+            <IncidentDetailsSection
+              draft={incidentDraft}
+              customerName={
+                order?.customer.name ||
+                incident?.customerName ||
+                mondayRecords[0]?.customer ||
+                ''
+              }
+              customerEmail={
+                order?.customer.email || incident?.customerEmail || ''
+              }
+              customerPhone={
+                order?.customer.phone ||
                 incident?.customerPhone ||
-                mondayRecords[0]?.phone
-                  ? ` · ${order?.customer.phone || incident?.customerPhone || mondayRecords[0]?.phone}`
-                  : ''}
-              </span>
-            </div>
-            <div className="form-grid two">
-              <Field label="Email del cliente">
-                <Input
-                  type="email"
-                  value={incidentDraft.customerEmail}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      customerEmail: e.target.value,
-                    })
-                  }
-                  placeholder="cliente@email.com"
-                />
-              </Field>
-              <Field label="Fecha de recepción de la incidencia">
-                <Input
-                  type="date"
-                  value={incidentDraft.date}
-                  onChange={(e) =>
-                    setIncidentDraft({ ...incidentDraft, date: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="Colegio de la incidencia">
-                <Input
-                  list="incident-schools"
-                  value={incidentDraft.school}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      school: e.target.value,
-                    })
-                  }
-                  placeholder="Selecciona o escribe el colegio"
-                />
-                <datalist id="incident-schools">
-                  {schools.map((school) => (
-                    <option key={school} value={school} />
-                  ))}
-                </datalist>
-              </Field>
-              <Field label="Descripción de la incidencia">
-                <Textarea
-                  rows={6}
-                  value={incidentDraft.text}
-                  onChange={(e) =>
-                    setIncidentDraft({ ...incidentDraft, text: e.target.value })
-                  }
-                  placeholder="Describe aquí qué ha ocurrido…"
-                />
-              </Field>
-              <Field label="Observaciones">
-                <Textarea
-                  rows={3}
-                  value={incidentDraft.observations}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      observations: e.target.value,
-                    })
-                  }
-                  placeholder="Añade cualquier observación adicional…"
-                />
-              </Field>
-            </div>
-            <div className="incident-checks">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={incidentDraft.recurrence}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      recurrence: e.target.checked,
-                    })
-                  }
-                />{' '}
-                Es una reincidencia
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={incidentDraft.pickup}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      pickup: e.target.checked,
-                    })
-                  }
-                />{' '}
-                Recoger en el cole
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={incidentDraft.solved}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      solved: e.target.checked,
-                    })
-                  }
-                />{' '}
-                Incidencia solucionada
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={incidentDraft.sent}
-                  onChange={(e) =>
-                    setIncidentDraft({
-                      ...incidentDraft,
-                      sent: e.target.checked,
-                    })
-                  }
-                />{' '}
-                Enviado
-              </label>
-            </div>
+                mondayRecords[0]?.phone ||
+                ''
+              }
+              schools={schools}
+              onChange={setIncidentDraft}
+            />
             <IncidentPickupSection
               draft={incidentDraft}
               schools={schools}

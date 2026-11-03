@@ -71,10 +71,14 @@ requireAll(
     '@/lib/incident-record',
     'incidentLabelLines',
     'incidentStatusLabel',
-    'checked={incidentDraft.sent}',
     'sent: incidentDraft.sent ? 1 : 0',
   ],
   'Los datos e impresión de incidencias',
+);
+requireAll(
+  'components/dashboard/incident-details-section.tsx',
+  ["['sent', 'Enviado']", 'event.target.checked'],
+  'El estado enviado de las incidencias',
 );
 for (const path of ['app/page.tsx', 'app/api/order-notes/route.ts']) {
   requireAll(
@@ -476,6 +480,14 @@ requireAll(
     'IncidentPickupSection',
   ],
   'La recogida del formulario de incidencias',
+);
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/incident-details-section',
+    'IncidentDetailsSection',
+  ],
+  'Los datos del formulario de incidencias',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
