@@ -40,6 +40,11 @@ import {
   reservationArticlesForSchool,
 } from '@/lib/dashboard-reservation-options';
 import {
+  emptyConnectedSearchMessage,
+  hasConnectedSearchResults,
+  incidentsMatchingCustomerQuery,
+} from '@/lib/dashboard-search-results';
+import {
   foldSearchText as folded,
   isExactRecordReference,
   incidentStorageReference,
@@ -513,31 +518,23 @@ export default function Home() {
         }>(incidentsResponse);
         const wooMatches = wooResponse.ok ? wooData.matches || [] : [];
         const mondayMatches = mondayResponse.ok ? mondayData.records || [] : [];
-        const queryDigits = searchTerm.replace(/\D/g, '');
         const incidentMatches = incidentsResponse.ok
-          ? (incidentsData.rows || []).filter((row) => {
-              const nameMatches = folded(row.customerName).includes(
-                folded(searchTerm),
-              );
-              const phone = row.customerPhone.replace(/\D/g, '');
-              const phoneMatches =
-                queryDigits.length >= 5 &&
-                Boolean(phone) &&
-                (phone.includes(queryDigits) || queryDigits.includes(phone));
-              return nameMatches || phoneMatches;
-            })
+          ? incidentsMatchingCustomerQuery(
+              incidentsData.rows || [],
+              searchTerm,
+            )
           : [];
         setOrderSearchMatches(wooMatches);
         setMondayRecords(mondayMatches);
         setIncidentSearchMatches(incidentMatches);
         if (
-          !wooMatches.length &&
-          !mondayMatches.length &&
-          !incidentMatches.length
+          !hasConnectedSearchResults(
+            wooMatches,
+            mondayMatches,
+            incidentMatches,
+          )
         )
-          setError(
-            `No se encontraron pedidos, reservas, prendas ni incidencias para “${searchTerm}”.`,
-          );
+          setError(emptyConnectedSearchMessage(searchTerm));
         return;
       }
       const [wooResponse, incidentResponse, mondayResponse, ticketResponse] =

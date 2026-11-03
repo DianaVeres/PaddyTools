@@ -563,6 +563,11 @@ requireAll(
   ['@/lib/dashboard-reservation-options', 'mondayReservationUpdateItemIds', 'reservationArticlesForSchool'],
   'Las opciones compartidas de reservas',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-search-results', 'incidentsMatchingCustomerQuery', 'hasConnectedSearchResults', 'emptyConnectedSearchMessage'],
+  'Los resultados compartidos de consulta global',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.
