@@ -75,6 +75,7 @@
     "test:kpi-auto-timer": "node scripts/test-kpi-auto-timer.mjs",
     "test:hotline-module": "node scripts/test-hotline-module.mjs",
     "test:quality-errors": "node scripts/test-quality-errors.mjs",
+    "test:documentation": "node scripts/test-documentation.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",
