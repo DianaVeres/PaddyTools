@@ -32,6 +32,10 @@ assert.deepEqual(selectedPickupLines([{ id: 7, name: 'Polo', sku: 'P7' }], incid
 ]);
 assert.equal(validateIncidentDraft({ ...incident, school: '' }, 1), 'Selecciona el colegio de la incidencia.');
 assert.equal(validateIncidentDraft(incident, 0), 'Selecciona al menos un producto para recoger.');
+assert.equal(
+  validateIncidentDraft({ ...incident, pickupSchool: '' }, 1),
+  'Selecciona el colegio al que pertenece el producto.',
+);
 
 const reservation = {
   reference: 'R100', customerId: '', customerName: 'Ana', phone: '612345678',

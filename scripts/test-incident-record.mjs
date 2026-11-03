@@ -34,7 +34,7 @@ assert.deepEqual(incidentLabelLines(incident), [
   'INCIDENCIA IPA49547',
   'NOMBRE: Ana María',
   'FECHA: 30/10/2026',
-  'RECOGIDA TEATINAS PINTO WEB',
+  'RECOGIDA TEATINAS PINTO',
 ]);
 assert.equal(incidentStatusLabel(incident), 'Pendiente · Enviada');
 assert.equal(

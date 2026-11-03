@@ -14,10 +14,11 @@ const dialog = readFileSync(
 
 for (const fragment of [
   'if (!draft.pickup) return null',
-  'Colegio de recogida',
+  'Colegio del producto',
   'Productos para recoger',
   'Cargando productos de WooCommerce',
   'No hay productos publicados para este colegio',
+  'Selecciona primero el colegio al que pertenece el producto',
   'updatePick({ selected: event.target.checked })',
   'updatePick({ size: event.target.value })',
   'updatePick({ units: Number(event.target.value) })',

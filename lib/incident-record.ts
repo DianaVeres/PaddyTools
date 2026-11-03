@@ -32,7 +32,7 @@ export const formatIncidentDate = (
 };
 
 export const incidentSchoolName = (incident: IncidentRecord) =>
-  incident.pickupSchoolName || incident.school || 'SIN COLEGIO';
+  incident.school || incident.pickupSchoolName || 'SIN COLEGIO';
 
 export const incidentLabelLines = (incident: IncidentRecord) => [
   `INCIDENCIA ${incident.orderNumber}`,

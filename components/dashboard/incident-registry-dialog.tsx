@@ -44,7 +44,7 @@ export function IncidentRegistryDialog(props: Props) {
                 <b>{row.customerName || 'Cliente sin nombre'}</b>
                 <span>{pickups ? row.pickupDetails || 'Sin detalle de prendas' : row.incidentText || 'Sin descripción'}</span>
                 {!pickups && <><small>Email: {row.customerEmail || 'No indicado'}</small><small>Observaciones: {row.observations || 'Sin observaciones'}</small></>}
-                <small>{row.pickupSchoolName || row.school || 'Colegio sin indicar'}</small>
+                <small>{row.school || row.pickupSchoolName || 'Colegio sin indicar'}</small>
               </div>
               <span className={`status ${pickups ? (row.pickupReceived ? 'status-green' : 'status-amber') : row.solved ? 'status-green' : 'status-amber'}`}>
                 {pickups ? row.pickupReceived ? 'Recibida' : 'Pendiente' : incidentStatusLabel(row)}

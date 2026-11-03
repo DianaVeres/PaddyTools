@@ -60,8 +60,11 @@ export function IncidentDocument({ incident }: { incident: Incident }) {
       {incident.pickupSchool && (
         <section className="document-pickup">
           <h2>Recoger en el colegio</h2>
-          <p><b>{incident.pickupSchoolName || 'Colegio sin indicar'} ·{' '}
+          <p><b>{incident.school || incident.pickupSchoolName || 'Colegio sin indicar'} ·{' '}
             {incident.pickupReceived ? 'RECIBIDO' : 'PENDIENTE'}</b></p>
+          {incident.pickupSchoolName && incident.pickupSchoolName !== incident.school && (
+            <small>Producto seleccionado del catálogo: {incident.pickupSchoolName}</small>
+          )}
           <p>{incident.pickupDetails || 'Sin detalle de prendas'}</p>
           {incident.pickupReceivedAt && <small>Fecha de recepción: {incident.pickupReceivedAt.replace('T', ' ')}</small>}
         </section>

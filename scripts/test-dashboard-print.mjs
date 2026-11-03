@@ -24,6 +24,8 @@ for (const fragment of [
   'incidentLabelLines',
   'formatIncidentDate',
   'incidentStatusLabel',
+  "incident.school || incident.pickupSchoolName || 'Colegio sin indicar'",
+  'Producto seleccionado del catálogo:',
   'MONDAY · REGISTRO RESERVAS',
 ]) {
   if (!component.includes(fragment))

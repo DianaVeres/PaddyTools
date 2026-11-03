@@ -27,7 +27,7 @@ export function validateIncidentDraft(
   if (!draft.school.trim()) return 'Selecciona el colegio de la incidencia.';
   if (!draft.text.trim()) return 'Describe la incidencia antes de guardar.';
   if (draft.pickup && !draft.pickupSchool.trim())
-    return 'Selecciona el colegio de recogida.';
+    return 'Selecciona el colegio al que pertenece el producto.';
   if (draft.pickup && selectedProducts < 1)
     return 'Selecciona al menos un producto para recoger.';
   return '';

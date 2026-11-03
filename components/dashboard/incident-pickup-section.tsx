@@ -28,12 +28,12 @@ export function IncidentPickupSection({
 
   return (
     <section className="pickup-box">
-      <Field label="Colegio de recogida">
+      <Field label="Colegio del producto">
         <select
           value={draft.pickupSchool}
           onChange={(event) => onSchoolChange(event.target.value)}
         >
-          <option value="">Selecciona un colegio</option>
+          <option value="">Selecciona el colegio del producto</option>
           {schools.map((school) => (
             <option key={school} value={school}>
               {school}
@@ -111,7 +111,7 @@ export function IncidentPickupSection({
           <p>
             {draft.pickupSchool
               ? 'No hay productos publicados para este colegio.'
-              : 'Selecciona primero un colegio.'}
+              : 'Selecciona primero el colegio al que pertenece el producto.'}
           </p>
         )}
       </div>
