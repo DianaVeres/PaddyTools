@@ -515,6 +515,14 @@ requireAll(
   ['@/components/dashboard/reservation-form-dialog', 'ReservationFormDialog'],
   'El formulario completo de reservas',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/customer-message-dialog',
+    'CustomerMessageDialog',
+  ],
+  'El diálogo de email y WhatsApp',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

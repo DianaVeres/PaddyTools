@@ -15,8 +15,6 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
-  Mail,
-  Phone,
   Printer,
   RefreshCw,
   Search,
@@ -60,7 +58,6 @@ import {
   deliveryKindFromText,
   updateDeliveryEmailDraft,
   type DeliveryEmailDraft as EmailDraft,
-  type DeliveryEmailKind,
 } from '@/lib/delivery-message';
 import {
   buildEmailLink,
@@ -110,6 +107,7 @@ import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
 import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
+import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1904,134 +1902,16 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog
+      <CustomerMessageDialog
         open={modal === 'email'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="email-dialog">
-          <DialogHeader>
-            <div className="modal-icon blue">
-              <Mail />
-            </div>
-            <DialogTitle>Preparar aviso al cliente</DialogTitle>
-            <DialogDescription>
-              Revisa los datos y elige si quieres abrir el mensaje en el correo
-              o en WhatsApp.
-            </DialogDescription>
-          </DialogHeader>
-          {emailDraft && (
-            <div className="email-form">
-              <Field label="Tipo de entrega">
-                <select
-                  value={emailDraft.delivery}
-                  onChange={(event) =>
-                    updateGeneratedEmail({
-                      delivery: event.target.value as DeliveryEmailKind,
-                    })
-                  }
-                >
-                  <option value="colegio">Entrega en colegio</option>
-                  <option value="domicilio">Envío a domicilio</option>
-                  <option value="tienda">Recogida en tienda</option>
-                </select>
-              </Field>
-              <Field label="Email del cliente">
-                <Input
-                  type="email"
-                  value={emailDraft.to}
-                  onChange={(event) =>
-                    setEmailDraft({ ...emailDraft, to: event.target.value })
-                  }
-                  placeholder="cliente@email.com"
-                />
-              </Field>
-              <Field label="Teléfono del cliente">
-                <Input
-                  type="tel"
-                  value={emailDraft.phone}
-                  onChange={(event) =>
-                    setEmailDraft({ ...emailDraft, phone: event.target.value })
-                  }
-                  placeholder="Ej. 612345678"
-                />
-              </Field>
-              {emailDraft.delivery === 'colegio' && (
-                <Field label="Colegio">
-                  <Input
-                    value={emailDraft.school}
-                    onChange={(event) =>
-                      updateGeneratedEmail({ school: event.target.value })
-                    }
-                    placeholder="Nombre del colegio"
-                  />
-                </Field>
-              )}
-              {emailDraft.delivery === 'domicilio' && (
-                <div className="email-home-fields">
-                  <Field label="Empresa de transporte">
-                    <select
-                      value={emailDraft.carrier}
-                      onChange={(event) =>
-                        updateGeneratedEmail({
-                          carrier: event.target.value as EmailDraft['carrier'],
-                        })
-                      }
-                    >
-                      <option value="viaxpress">ViaXpress</option>
-                      <option value="dhl">DHL</option>
-                    </select>
-                  </Field>
-                  <Field label="Número de envío">
-                    <Input
-                      value={emailDraft.trackingNumber}
-                      onChange={(event) =>
-                        updateGeneratedEmail({
-                          trackingNumber: event.target.value,
-                        })
-                      }
-                      placeholder="Introduce el nº de envío"
-                    />
-                  </Field>
-                </div>
-              )}
-              <Field label="Asunto">
-                <Input
-                  value={emailDraft.subject}
-                  onChange={(event) =>
-                    setEmailDraft({
-                      ...emailDraft,
-                      subject: event.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Mensaje">
-                <Textarea
-                  value={emailDraft.body}
-                  onChange={(event) =>
-                    setEmailDraft({ ...emailDraft, body: event.target.value })
-                  }
-                  rows={7}
-                />
-              </Field>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cancelar
-            </Button>
-            <Button variant="outline" onClick={() => void copyEmailText()}>
-              Copiar texto
-            </Button>
-            <Button className="whatsapp-action" onClick={launchWhatsApp}>
-              <Phone /> Abrir WhatsApp
-            </Button>
-            <Button onClick={launchEmail}>
-              <Mail /> Abrir correo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        draft={emailDraft}
+        onClose={() => setModal(null)}
+        onChange={setEmailDraft}
+        onGeneratedChange={updateGeneratedEmail}
+        onCopy={() => void copyEmailText()}
+        onWhatsApp={launchWhatsApp}
+        onEmail={launchEmail}
+      />
       <Dialog
         open={shippingOpen}
         onOpenChange={(open) => {
