@@ -1267,6 +1267,7 @@ export default function Home() {
         shippingLoading={shippingLoading}
         onOpenPackingList={() => window.location.assign('/packing-list')}
         onOpenKpis={() => window.location.assign('/kpis')}
+        onOpenHotline={() => window.location.assign('/hotline')}
         onOpenReservations={() => void openReservations()}
         onOpenPickups={() => void openRegistry('recogidas')}
         onOpenShipping={openShipping}

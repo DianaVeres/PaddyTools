@@ -38,6 +38,10 @@ const kpis = await request('/kpis');
 const kpisHtml = await kpis.text();
 if (!kpisHtml.includes('KPIs') && !kpisHtml.includes('Indicadores'))
   throw new Error('La pantalla de KPI no está disponible en producción.');
+const hotline = await request('/hotline');
+const hotlineHtml = await hotline.text();
+if (!hotlineHtml.includes('Hotline'))
+  throw new Error('La pantalla de Hotline no está disponible en producción.');
 
 // La ruta pública de salud comprueba ambas bases sin exponer datos personales.
 const health = await json('/api/health');
@@ -60,6 +64,7 @@ for (const path of [
   '/api/search?number=SMOKE-INVALID',
   '/api/kpis?from=2026-11-01&to=2026-11-30',
   '/api/kpi-work-logs?from=2026-11-01&to=2026-11-30',
+  '/api/hotline/cases',
 ]) {
   const protectedResponse = await json(path, [401]);
   if (typeof protectedResponse.data?.error !== 'string')

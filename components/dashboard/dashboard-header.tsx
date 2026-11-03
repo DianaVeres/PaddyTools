@@ -3,6 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   LogOut,
+  Mail,
   PackageCheck,
   Shirt,
   Truck,
@@ -26,6 +27,7 @@ export function DashboardHeader({
   shippingLoading,
   onOpenPackingList,
   onOpenKpis,
+  onOpenHotline,
   onOpenReservations,
   onOpenPickups,
   onOpenShipping,
@@ -37,6 +39,7 @@ export function DashboardHeader({
   shippingLoading: boolean;
   onOpenPackingList: () => void;
   onOpenKpis: () => void;
+  onOpenHotline: () => void;
   onOpenReservations: () => void;
   onOpenPickups: () => void;
   onOpenShipping: () => void;
@@ -67,6 +70,13 @@ export function DashboardHeader({
           onClick={onOpenKpis}
         >
           <BarChart3 /> KPIs
+        </Button>
+        <Button
+          className="action-button hotline"
+          variant="outline"
+          onClick={onOpenHotline}
+        >
+          <Mail /> Hotline
         </Button>
         <Button
           className="action-button reservation"

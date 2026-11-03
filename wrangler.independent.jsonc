@@ -28,6 +28,12 @@
       "database_id": "1c3284f2-56f0-4f44-81fb-99f9a128986e"
     }
   ],
+  "services": [
+    {
+      "binding": "HOTLINE_SERVICE",
+      "service": "paddy-hotline"
+    }
+  ],
   "observability": {
     "enabled": true
   }
