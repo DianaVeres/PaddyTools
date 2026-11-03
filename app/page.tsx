@@ -110,6 +110,7 @@ import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
+import { IncidentPickupSection } from '@/components/dashboard/incident-pickup-section';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1964,136 +1965,22 @@ export default function Home() {
                 Enviado
               </label>
             </div>
-            {incidentDraft.pickup && (
-              <section className="pickup-box">
-                <Field label="Colegio de recogida">
-                  <select
-                    value={incidentDraft.pickupSchool}
-                    onChange={(e) => {
-                      const school = e.target.value;
-                      setIncidentDraft({
-                        ...incidentDraft,
-                        pickupSchool: school,
-                        pickupItems: {},
-                      });
-                      void loadPickupProducts(school);
-                    }}
-                  >
-                    <option value="">Selecciona un colegio</option>
-                    {schools.map((school) => (
-                      <option key={school} value={school}>
-                        {school}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <span className="pickup-label">Productos para recoger</span>
-                <div className="pickup-products">
-                  {productsLoading ? (
-                    <p>Cargando productos de WooCommerce…</p>
-                  ) : productsError ? (
-                    <p className="pickup-error">{productsError}</p>
-                  ) : pickupProducts.length ? (
-                    <>
-                      <div className="pickup-product-header">
-                        <span />
-                        <span>Artículo</span>
-                        <span>Talla</span>
-                        <span>Unidades</span>
-                      </div>
-                      {pickupProducts.map((item) => {
-                        const pick = incidentDraft.pickupItems[item.id] || {
-                          selected: false,
-                          size: '',
-                          units: 1,
-                        };
-                        return (
-                          <div
-                            className={`pickup-product ${pick.selected ? '' : 'disabled'}`}
-                            key={item.id}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={pick.selected}
-                              onChange={(e) =>
-                                setIncidentDraft({
-                                  ...incidentDraft,
-                                  pickupItems: {
-                                    ...incidentDraft.pickupItems,
-                                    [item.id]: {
-                                      ...pick,
-                                      selected: e.target.checked,
-                                    },
-                                  },
-                                })
-                              }
-                            />
-                            <div>
-                              <b>{item.name}</b>
-                              <small>{item.sku}</small>
-                            </div>
-                            <Input
-                              placeholder="Talla"
-                              value={pick.size}
-                              disabled={!pick.selected}
-                              onChange={(e) =>
-                                setIncidentDraft({
-                                  ...incidentDraft,
-                                  pickupItems: {
-                                    ...incidentDraft.pickupItems,
-                                    [item.id]: {
-                                      ...pick,
-                                      size: e.target.value,
-                                    },
-                                  },
-                                })
-                              }
-                            />
-                            <Input
-                              type="number"
-                              min={1}
-                              value={pick.units}
-                              disabled={!pick.selected}
-                              onChange={(e) =>
-                                setIncidentDraft({
-                                  ...incidentDraft,
-                                  pickupItems: {
-                                    ...incidentDraft.pickupItems,
-                                    [item.id]: {
-                                      ...pick,
-                                      units: Number(e.target.value),
-                                    },
-                                  },
-                                })
-                              }
-                            />
-                          </div>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <p>
-                      {incidentDraft.pickupSchool
-                        ? 'No hay productos publicados para este colegio.'
-                        : 'Selecciona primero un colegio.'}
-                    </p>
-                  )}
-                </div>
-                <Field label="Observaciones">
-                  <Textarea
-                    rows={3}
-                    value={incidentDraft.pickupNotes}
-                    onChange={(e) =>
-                      setIncidentDraft({
-                        ...incidentDraft,
-                        pickupNotes: e.target.value,
-                      })
-                    }
-                    placeholder="Alumno u otros detalles opcionales…"
-                  />
-                </Field>
-              </section>
-            )}
+            <IncidentPickupSection
+              draft={incidentDraft}
+              schools={schools}
+              products={pickupProducts}
+              loading={productsLoading}
+              error={productsError}
+              onChange={setIncidentDraft}
+              onSchoolChange={(school) => {
+                setIncidentDraft({
+                  ...incidentDraft,
+                  pickupSchool: school,
+                  pickupItems: {},
+                });
+                void loadPickupProducts(school);
+              }}
+            />
             <div className="form-tools">
               <Button
                 variant="outline"
