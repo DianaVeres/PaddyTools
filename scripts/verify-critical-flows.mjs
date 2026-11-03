@@ -494,6 +494,14 @@ requireAll(
   ['@/components/dashboard/incident-form-dialog', 'IncidentFormDialog'],
   'El formulario completo de incidencias',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/reservation-customer-section',
+    'ReservationCustomerSection',
+  ],
+  'Los datos de cliente del formulario de reservas',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

@@ -110,6 +110,7 @@ import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
+import { ReservationCustomerSection } from '@/components/dashboard/reservation-customer-section';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1891,127 +1892,14 @@ export default function Home() {
             </div>
           ) : (
             <div className="form-grid two reservation-grid">
-              <Field label="Nº reserva o pedido">
-                <Input
-                  value={reservationDraft.reference}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      reference: e.target.value.toUpperCase(),
-                    })
-                  }
-                  placeholder="Ej. PA12345 o RPA12345"
-                  disabled={Boolean(editingReservationId)}
-                />
-              </Field>
-              <Field label="Cliente">
-                <div className="customer-picker">
-                  <Input
-                    list="monday-customers"
-                    value={reservationDraft.customerName}
-                    disabled={newReservationCustomer}
-                    onChange={(e) => {
-                      const name = e.target.value;
-                      const match = reservationOptions?.customers.find(
-                        (item) => folded(item.name) === folded(name),
-                      );
-                      setReservationDraft({
-                        ...reservationDraft,
-                        customerName: name,
-                        customerId: match?.id || '',
-                        phone: match?.phone || '',
-                        customerEmail: match?.email || '',
-                        school: match?.school || '',
-                        articleId: match?.school
-                          ? ''
-                          : reservationDraft.articleId,
-                      });
-                    }}
-                    placeholder="Selecciona un cliente de Monday"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const active = !newReservationCustomer;
-                      setNewReservationCustomer(active);
-                      setReservationDraft({
-                        ...reservationDraft,
-                        customerId: '',
-                        customerName: active
-                          ? ''
-                          : reservationDraft.customerName,
-                        phone: active ? '' : reservationDraft.phone,
-                        customerEmail: active
-                          ? ''
-                          : reservationDraft.customerEmail,
-                      });
-                    }}
-                  >
-                    {newReservationCustomer ? 'Usar existente' : 'Nuevo'}
-                  </Button>
-                </div>
-                <datalist id="monday-customers">
-                  {reservationOptions?.customers.map((item) => (
-                    <option key={item.id} value={item.name} />
-                  ))}
-                </datalist>
-              </Field>
-              {newReservationCustomer && (
-                <Field label="Nombre del nuevo cliente">
-                  <Input
-                    value={reservationDraft.customerName}
-                    onChange={(e) =>
-                      setReservationDraft({
-                        ...reservationDraft,
-                        customerName: e.target.value,
-                      })
-                    }
-                    placeholder="Nombre y apellidos"
-                  />
-                </Field>
-              )}
-              <Field label="Teléfono">
-                <Input
-                  value={reservationDraft.phone}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      phone: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="E-mail">
-                <Input
-                  type="email"
-                  value={reservationDraft.customerEmail}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      customerEmail: e.target.value,
-                    })
-                  }
-                  placeholder="cliente@email.com"
-                />
-              </Field>
-              <Field label="Colegio">
-                <select
-                  value={reservationDraft.school}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      school: e.target.value,
-                      articleId: '',
-                    })
-                  }
-                >
-                  <option value="">Selecciona un colegio</option>
-                  {reservationOptions?.schools.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </Field>
+              <ReservationCustomerSection
+                draft={reservationDraft}
+                options={reservationOptions}
+                newCustomer={newReservationCustomer}
+                editing={Boolean(editingReservationId)}
+                onChange={setReservationDraft}
+                onNewCustomerChange={setNewReservationCustomer}
+              />
               <Field label="Fecha reserva">
                 <Input
                   type="date"
