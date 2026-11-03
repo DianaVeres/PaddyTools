@@ -43,10 +43,12 @@ assert.equal(
 
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
 for (const fragment of [
-  'incidentsMatchingCustomerQuery(',
   'hasConnectedSearchResults(',
   'emptyConnectedSearchMessage(',
 ])
   if (!page.includes(fragment)) throw new Error(`La pantalla no usa el resultado compartido: ${fragment}`);
+const api = readFileSync(resolve(root, 'lib/dashboard-api.ts'), 'utf8');
+if (!api.includes('incidentsMatchingCustomerQuery('))
+  throw new Error('El cliente no usa la búsqueda compartida de incidencias');
 rmSync(folder, { recursive: true, force: true });
 console.log('Resultados compartidos de consulta global verificados.');

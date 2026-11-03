@@ -53,7 +53,7 @@ requireAll(
   ],
   'Las copias verificadas de las bases de datos',
 );
-for (const path of ['app/page.tsx', 'app/packing-list/page.tsx']) {
+for (const path of ['app/packing-list/page.tsx']) {
   requireAll(
     path,
     ['@/lib/http-response'],
@@ -65,6 +65,16 @@ for (const path of ['app/page.tsx', 'app/packing-list/page.tsx']) {
     'La lectura segura de respuestas en las pantallas',
   );
 }
+requireAll(
+  'lib/dashboard-api.ts',
+  ['@/lib/http-response', 'readJsonResponse'],
+  'La lectura segura del cliente del panel principal',
+);
+forbid(
+  'app/page.tsx',
+  ['.json()', 'fetch('],
+  'La centralización de peticiones del panel principal',
+);
 requireAll(
   'app/page.tsx',
   [
@@ -149,9 +159,13 @@ requireAll(
     '@/lib/contact-links',
     'buildEmailLink',
     'buildWhatsAppLink',
-    'isValidEmail',
   ],
   'Los enlaces aislados de contacto',
+);
+requireAll(
+  'lib/dashboard-form-rules.ts',
+  ['@/lib/contact-links', 'isValidEmail'],
+  'La validación aislada del correo de reservas',
 );
 requireAll(
   'app/page.tsx',
@@ -565,8 +579,28 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-search-results', 'incidentsMatchingCustomerQuery', 'hasConnectedSearchResults', 'emptyConnectedSearchMessage'],
+  ['@/lib/dashboard-search-results', 'hasConnectedSearchResults', 'emptyConnectedSearchMessage'],
   'Los resultados compartidos de consulta global',
+);
+requireAll(
+  'lib/dashboard-api.ts',
+  ['incidentsMatchingCustomerQuery'],
+  'La búsqueda de incidencias conectadas',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-api', 'searchConnectedRecords', 'searchExactConnected', 'fetchIncidentRegistry'],
+  'El cliente único del panel principal',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-form-rules', 'selectedPickupLines', 'validateIncidentDraft', 'validateReservationDraft'],
+  'Las reglas compartidas de formularios',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/lib/use-draggable-dialog', 'useDraggableDialog'],
+  'El movimiento compartido de ventanas',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

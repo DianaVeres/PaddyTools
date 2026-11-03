@@ -77,6 +77,9 @@ $dashboardReservationResultDialogCheck = Join-Path $officialRoot 'scripts\test-d
 $dashboardRegistryFilterCheck = Join-Path $officialRoot 'scripts\test-dashboard-registry-filter.mjs'
 $dashboardReservationOptionsCheck = Join-Path $officialRoot 'scripts\test-dashboard-reservation-options.mjs'
 $dashboardSearchResultsCheck = Join-Path $officialRoot 'scripts\test-dashboard-search-results.mjs'
+$dashboardApiCheck = Join-Path $officialRoot 'scripts\test-dashboard-api.mjs'
+$dashboardFormRulesCheck = Join-Path $officialRoot 'scripts\test-dashboard-form-rules.mjs'
+$dashboardDraggableDialogCheck = Join-Path $officialRoot 'scripts\test-dashboard-draggable-dialog.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
 $storeTicketCheck = Join-Path $officialRoot 'scripts\test-store-ticket.mjs'
 $mondayClientCheck = Join-Path $officialRoot 'scripts\test-monday-client.mjs'
@@ -93,7 +96,7 @@ $productionCheck = Join-Path $officialRoot 'scripts\verify-production.mjs'
 $backupScript = Join-Path $officialRoot 'scripts\backup-production.ps1'
 $node = (Get-Command node -ErrorAction Stop).Source
 
-foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $incidentWriteCheck, $incidentQueryCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $dashboardTypesCheck, $dashboardCommonCheck, $dashboardPrintCheck, $dashboardOrderItemsCheck, $dashboardIncidentCardCheck, $dashboardMondayCardsCheck, $dashboardReservationNotesCheck, $dashboardStoreTicketCheck, $dashboardOrderActivityCheck, $dashboardOrderMovementsCheck, $dashboardOrderDocumentsCheck, $dashboardOrderNotesCheck, $dashboardOrderFollowUpCheck, $dashboardOrderSummaryCheck, $dashboardOrderHeadingCheck, $dashboardOrderLinkedRecordsCheck, $dashboardHeaderCheck, $dashboardGlobalSearchPanelCheck, $dashboardFeedbackCheck, $dashboardConnectedResultsCheck, $dashboardPrintSheetsCheck, $dashboardIncidentDocumentDialogCheck, $dashboardIncidentPickupSectionCheck, $dashboardIncidentDetailsSectionCheck, $dashboardIncidentFormDialogCheck, $dashboardReservationCustomerSectionCheck, $dashboardReservationDetailsSectionCheck, $dashboardReservationFormDialogCheck, $dashboardCustomerMessageDialogCheck, $dashboardShippingHistoryDialogCheck, $dashboardReservationRegistryDialogCheck, $dashboardIncidentRegistryDialogCheck, $dashboardReservationResultDialogCheck, $dashboardRegistryFilterCheck, $dashboardReservationOptionsCheck, $dashboardSearchResultsCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
+foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integrationCheck, $criticalFlowsCheck, $schoolMatchingCheck, $packingReferencesCheck, $packingDatesCheck, $packingExportCheck, $httpResponseCheck, $incidentRecordCheck, $incidentStoreCheck, $incidentActionsCheck, $incidentWriteCheck, $incidentQueryCheck, $permissionsCheck, $apiAccessCheck, $globalSearchCheck, $wooCustomerSearchCheck, $wooOrderDetailCheck, $labelPrintCheck, $deliveryMessageCheck, $contactLinksCheck, $dashboardTypesCheck, $dashboardCommonCheck, $dashboardPrintCheck, $dashboardOrderItemsCheck, $dashboardIncidentCardCheck, $dashboardMondayCardsCheck, $dashboardReservationNotesCheck, $dashboardStoreTicketCheck, $dashboardOrderActivityCheck, $dashboardOrderMovementsCheck, $dashboardOrderDocumentsCheck, $dashboardOrderNotesCheck, $dashboardOrderFollowUpCheck, $dashboardOrderSummaryCheck, $dashboardOrderHeadingCheck, $dashboardOrderLinkedRecordsCheck, $dashboardHeaderCheck, $dashboardGlobalSearchPanelCheck, $dashboardFeedbackCheck, $dashboardConnectedResultsCheck, $dashboardPrintSheetsCheck, $dashboardIncidentDocumentDialogCheck, $dashboardIncidentPickupSectionCheck, $dashboardIncidentDetailsSectionCheck, $dashboardIncidentFormDialogCheck, $dashboardReservationCustomerSectionCheck, $dashboardReservationDetailsSectionCheck, $dashboardReservationFormDialogCheck, $dashboardCustomerMessageDialogCheck, $dashboardShippingHistoryDialogCheck, $dashboardReservationRegistryDialogCheck, $dashboardIncidentRegistryDialogCheck, $dashboardReservationResultDialogCheck, $dashboardRegistryFilterCheck, $dashboardReservationOptionsCheck, $dashboardSearchResultsCheck, $dashboardApiCheck, $dashboardFormRulesCheck, $dashboardDraggableDialogCheck, $orderNoteCheck, $storeTicketCheck, $mondayClientCheck, $mondayMappingCheck, $mondayReadCheck, $mondayUpdatesCheck, $mondayWriteCheck, $mondayOptionsCheck, $mondayReservationsCheck, $mondaySearchCheck, $mondayLookupCheck, $mondayMaintenanceCheck, $productionCheck, $backupScript, $node)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -330,6 +333,18 @@ try {
   & $node $dashboardSearchResultsCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los resultados compartidos de consulta global han fallado. No se desplegará nada."
+  }
+  & $node $dashboardApiCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El cliente único del panel principal ha fallado. No se desplegará nada."
+  }
+  & $node $dashboardFormRulesCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "Las reglas compartidas de formularios han fallado. No se desplegará nada."
+  }
+  & $node $dashboardDraggableDialogCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El movimiento compartido de ventanas ha fallado. No se desplegará nada."
   }
   & $node $orderNoteCheck
   if ($LASTEXITCODE -ne 0) {

@@ -32,8 +32,8 @@ for (const fragment of [
   'editing={Boolean(editingReservationId)}',
   'articles={reservationArticles}',
   "onSave={() => void save('reserva')}",
-  'onDragStart={startReservationDrag}',
-  'onDragStop={stopReservationDrag}',
+  'onDragStart={reservationDialog.start}',
+  'onDragStop={reservationDialog.stop}',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`La pantalla no conecta el formulario de reservas: ${fragment}`);

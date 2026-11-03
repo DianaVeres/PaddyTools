@@ -2,10 +2,8 @@
 
 import {
   FormEvent,
-  PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
@@ -25,7 +23,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { readJsonResponse } from '@/lib/http-response';
 import {
   incidentLabelLines,
   type IncidentRecord as Incident,
@@ -42,8 +39,30 @@ import {
 import {
   emptyConnectedSearchMessage,
   hasConnectedSearchResults,
-  incidentsMatchingCustomerQuery,
 } from '@/lib/dashboard-search-results';
+import {
+  fetchIncidentRegistry,
+  fetchSchools,
+  fetchSessionUser,
+  fetchMondayUpdates,
+  fetchOrderDocument,
+  fetchOrderNotes,
+  fetchReservationOptions,
+  fetchReservations,
+  fetchSchoolProducts,
+  fetchShippingMatches,
+  patchIncident,
+  postIncident,
+  postOrderNote,
+  removeIncident,
+  removeOrderNote,
+  closeSession,
+  runMondayMaintenance,
+  saveMondayReservation,
+  searchConnectedRecords,
+  searchExactConnected,
+  setRemoteReturnAttended,
+} from '@/lib/dashboard-api';
 import {
   foldSearchText as folded,
   isExactRecordReference,
@@ -64,8 +83,13 @@ import {
 import {
   buildEmailLink,
   buildWhatsAppLink,
-  isValidEmail,
 } from '@/lib/contact-links';
+import {
+  selectedPickupLines,
+  validateIncidentDraft,
+  validateReservationDraft,
+} from '@/lib/dashboard-form-rules';
+import { useDraggableDialog } from '@/lib/use-draggable-dialog';
 import {
   normalizeOrderNoteContent,
   normalizeOrderNoteReference,
@@ -135,68 +159,13 @@ export default function Home() {
   const [documentLoading, setDocumentLoading] = useState<
     'invoice' | 'packing-slip' | null
   >(null);
-  const [reservationDialogOffset, setReservationDialogOffset] = useState({
-    x: 0,
-    y: 0,
-  });
-  const reservationDrag = useRef<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  } | null>(null);
-
-  function startReservationDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (window.innerWidth < 768 || event.button !== 0) return;
-    const dialog = event.currentTarget.closest('[data-slot="dialog-content"]');
-    if (!(dialog instanceof HTMLElement)) return;
-    const rect = dialog.getBoundingClientRect();
-    reservationDrag.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: reservationDialogOffset.x,
-      originY: reservationDialogOffset.y,
-      minX: reservationDialogOffset.x - rect.left + 12,
-      maxX: reservationDialogOffset.x + window.innerWidth - rect.right - 12,
-      minY: reservationDialogOffset.y - rect.top + 12,
-      maxY: reservationDialogOffset.y + window.innerHeight - rect.bottom - 12,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function moveReservationDialog(event: ReactPointerEvent<HTMLDivElement>) {
-    const drag = reservationDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    setReservationDialogOffset({
-      x: Math.min(
-        drag.maxX,
-        Math.max(drag.minX, drag.originX + event.clientX - drag.startX),
-      ),
-      y: Math.min(
-        drag.maxY,
-        Math.max(drag.minY, drag.originY + event.clientY - drag.startY),
-      ),
-    });
-  }
-
-  function stopReservationDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (reservationDrag.current?.pointerId === event.pointerId)
-      reservationDrag.current = null;
-  }
+  const reservationDialog = useDraggableDialog();
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
 
   useEffect(() => {
-    void fetch('/api/auth/session')
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Sesión no válida');
-        const data = await readJsonResponse<{ user: SessionUser }>(response);
-        setSessionUser(data.user);
+    void fetchSessionUser()
+      .then(async (user) => {
+        setSessionUser(user);
         const initialView = new URLSearchParams(window.location.search).get(
           'view',
         );
@@ -209,7 +178,7 @@ export default function Home() {
         );
         if (pendingDelete) {
           window.history.replaceState({}, '', window.location.pathname);
-          if (!canDeleteIncidents(data.user)) {
+          if (!canDeleteIncidents(user)) {
             window.alert(
               'Tu usuario no tiene permiso para eliminar incidencias.',
             );
@@ -221,21 +190,7 @@ export default function Home() {
             )
           )
             return;
-          const deleteResponse = await fetch('/api/incidents', {
-            method: 'DELETE',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ orderNumber: pendingDelete }),
-          });
-          const deleteData = await readJsonResponse<{
-            deleted?: boolean;
-            error?: string;
-          }>(deleteResponse);
-          if (!deleteResponse.ok || !deleteData.deleted) {
-            window.alert(
-              deleteData.error || 'No se pudo eliminar la incidencia.',
-            );
-            return;
-          }
+          await removeIncident({ orderNumber: pendingDelete });
           window.location.assign('/');
         }
       })
@@ -243,7 +198,7 @@ export default function Home() {
   }, []);
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await closeSession();
     window.location.assign('/login');
   }
 
@@ -253,17 +208,8 @@ export default function Home() {
       'f8626767-5497-41dd-8d0a-cc43668155d8'
     )
       return;
-    void fetch('/api/monday?maintenance=f8626767-5497-41dd-8d0a-cc43668155d8')
-      .then(async (response) => {
-        const result = await readJsonResponse<{
-          removed?: boolean;
-          message?: string;
-          error?: string;
-        }>(response);
-        if (!response.ok)
-          throw new Error(
-            result.error || 'No se pudo eliminar la columna ETIQUETA.',
-          );
+    void runMondayMaintenance('f8626767-5497-41dd-8d0a-cc43668155d8')
+      .then((result) => {
         setSaved(
           result.removed
             ? 'Columna ETIQUETA eliminada de Monday.'
@@ -395,12 +341,7 @@ export default function Home() {
     // En los pedidos de colegio, PackingList es la fuente principal del colegio.
     if (delivery === 'colegio' && !school) {
       try {
-        const response = await fetch(
-          `/api/shipping?order=${encodeURIComponent(order.number)}`,
-          { cache: 'no-store' },
-        );
-        const data = await readJsonResponse<{ matches?: Shipment[] }>(response);
-        school = data.matches?.[0]?.school || '';
+        school = (await fetchShippingMatches(order.number))[0]?.school || '';
       } catch {
         // El colegio seguirá siendo editable si PackingList no responde.
       }
@@ -494,36 +435,8 @@ export default function Home() {
         selectedLinkedOrderNumber,
       );
       if (!isWooOrder && !isExactReference && !selectedOrderNumber) {
-        const [wooResponse, mondayResponse, incidentsResponse] =
-          await Promise.all([
-            fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, {
-              cache: 'no-store',
-            }),
-            fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, {
-              cache: 'no-store',
-            }),
-            fetch('/api/incidents?scope=all', { cache: 'no-store' }),
-          ]);
-        const wooData = await readJsonResponse<{
-          matches?: OrderSearchMatch[];
-          error?: string;
-        }>(wooResponse, { source: 'WooCommerce' });
-        const mondayData = await readJsonResponse<{
-          records?: MondayRecord[];
-          error?: string;
-        }>(mondayResponse, { source: 'Monday' });
-        const incidentsData = await readJsonResponse<{
-          rows?: Incident[];
-          error?: string;
-        }>(incidentsResponse);
-        const wooMatches = wooResponse.ok ? wooData.matches || [] : [];
-        const mondayMatches = mondayResponse.ok ? mondayData.records || [] : [];
-        const incidentMatches = incidentsResponse.ok
-          ? incidentsMatchingCustomerQuery(
-              incidentsData.rows || [],
-              searchTerm,
-            )
-          : [];
+        const { wooMatches, mondayMatches, incidentMatches } =
+          await searchConnectedRecords(searchTerm);
         setOrderSearchMatches(wooMatches);
         setMondayRecords(mondayMatches);
         setIncidentSearchMatches(incidentMatches);
@@ -537,71 +450,20 @@ export default function Home() {
           setError(emptyConnectedSearchMessage(searchTerm));
         return;
       }
-      const [wooResponse, incidentResponse, mondayResponse, ticketResponse] =
-        await Promise.all([
-          isWooOrder
-            ? fetch(
-                `/api/search?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
-                {
-                  cache: 'no-store',
-                },
-              )
-            : Promise.resolve(null),
-          fetch(
-            selectedIncidentId
-              ? `/api/incidents?id=${encodeURIComponent(selectedIncidentId)}`
-              : `/api/incidents?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
-            {
-              cache: 'no-store',
-            },
-          ),
-          fetch(
-            `/api/monday?number=${encodeURIComponent(selectedLinkedOrderNumber)}`,
-            {
-              cache: 'no-store',
-            },
-          ),
-          fetch(`/api/tickets?number=${encodeURIComponent(searchTerm)}`, {
-            cache: 'no-store',
-          }),
-        ]);
-      const wooData = wooResponse
-        ? await readJsonResponse<Order & { error?: string }>(wooResponse, {
-            source: 'WooCommerce',
-          })
-        : null;
-      const incidentData = await readJsonResponse<{
-        found?: boolean;
-        incident?: Incident;
-        error?: string;
-      }>(incidentResponse);
-      const mondayData = await readJsonResponse<{
-        found?: boolean;
-        records?: MondayRecord[];
-        error?: string;
-      }>(mondayResponse, { source: 'Monday' });
-      const ticketData = await readJsonResponse<{
-        found?: boolean;
-        ticket?: StoreTicket;
-        error?: string;
-      }>(ticketResponse);
-      if (wooResponse?.ok && wooData) setOrder(wooData);
-      if (incidentResponse.ok && incidentData.found)
-        setIncident(incidentData.incident || null);
-      if (mondayResponse.ok) setMondayRecords(mondayData.records || []);
-      if (ticketResponse.ok && ticketData.found)
-        setTicket(ticketData.ticket || null);
-      if (
-        (!wooResponse || !wooResponse.ok) &&
-        !incidentData.found &&
-        !mondayData.found &&
-        !ticketData.found
-      )
+      const result = await searchExactConnected({
+        reference: selectedLinkedOrderNumber,
+        ticketReference: searchTerm,
+        incidentId: selectedIncidentId,
+        wooOrder: isWooOrder,
+      });
+      if (result.order) setOrder(result.order);
+      if (result.incident) setIncident(result.incident);
+      setMondayRecords(result.mondayRecords);
+      if (result.ticket) setTicket(result.ticket);
+      if (!result.found)
         setError(
           isWooOrder
-            ? [wooData?.error, incidentData.error, mondayData.error]
-                .filter(Boolean)
-                .join(' · ') ||
+            ? result.errors.join(' · ') ||
                 'No se encontró información para este número de pedido.'
             : `El ticket ${searchTerm} todavía no está sincronizado desde DetallWPF. Abre Reimpresión de Ticket, selecciónalo y ejecuta “sincronizar-ticket-actual.cmd”.`,
         );
@@ -614,16 +476,9 @@ export default function Home() {
   async function loadOrderNotes(orderNumber: string) {
     setNotesLoading(true);
     try {
-      const response = await fetch(
-        `/api/order-notes?number=${encodeURIComponent(normalizeOrderNoteReference(orderNumber))}`,
-        { cache: 'no-store' },
+      setOrderNotes(
+        await fetchOrderNotes(normalizeOrderNoteReference(orderNumber)),
       );
-      const data = await readJsonResponse<{
-        notes?: OrderNote[];
-        error?: string;
-      }>(response);
-      if (!response.ok) throw new Error(data.error);
-      setOrderNotes(data.notes || []);
     } catch (error) {
       setOrderNotes([]);
       setSaved(
@@ -640,24 +495,14 @@ export default function Home() {
     setReturnUpdating(true);
     setSaved('');
     try {
-      const response = await fetch('/api/return-attended', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      const returnAttended = await setRemoteReturnAttended({
           orderId: order.id,
           orderNumber: order.number,
           attended,
-        }),
       });
-      const data = await readJsonResponse<{
-        returnAttended?: boolean;
-        error?: string;
-      }>(response, { source: 'WooCommerce' });
-      if (!response.ok)
-        throw new Error(data.error || 'No se pudo actualizar la devolución.');
       setOrder((current) =>
         current
-          ? { ...current, returnAttended: Boolean(data.returnAttended) }
+          ? { ...current, returnAttended }
           : current,
       );
       setSaved(
@@ -685,16 +530,7 @@ export default function Home() {
         orderNumber: order.number,
         type,
       });
-      const response = await fetch(`/api/order-documents?${params}`, {
-        cache: 'no-store',
-      });
-      if (!response.ok) {
-        const data = await readJsonResponse<{ error?: string }>(response, {
-          source: 'WooCommerce',
-        });
-        throw new Error(data.error || 'No se pudo descargar el documento.');
-      }
-      const url = URL.createObjectURL(await response.blob());
+      const url = URL.createObjectURL(await fetchOrderDocument(params));
       const link = document.createElement('a');
       link.href = url;
       link.download = `${type === 'invoice' ? 'factura' : 'albaran-devolucion'}-${order.number}.pdf`;
@@ -727,22 +563,12 @@ export default function Home() {
       return;
     }
     try {
-      const response = await fetch('/api/order-notes', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      const note = await postOrderNote({
           orderNumber: normalizeOrderNoteReference(noteReference),
           kind: noteKind,
           content,
-        }),
       });
-      const data = await readJsonResponse<{
-        note?: OrderNote;
-        error?: string;
-      }>(response);
-      if (!response.ok || !data.note)
-        throw new Error(data.error || 'No se pudo guardar la nota.');
-      setOrderNotes((notes) => [data.note!, ...notes]);
+      setOrderNotes((notes) => [note, ...notes]);
       setNoteDraft('');
       setSaved(
         order ? 'Nota guardada en el pedido.' : 'Nota guardada en la reserva.',
@@ -762,20 +588,10 @@ export default function Home() {
     setNoteDeletingId(note.id);
     setSaved('');
     try {
-      const response = await fetch('/api/order-notes', {
-        method: 'DELETE',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      await removeOrderNote({
           id: note.id,
           orderNumber: normalizeOrderNoteReference(noteReference),
-        }),
       });
-      const data = await readJsonResponse<{
-        deleted?: boolean;
-        error?: string;
-      }>(response);
-      if (!response.ok || !data.deleted)
-        throw new Error(data.error || 'No se pudo eliminar la nota.');
       setOrderNotes((notes) =>
         notes.filter((current) => current.id !== note.id),
       );
@@ -802,20 +618,9 @@ export default function Home() {
     }
     let cancelled = false;
     setMondayUpdatesLoading(true);
-    void fetch(
-      `/api/monday?updatesFor=${encodeURIComponent(mondayUpdateItemIds)}`,
-      { cache: 'no-store' },
-    )
-      .then(async (response) => {
-        const data = await readJsonResponse<{
-          updates?: MondayUpdate[];
-          error?: string;
-        }>(response, { source: 'Monday' });
-        if (!response.ok)
-          throw new Error(
-            data.error || 'No se pudieron cargar los comentarios de Monday.',
-          );
-        if (!cancelled) setMondayUpdates(data.updates || []);
+    void fetchMondayUpdates(mondayUpdateItemIds)
+      .then((updates) => {
+        if (!cancelled) setMondayUpdates(updates);
       })
       .catch((error) => {
         if (!cancelled) {
@@ -857,14 +662,13 @@ export default function Home() {
     });
     setModal('incidencia');
     if (!schoolOptions.length)
-      void fetch('/api/schools')
-        .then((response) => readJsonResponse<string[]>(response))
+      void fetchSchools()
         .then((data) => Array.isArray(data) && setSchoolOptions(data));
     if (incident?.pickupSchool && pickupSchool)
       void loadPickupProducts(pickupSchool);
   }
   async function openReservation(existing?: MondayRecord) {
-    setReservationDialogOffset({ x: 0, y: 0 });
+    reservationDialog.reset();
     setModal('reserva');
     setEditingReservationId(existing?.id || '');
     setNewReservationCustomer(false);
@@ -925,21 +729,11 @@ export default function Home() {
     if (reservationOptions?.articles?.length) return;
     setReservationLoading(true);
     try {
-      const [response, reservationsResponse] = await Promise.all([
-        fetch('/api/monday?mode=reservation-options', { cache: 'no-store' }),
-        fetch('/api/monday?mode=reservations', { cache: 'no-store' }),
+      const [data, reservations] = await Promise.all([
+        fetchReservationOptions(),
+        fetchReservations().catch(() => []),
       ]);
-      const data = await readJsonResponse<ReservationOptions & {
-        error?: string;
-      }>(response, { source: 'Monday' });
-      if (!response.ok) throw new Error(data.error);
-      const reservationsData = reservationsResponse.ok
-        ? await readJsonResponse<{ records?: MondayRecord[] }>(
-            reservationsResponse,
-            { source: 'Monday' },
-          )
-        : { records: [] };
-      const recoveredArticles = (reservationsData.records || []).flatMap(
+      const recoveredArticles = reservations.flatMap(
         (record) =>
           (record.articleIds || []).map((id) => ({
             id,
@@ -991,15 +785,7 @@ export default function Home() {
     setRegistryFilter('');
     setReservationsLoading(true);
     try {
-      const response = await fetch('/api/monday?mode=reservations', {
-        cache: 'no-store',
-      });
-      const data = await readJsonResponse<{
-        records?: MondayRecord[];
-        error?: string;
-      }>(response, { source: 'Monday' });
-      if (!response.ok) throw new Error(data.error);
-      setReservationRows(data.records || []);
+      setReservationRows(await fetchReservations());
     } catch (error) {
       setReservationRows([]);
       setSaved(
@@ -1017,16 +803,7 @@ export default function Home() {
     if (!school) return;
     setProductsLoading(true);
     try {
-      const response = await fetch(
-        `/api/school-products?school=${encodeURIComponent(school)}`,
-        { cache: 'no-store' },
-      );
-      const data = await readJsonResponse<SchoolProduct[] & {
-        error?: string;
-      }>(response, { source: 'WooCommerce' });
-      if (!response.ok)
-        throw new Error(data.error || 'No se pudieron cargar los productos.');
-      setPickupProducts(Array.isArray(data) ? data : []);
+      setPickupProducts(await fetchSchoolProducts(school));
     } catch (error) {
       setProductsError(
         error instanceof Error
@@ -1058,37 +835,15 @@ export default function Home() {
         incident?.customerPhone ||
         mondayRecords[0]?.phone ||
         '';
-      let response: Response;
+      let record: { id?: string; formula?: string } = {};
       if (kind === 'incidencia') {
-        if (
-          !incidentDraft.date ||
-          !incidentDraft.school.trim() ||
-          !incidentDraft.text.trim()
-        ) {
-          setSaved(
-            !incidentDraft.date
-              ? 'Indica la fecha de recepción.'
-              : !incidentDraft.school.trim()
-                ? 'Selecciona el colegio de la incidencia.'
-                : 'Describe la incidencia antes de guardar.',
-          );
-          return;
-        }
-        const selected = pickupProducts
-          .filter((item) => incidentDraft.pickupItems[item.id]?.selected)
-          .map((item) => {
-            const pick = incidentDraft.pickupItems[item.id];
-            return `- ${item.name} | Talla: ${pick.size} | Unidades: ${pick.units || 1}`;
-          });
-        if (
-          incidentDraft.pickup &&
-          (!incidentDraft.pickupSchool.trim() || !selected.length)
-        ) {
-          setSaved(
-            !incidentDraft.pickupSchool.trim()
-              ? 'Selecciona el colegio de recogida.'
-              : 'Selecciona al menos un producto para recoger.',
-          );
+        const selected = selectedPickupLines(pickupProducts, incidentDraft);
+        const validationError = validateIncidentDraft(
+          incidentDraft,
+          selected.length,
+        );
+        if (validationError) {
+          setSaved(validationError);
           return;
         }
         const pickupDetails = [
@@ -1098,10 +853,7 @@ export default function Home() {
         ]
           .filter(Boolean)
           .join('\n');
-        response = await fetch('/api/incidents', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
+        record = await postIncident({
             order_number: incidentStorageReference(reference),
             order_id: order?.id || '',
             customer_name: customerName,
@@ -1129,78 +881,35 @@ export default function Home() {
             is_recurrence: incidentDraft.recurrence ? 1 : 0,
             source_type: 'pedido',
             record_id: incidentDraft.recurrence ? '' : incident?.id || '',
-          }),
         });
       } else {
-        if (
-          !reservationDraft.reference.trim() ||
-          !reservationDraft.customerName.trim() ||
-          !reservationDraft.school ||
-          !reservationDraft.date ||
-          !reservationDraft.articleId ||
-          !reservationDraft.size.trim() ||
-          reservationDraft.units < 1
-        ) {
-          setSaved(
-            'Completa referencia, cliente, colegio, fecha, artículo, talla y unidades.',
-          );
-          return;
-        }
         const linkedCustomerFromSearch = Boolean(
           order?.customer.name ||
           incident?.customerName ||
           mondayRecords[0]?.customer,
         );
-        if (
-          !reservationDraft.customerId &&
-          !newReservationCustomer &&
-          !linkedCustomerFromSearch
-        ) {
-          setSaved(
-            'Selecciona un cliente del desplegable o pulsa Nuevo para crearlo.',
-          );
-          return;
-        }
-        if (
-          newReservationCustomer &&
-          (!reservationDraft.phone.trim() ||
-            !reservationDraft.customerEmail.trim())
-        ) {
-          setSaved('Para un cliente nuevo, completa teléfono y e-mail.');
-          return;
-        }
-        if (
-          newReservationCustomer &&
-          !isValidEmail(reservationDraft.customerEmail)
-        ) {
-          setSaved('El e-mail del cliente nuevo no tiene un formato válido.');
+        const validationError = validateReservationDraft(reservationDraft, {
+          newCustomer: newReservationCustomer,
+          linkedCustomer: linkedCustomerFromSearch,
+        });
+        if (validationError) {
+          setSaved(validationError);
           return;
         }
         setReservationSaving(true);
         const reservationReference = reservationStorageReference(reference);
-        response = await fetch('/api/monday', {
-          method: editingReservationId ? 'PUT' : 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
+        record = await saveMondayReservation(
+          {
             id: editingReservationId || undefined,
             ...reservationDraft,
             createCustomer:
               newReservationCustomer ||
               (!reservationDraft.customerId && linkedCustomerFromSearch),
             reference: reservationReference,
-          }),
-        });
+          },
+          Boolean(editingReservationId),
+        );
       }
-      if (!response.ok) {
-        const data = await readJsonResponse<{ error?: string }>(response, {
-          source: 'Monday',
-        });
-        throw new Error(data.error);
-      }
-      const record = await readJsonResponse<{
-        id?: string;
-        formula?: string;
-      }>(response, { source: 'Monday' });
       setSaved(
         kind === 'reserva'
           ? editingReservationId
@@ -1279,12 +988,7 @@ export default function Home() {
     setShippingLoading(true);
     setShipments(null);
     try {
-      const response = await fetch(
-        `/api/shipping?order=${encodeURIComponent(shippingReference)}`,
-        { cache: 'no-store' },
-      );
-      const data = await readJsonResponse<{ matches?: Shipment[] }>(response);
-      setShipments(data.matches ?? []);
+      setShipments(await fetchShippingMatches(shippingReference));
     } catch {
       setShipments([]);
     } finally {
@@ -1301,16 +1005,9 @@ export default function Home() {
     setRegistryLoading(true);
     setRegistryFilter('');
     try {
-      const response = await fetch(
-        `/api/incidents?scope=${kind === 'registro' ? 'all' : 'pickups'}`,
-        { cache: 'no-store' },
+      setRegistryRows(
+        await fetchIncidentRegistry(kind === 'registro' ? 'all' : 'pickups'),
       );
-      const data = await readJsonResponse<{
-        rows?: Incident[];
-        error?: string;
-      }>(response);
-      if (!response.ok) throw new Error(data.error);
-      setRegistryRows(data.rows || []);
     } catch (error) {
       setRegistryRows([]);
       setSaved(
@@ -1366,12 +1063,11 @@ export default function Home() {
     }, 100);
   }
   function printIncidentDraft(mode: 'document' | 'label') {
-    const pickupDetails = pickupProducts
-      .filter((item) => incidentDraft.pickupItems[item.id]?.selected)
-      .map((item) => {
-        const pick = incidentDraft.pickupItems[item.id];
-        return `- ${item.name} | Talla: ${pick.size || 'Sin indicar'} | Unidades: ${pick.units || 1}`;
-      });
+    const pickupDetails = selectedPickupLines(
+      pickupProducts,
+      incidentDraft,
+      true,
+    );
     if (incidentDraft.pickupNotes.trim())
       pickupDetails.push(`Observaciones: ${incidentDraft.pickupNotes.trim()}`);
     const row: Incident = {
@@ -1412,17 +1108,11 @@ export default function Home() {
   }
   async function setPickupReceived(row: Incident, received: boolean) {
     try {
-      const response = await fetch('/api/incidents', {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      await patchIncident({
           id: row.id,
           orderNumber: row.orderNumber,
           received,
-        }),
       });
-      const data = await readJsonResponse<{ error?: string }>(response);
-      if (!response.ok) throw new Error(data.error);
       setRegistryRows((rows) =>
         rows.map((item) =>
           item.id === row.id
@@ -1455,20 +1145,11 @@ export default function Home() {
   }
   async function setIncidentSolved(row: Incident, solved: boolean) {
     try {
-      const response = await fetch('/api/incidents', {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      const data = await patchIncident({
           id: row.id,
           orderNumber: row.orderNumber,
           solved,
-        }),
       });
-      const data = await readJsonResponse<{
-        error?: string;
-        incident?: Incident;
-      }>(response);
-      if (!response.ok) throw new Error(data.error);
       const updated = data.incident || {
         ...row,
         solved,
@@ -1501,17 +1182,7 @@ export default function Home() {
       return;
     setDeletingIncident(row.orderNumber);
     try {
-      const response = await fetch('/api/incidents', {
-        method: 'DELETE',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id: row.id, orderNumber: row.orderNumber }),
-      });
-      const data = await readJsonResponse<{
-        deleted?: boolean;
-        error?: string;
-      }>(response);
-      if (!response.ok || !data.deleted)
-        throw new Error(data.error || 'No se pudo eliminar la incidencia.');
+      await removeIncident({ id: row.id, orderNumber: row.orderNumber });
       setRegistryRows((rows) => rows.filter((item) => item.id !== row.id));
       if (incident?.id === row.id) setIncident(null);
       if (selectedIncident?.id === row.id) setSelectedIncident(null);
@@ -1785,7 +1456,7 @@ export default function Home() {
         editing={Boolean(editingReservationId)}
         loading={reservationLoading}
         saving={reservationSaving}
-        offset={reservationDialogOffset}
+        offset={reservationDialog.offset}
         draft={reservationDraft}
         options={reservationOptions}
         articles={reservationArticles}
@@ -1794,9 +1465,9 @@ export default function Home() {
         onDraftChange={setReservationDraft}
         onNewCustomerChange={setNewReservationCustomer}
         onSave={() => void save('reserva')}
-        onDragStart={startReservationDrag}
-        onDragMove={moveReservationDialog}
-        onDragStop={stopReservationDrag}
+        onDragStart={reservationDialog.start}
+        onDragMove={reservationDialog.move}
+        onDragStop={reservationDialog.stop}
       />
       <ReservationResultDialog
         open={modal === 'reserva-creada'}
