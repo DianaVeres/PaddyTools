@@ -637,6 +637,11 @@ requireAll(
   ['@/components/kpis/kpi-timer', 'KpiTimer'],
   'El contador automático global de KPI',
 );
+requireAll(
+  'app/packing-list/page.tsx',
+  ['@/lib/kpi-auto-timer', 'beginAutomaticWork', 'completeAutomaticWork', 'orders: found.length'],
+  'La medición automática de PackingList',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

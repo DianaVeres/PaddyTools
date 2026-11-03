@@ -56,6 +56,12 @@ import {
 } from '@/lib/packing-export';
 import { readJsonResponse as readResponseJson } from '@/lib/http-response';
 import {
+  beginAutomaticWork,
+  cancelAutomaticWork,
+  completeAutomaticWork,
+  readAutomaticWork,
+} from '@/lib/kpi-auto-timer';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -124,6 +130,31 @@ export default function Home() {
   const [draft, setDraft] = useState<PackingList | null>(null);
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
   const [activity, setActivity] = useState<Activity[]>([]);
+  const [packingTimerStarted, setPackingTimerStarted] = useState('');
+
+  useEffect(() => {
+    const timer = readAutomaticWork('packing-list-create');
+    if (timer) setPackingTimerStarted(timer.startedIso);
+  }, []);
+
+  function selectPackingSchool(nextSchool: string) {
+    setSchool(nextSchool);
+    if (!nextSchool) {
+      cancelAutomaticWork('packing-list-create');
+      setPackingTimerStarted('');
+      return;
+    }
+    const expectedContext = `Colegio: ${nextSchool}`;
+    const existing = readAutomaticWork('packing-list-create');
+    if (existing && existing.context !== expectedContext)
+      cancelAutomaticWork('packing-list-create');
+    const timer = beginAutomaticWork(
+      'packing-list-create',
+      'packing',
+      expectedContext,
+    );
+    setPackingTimerStarted(timer.startedIso);
+  }
 
   // Agrupa en una carpeta todas las variantes que representan el mismo colegio.
   const schools = useMemo(() => {
@@ -650,6 +681,18 @@ export default function Home() {
         throw new Error(saved.error || 'No se pudo guardar.');
       await openPackingList(saved.id);
       setMessage('PackingList generado y archivado automáticamente.');
+      try {
+        await completeAutomaticWork('packing-list-create', {
+          orders: found.length,
+          packingLists: 1,
+          notes: `PackingList ${saved.id}`,
+        });
+        setPackingTimerStarted('');
+      } catch {
+        setMessage(
+          'PackingList generado correctamente, pero no se pudo registrar automáticamente su tiempo.',
+        );
+      }
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -781,7 +824,7 @@ export default function Home() {
                 <span>Colegio</span>
                 <select
                   value={school}
-                  onChange={(e) => setSchool(e.target.value)}
+                  onChange={(e) => selectPackingSchool(e.target.value)}
                   autoFocus
                   required
                 >
@@ -792,6 +835,15 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
+                {packingTimerStarted && (
+                  <small className="automatic-timer-note">
+                    Medición automática activa desde{' '}
+                    {new Date(packingTimerStarted).toLocaleTimeString('es-ES', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </small>
+                )}
               </label>
               <label>
                 <span>Fecha de envío</span>
