@@ -474,7 +474,7 @@ requireAll(
   'El diálogo de documento de incidencia',
 );
 requireAll(
-  'app/page.tsx',
+  'components/dashboard/incident-form-dialog.tsx',
   [
     '@/components/dashboard/incident-pickup-section',
     'IncidentPickupSection',
@@ -482,12 +482,17 @@ requireAll(
   'La recogida del formulario de incidencias',
 );
 requireAll(
-  'app/page.tsx',
+  'components/dashboard/incident-form-dialog.tsx',
   [
     '@/components/dashboard/incident-details-section',
     'IncidentDetailsSection',
   ],
   'Los datos del formulario de incidencias',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/incident-form-dialog', 'IncidentFormDialog'],
+  'El formulario completo de incidencias',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

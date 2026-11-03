@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const dialog = readFileSync(
+  resolve(root, 'components/dashboard/incident-form-dialog.tsx'),
+  'utf8',
+);
 
 for (const fragment of [
   "customerName || 'Cliente sin nombre'",
@@ -27,12 +31,14 @@ for (const fragment of [
 for (const fragment of [
   "@/components/dashboard/incident-details-section",
   '<IncidentDetailsSection',
-  'draft={incidentDraft}',
+  'draft={draft}',
   'schools={schools}',
-  'onChange={setIncidentDraft}',
+  'onChange={onDraftChange}',
 ]) {
-  if (!page.includes(fragment))
-    throw new Error(`La pantalla no conecta los datos de incidencia: ${fragment}`);
+  if (!dialog.includes(fragment))
+    throw new Error(`El diálogo no conecta los datos de incidencia: ${fragment}`);
 }
+if (!page.includes('@/components/dashboard/incident-form-dialog'))
+  throw new Error('La pantalla no conecta el diálogo de incidencias.');
 
 console.log('Datos y estados del formulario de incidencias verificados.');

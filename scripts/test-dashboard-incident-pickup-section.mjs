@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const dialog = readFileSync(
+  resolve(root, 'components/dashboard/incident-form-dialog.tsx'),
+  'utf8',
+);
 
 for (const fragment of [
   'if (!draft.pickup) return null',
@@ -26,12 +30,15 @@ for (const fragment of [
 for (const fragment of [
   "@/components/dashboard/incident-pickup-section",
   '<IncidentPickupSection',
-  'products={pickupProducts}',
+  'products={products}',
   'loading={productsLoading}',
   'error={productsError}',
-  'pickupItems: {}',
-  'void loadPickupProducts(school)',
+  'onSchoolChange={onPickupSchoolChange}',
 ]) {
+  if (!dialog.includes(fragment))
+    throw new Error(`El diálogo no conecta la recogida: ${fragment}`);
+}
+for (const fragment of ['pickupItems: {}', 'void loadPickupProducts(school)']) {
   if (!page.includes(fragment))
     throw new Error(`La pantalla no conecta la recogida: ${fragment}`);
 }

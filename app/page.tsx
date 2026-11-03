@@ -10,7 +10,6 @@ import {
   useState,
 } from 'react';
 import {
-  AlertTriangle,
   Archive,
   CalendarDays,
   Check,
@@ -110,8 +109,7 @@ import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
-import { IncidentPickupSection } from '@/components/dashboard/incident-pickup-section';
-import { IncidentDetailsSection } from '@/components/dashboard/incident-details-section';
+import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1811,96 +1809,45 @@ export default function Home() {
         />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}
-      <Dialog
+      <IncidentFormDialog
         open={modal === 'incidencia'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="form-dialog incident-dialog">
-          <DialogHeader>
-            <div className="modal-icon orange">
-              <AlertTriangle />
-            </div>
-            <DialogTitle>
-              Incidencia del pedido #
-              {order?.number ||
-                incident?.orderNumber ||
-                mondayRecords[0]?.reference}
-            </DialogTitle>
-            <DialogDescription>
-              Los datos se guardarán en el registro compartido de incidencias.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="incident-form">
-            <IncidentDetailsSection
-              draft={incidentDraft}
-              customerName={
-                order?.customer.name ||
-                incident?.customerName ||
-                mondayRecords[0]?.customer ||
-                ''
-              }
-              customerEmail={
-                order?.customer.email || incident?.customerEmail || ''
-              }
-              customerPhone={
-                order?.customer.phone ||
-                incident?.customerPhone ||
-                mondayRecords[0]?.phone ||
-                ''
-              }
-              schools={schools}
-              onChange={setIncidentDraft}
-            />
-            <IncidentPickupSection
-              draft={incidentDraft}
-              schools={schools}
-              products={pickupProducts}
-              loading={productsLoading}
-              error={productsError}
-              onChange={setIncidentDraft}
-              onSchoolChange={(school) => {
-                setIncidentDraft({
-                  ...incidentDraft,
-                  pickupSchool: school,
-                  pickupItems: {},
-                });
-                void loadPickupProducts(school);
-              }}
-            />
-            <div className="form-tools">
-              <Button
-                variant="outline"
-                onClick={() => printIncidentDraft('label')}
-              >
-                <Tag /> Emitir etiqueta
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => printIncidentDraft('document')}
-              >
-                <Printer /> Imprimir
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void save('incidencia', true)}
-            >
-              Guardar como solucionada
-            </Button>
-            <Button
-              className="save-incident"
-              onClick={() => void save('incidencia')}
-            >
-              Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        reference={
+          order?.number ||
+          incident?.orderNumber ||
+          mondayRecords[0]?.reference ||
+          ''
+        }
+        customerName={
+          order?.customer.name ||
+          incident?.customerName ||
+          mondayRecords[0]?.customer ||
+          ''
+        }
+        customerEmail={order?.customer.email || incident?.customerEmail || ''}
+        customerPhone={
+          order?.customer.phone ||
+          incident?.customerPhone ||
+          mondayRecords[0]?.phone ||
+          ''
+        }
+        draft={incidentDraft}
+        schools={schools}
+        products={pickupProducts}
+        productsLoading={productsLoading}
+        productsError={productsError}
+        onClose={() => setModal(null)}
+        onDraftChange={setIncidentDraft}
+        onPickupSchoolChange={(school) => {
+          setIncidentDraft({
+            ...incidentDraft,
+            pickupSchool: school,
+            pickupItems: {},
+          });
+          void loadPickupProducts(school);
+        }}
+        onPrint={printIncidentDraft}
+        onSave={(solved) => void save('incidencia', solved)}
+      />
       <Dialog
         open={modal === 'reserva'}
         onOpenChange={(open) => !open && setModal(null)}
