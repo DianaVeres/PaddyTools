@@ -553,6 +553,11 @@ requireAll(
   ['@/components/dashboard/reservation-result-dialog', 'ReservationResultDialog'],
   'La confirmación de reserva creada',
 );
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-registry-filter', 'filterIncidentRegistry', 'filterReservationRegistry'],
+  'Los filtros compartidos de registros',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

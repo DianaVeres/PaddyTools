@@ -32,6 +32,10 @@ import {
 } from '@/lib/incident-record';
 import { canDeleteIncidents } from '@/lib/permissions';
 import {
+  filterIncidentRegistry,
+  filterReservationRegistry,
+} from '@/lib/dashboard-registry-filter';
+import {
   foldSearchText as folded,
   isExactRecordReference,
   incidentStorageReference,
@@ -1611,41 +1615,16 @@ export default function Home() {
       ].filter(Boolean) as string[],
     ),
   ].sort((a, b) => a.localeCompare(b, 'es'));
-  const visibleRegistryRows = registryRows.filter((row) => {
-    if (modal === 'recogidas' && !showReceivedPickups && row.pickupReceived)
-      return false;
-    const term = folded(registryFilter);
-    return (
-      !term ||
-      folded(
-        [
-          row.orderNumber,
-          row.customerName,
-          row.school,
-          row.pickupSchoolName,
-          row.incidentText,
-          row.pickupDetails,
-        ].join(' '),
-      ).includes(term)
-    );
-  });
-  const visibleReservationRows = reservationRows.filter((row) => {
-    const term = folded(registryFilter);
-    return (
-      !term ||
-      folded(
-        [
-          row.reference,
-          row.customer,
-          row.phone,
-          row.school,
-          row.articleDescription,
-          row.size,
-          row.status,
-        ].join(' '),
-      ).includes(term)
-    );
-  });
+  const visibleRegistryRows = filterIncidentRegistry(
+    registryRows,
+    registryFilter,
+    modal === 'recogidas',
+    showReceivedPickups,
+  );
+  const visibleReservationRows = filterReservationRegistry(
+    reservationRows,
+    registryFilter,
+  );
 
   return (
     <main className="min-h-screen bg-background text-foreground">
