@@ -18,7 +18,7 @@ for (const fragment of ['Productividad', 'Calidad y mejora', 'Pedidos enviados',
   if (!dashboard.includes(fragment)) throw new Error(`El cuadro KPI ha perdido: ${fragment}`);
 for (const fragment of ['buildKpiSnapshot', 'cache-control'])
   if (!route.includes(fragment)) throw new Error(`La API KPI ha perdido: ${fragment}`);
-for (const fragment of ['listIncidents', 'listPackingLists', 'calculateKpiSnapshot'])
+for (const fragment of ['listIncidents', 'listPackingLists', 'calculateKpiSnapshot', 'workerEmail'])
   if (!service.includes(fragment)) throw new Error(`El servicio KPI ha perdido: ${fragment}`);
 for (const fragment of ['¿Quién ha hecho qué?', 'N.º pedidos', 'N.º productos', 'N.º PackingLists'])
   if (!workForm.includes(fragment)) throw new Error(`El registro de tiempos ha perdido: ${fragment}`);
@@ -26,4 +26,6 @@ for (const fragment of ['Personas necesarias', 'Preparación / pedido', 'Tiempo 
   if (!productivity.includes(fragment)) throw new Error(`La productividad ha perdido: ${fragment}`);
 if (!migration.includes('CREATE TABLE `kpi_work_logs`') || migration.includes('CREATE TABLE `auth_users`'))
   throw new Error('La migración KPI no está aislada correctamente.');
+if (!page.includes('Todas las personas') || !page.includes('selectedWorker'))
+  throw new Error('La pantalla KPI no permite la vista conjunta e individual.');
 console.log('Módulo independiente de KPI verificado.');

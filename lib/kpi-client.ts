@@ -9,8 +9,9 @@ async function request<T>(url: string, init?: RequestInit) {
   return data;
 }
 
-export function loadKpiSnapshot(from: string, to: string) {
+export function loadKpiSnapshot(from: string, to: string, worker = '') {
   const params = new URLSearchParams({ from, to });
+  if (worker) params.set('worker', worker);
   return request<KpiSnapshot>(`/api/kpis?${params}`, { cache: 'no-store' });
 }
 

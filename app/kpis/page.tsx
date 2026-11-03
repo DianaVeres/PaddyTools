@@ -25,6 +25,8 @@ export default function KpisPage() {
   const [dates, setDates] = useState(initialDates);
   const [data, setData] = useState<KpiSnapshot | null>(null);
   const [logs, setLogs] = useState<KpiWorkLog[]>([]);
+  const [allLogs, setAllLogs] = useState<KpiWorkLog[]>([]);
+  const [selectedWorker, setSelectedWorker] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -33,14 +35,16 @@ export default function KpisPage() {
     setError('');
     try {
       const [snapshot, workLogs] = await Promise.all([
-        loadKpiSnapshot(nextDates.from, nextDates.to),
+        loadKpiSnapshot(nextDates.from, nextDates.to, selectedWorker),
         loadKpiWorkLogs(nextDates.from, nextDates.to),
       ]);
       setData(snapshot);
-      setLogs(workLogs);
+      setAllLogs(workLogs);
+      setLogs(selectedWorker ? workLogs.filter((log) => log.workerEmail === selectedWorker) : workLogs);
     } catch (loadError) {
       setData(null);
       setLogs([]);
+      setAllLogs([]);
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los KPI.');
     } finally {
       setLoading(false);
@@ -50,6 +54,14 @@ export default function KpisPage() {
   useEffect(() => {
     void loadKpis(initialDates());
   }, []);
+  useEffect(() => {
+    if (data) void loadKpis();
+  }, [selectedWorker]);
+  useEffect(() => {
+    const refresh = () => void loadKpis();
+    window.addEventListener('paddytools:kpi-saved', refresh);
+    return () => window.removeEventListener('paddytools:kpi-saved', refresh);
+  });
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -81,6 +93,7 @@ export default function KpisPage() {
       <form className="kpi-filters" onSubmit={submit}>
         <label>Desde<Input type="date" value={dates.from} onChange={(event) => setDates({ ...dates, from: event.target.value })} /></label>
         <label>Hasta<Input type="date" value={dates.to} onChange={(event) => setDates({ ...dates, to: event.target.value })} /></label>
+        <label>Persona<select value={selectedWorker} onChange={(event) => setSelectedWorker(event.target.value)}><option value="">Todas las personas</option>{[...new Map(allLogs.map((log) => [log.workerEmail, log.workerName])).entries()].map(([email,name]) => <option key={email} value={email}>{name}</option>)}</select></label>
         <Button type="submit" disabled={loading}>{loading ? <RefreshCw className="spin" /> : <BarChart3 />} Actualizar indicadores</Button>
       </form>
       {error && <div className="kpi-error">{error}</div>}

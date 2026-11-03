@@ -49,7 +49,8 @@ export function validateKpiWorkLog(input: Record<string, unknown>) {
   const activity = String(input.activity || '') as KpiActivity;
   const startedAt = String(input.startedAt || '').slice(0, 5);
   const endedAt = String(input.endedAt || '').slice(0, 5);
-  const minutes = workDurationMinutes(startedAt, endedAt);
+  const measuredMinutes = count(input.measuredMinutes);
+  const minutes = measuredMinutes || workDurationMinutes(startedAt, endedAt);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate))
     throw new Error('Indica la fecha del trabajo.');
   if (!KPI_ACTIVITIES.some(([value]) => value === activity))

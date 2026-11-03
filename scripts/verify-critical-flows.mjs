@@ -632,6 +632,11 @@ requireAll(
   ['CREATE TABLE `kpi_work_logs`', 'idx_kpi_work_date'],
   'La migración aislada de tiempos KPI',
 );
+requireAll(
+  'app/layout.tsx',
+  ['@/components/kpis/kpi-timer', 'KpiTimer'],
+  'El contador automático global de KPI',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

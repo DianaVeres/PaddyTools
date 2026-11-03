@@ -8,6 +8,7 @@ export type { KpiSnapshot } from '@/lib/kpi-metrics';
 export async function buildKpiSnapshot(
   from: string,
   to: string,
+  workerEmail = '',
 ): Promise<KpiSnapshot> {
   const [allIncidents, allPackingLists, allPackingOrders, allWorkLogs] = await Promise.all([
     listIncidents('all'),
@@ -21,6 +22,8 @@ export async function buildKpiSnapshot(
     incidents: allIncidents,
     packingLists: allPackingLists,
     packingOrders: allPackingOrders,
-    workLogs: allWorkLogs,
+    workLogs: workerEmail
+      ? allWorkLogs.filter((row) => row.workerEmail === workerEmail)
+      : allWorkLogs,
   });
 }
