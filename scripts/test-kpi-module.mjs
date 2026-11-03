@@ -10,7 +10,7 @@ const client = readFileSync(resolve(root, 'lib/kpi-client.ts'), 'utf8');
 const workForm = readFileSync(resolve(root, 'components/kpis/work-log-form.tsx'), 'utf8');
 const productivity = readFileSync(resolve(root, 'components/kpis/productivity-dashboard.tsx'), 'utf8');
 const migration = readFileSync(resolve(root, 'drizzle/0006_kpi_work_logs.sql'), 'utf8');
-for (const fragment of ['Indicadores de productividad', 'Actualizar indicadores', 'KpiDashboard', 'ProductivityDashboard', 'WorkLogForm'])
+for (const fragment of ['Indicadores de productividad', 'Actualizar indicadores', 'KpiDashboard', 'ProductivityDashboard', 'QualityDashboard', 'WorkLogForm'])
   if (!page.includes(fragment)) throw new Error(`La pantalla KPI ha perdido: ${fragment}`);
 for (const fragment of ['/api/kpis', '/api/kpi-work-logs', 'saveKpiWorkLog', 'deleteKpiWorkLog'])
   if (!client.includes(fragment)) throw new Error(`El cliente KPI ha perdido: ${fragment}`);

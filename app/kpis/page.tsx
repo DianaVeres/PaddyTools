@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { KpiDashboard } from '@/components/kpis/kpi-dashboard';
 import { WorkLogForm } from '@/components/kpis/work-log-form';
 import { ProductivityDashboard } from '@/components/kpis/productivity-dashboard';
+import { QualityDashboard } from '@/components/kpis/quality-dashboard';
 import { deleteKpiWorkLog, loadKpiSnapshot, loadKpiWorkLogs } from '@/lib/kpi-client';
+import { loadQuality, type QualityResponse } from '@/lib/quality-client';
 import type { KpiSnapshot } from '@/lib/kpi-metrics';
 import type { KpiWorkLog } from '@/lib/kpi-work-log';
 import './kpis.css';
@@ -26,6 +28,7 @@ export default function KpisPage() {
   const [data, setData] = useState<KpiSnapshot | null>(null);
   const [logs, setLogs] = useState<KpiWorkLog[]>([]);
   const [allLogs, setAllLogs] = useState<KpiWorkLog[]>([]);
+  const [quality, setQuality] = useState<QualityResponse | null>(null);
   const [selectedWorker, setSelectedWorker] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,17 +37,20 @@ export default function KpisPage() {
     setLoading(true);
     setError('');
     try {
-      const [snapshot, workLogs] = await Promise.all([
+      const [snapshot, workLogs, qualityData] = await Promise.all([
         loadKpiSnapshot(nextDates.from, nextDates.to, selectedWorker),
         loadKpiWorkLogs(nextDates.from, nextDates.to),
+        loadQuality(nextDates.from, nextDates.to, selectedWorker),
       ]);
       setData(snapshot);
       setAllLogs(workLogs);
       setLogs(selectedWorker ? workLogs.filter((log) => log.workerEmail === selectedWorker) : workLogs);
+      setQuality(qualityData);
     } catch (loadError) {
       setData(null);
       setLogs([]);
       setAllLogs([]);
+      setQuality(null);
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los KPI.');
     } finally {
       setLoading(false);
@@ -93,11 +99,11 @@ export default function KpisPage() {
       <form className="kpi-filters" onSubmit={submit}>
         <label>Desde<Input type="date" value={dates.from} onChange={(event) => setDates({ ...dates, from: event.target.value })} /></label>
         <label>Hasta<Input type="date" value={dates.to} onChange={(event) => setDates({ ...dates, to: event.target.value })} /></label>
-        <label>Persona<select value={selectedWorker} onChange={(event) => setSelectedWorker(event.target.value)}><option value="">Todas las personas</option>{[...new Map(allLogs.map((log) => [log.workerEmail, log.workerName])).entries()].map(([email,name]) => <option key={email} value={email}>{name}</option>)}</select></label>
+        <label>Persona<select value={selectedWorker} onChange={(event) => setSelectedWorker(event.target.value)}><option value="">Todas las personas</option>{[...new Map([...(quality?.workers || []).map((worker) => [worker.email, worker.displayName] as const), ...allLogs.map((log) => [log.workerEmail, log.workerName] as const)]).entries()].map(([email,name]) => <option key={email} value={email}>{name}</option>)}</select></label>
         <Button type="submit" disabled={loading}>{loading ? <RefreshCw className="spin" /> : <BarChart3 />} Actualizar indicadores</Button>
       </form>
       {error && <div className="kpi-error">{error}</div>}
-      {loading && !data ? <div className="kpi-loading"><RefreshCw className="spin" /> Calculando indicadores…</div> : data && <><KpiDashboard data={data} /><ProductivityDashboard data={data} logs={logs} onDelete={(id) => void removeLog(id)} /><WorkLogForm onSaved={() => void loadKpis()} /></>}
+      {loading && !data ? <div className="kpi-loading"><RefreshCw className="spin" /> Calculando indicadores…</div> : data && quality && <><KpiDashboard data={data} /><ProductivityDashboard data={data} logs={logs} onDelete={(id) => void removeLog(id)} /><QualityDashboard data={quality} onChanged={() => void loadKpis()} /><WorkLogForm onSaved={() => void loadKpis()} /></>}
     </main>
   );
 }

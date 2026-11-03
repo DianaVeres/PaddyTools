@@ -150,6 +150,41 @@ export const kpiWorkLogs = sqliteTable(
   ],
 );
 
+export const qualityErrors = sqliteTable(
+  'quality_errors',
+  {
+    id: text('id').primaryKey(),
+    errorDate: text('error_date').notNull(),
+    process: text('process').notNull(),
+    responsibleEmail: text('responsible_email').notNull(),
+    responsibleName: text('responsible_name').notNull(),
+    reporterEmail: text('reporter_email').notNull(),
+    reporterName: text('reporter_name').notNull(),
+    severity: text('severity').notNull().default('media'),
+    errorType: text('error_type').notNull(),
+    reference: text('reference').notNull().default(''),
+    description: text('description').notNull(),
+    affectedUnits: integer('affected_units').notNull().default(1),
+    correctionMinutes: integer('correction_minutes').notNull().default(0),
+    recurrence: integer('recurrence', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    resolved: integer('resolved', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [
+    index('idx_quality_error_date').on(table.errorDate),
+    index('idx_quality_process_date').on(table.process, table.errorDate),
+    index('idx_quality_worker_date').on(
+      table.responsibleEmail,
+      table.errorDate,
+    ),
+  ],
+);
+
 // PackingList conserva su D1 histórica separada; así integramos el código sin
 // mover ni duplicar datos de producción.
 export const packingLists = sqliteTable(

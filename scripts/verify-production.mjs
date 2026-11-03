@@ -65,6 +65,7 @@ for (const path of [
   '/api/kpis?from=2026-11-01&to=2026-11-30',
   '/api/kpi-work-logs?from=2026-11-01&to=2026-11-30',
   '/api/hotline/cases',
+  '/api/quality-errors?from=2026-11-01&to=2026-11-30',
 ]) {
   const protectedResponse = await json(path, [401]);
   if (typeof protectedResponse.data?.error !== 'string')
