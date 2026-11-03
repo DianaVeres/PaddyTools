@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -10,6 +10,17 @@ const manual = readFileSync(
 
 if (!readme.includes('docs/MANUAL_DE_USO_PADDYTOOLS.md'))
   throw new Error('El README no enlaza el manual oficial.');
+
+for (const document of [
+  'docs/Manual_visual_PaddyTools.docx',
+  'docs/Manual_visual_PaddyTools.pdf',
+]) {
+  const path = resolve(root, document);
+  if (!readme.includes(document))
+    throw new Error(`El README no enlaza ${document}.`);
+  if (!existsSync(path) || statSync(path).size === 0)
+    throw new Error(`Falta el documento visual o está vacío: ${document}`);
+}
 
 for (const section of [
   'Pantalla principal y consulta global',
