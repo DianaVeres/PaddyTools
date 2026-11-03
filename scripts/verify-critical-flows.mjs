@@ -609,13 +609,28 @@ requireAll(
 );
 requireAll(
   'app/kpis/page.tsx',
-  ['@/components/kpis/kpi-dashboard', '/api/kpis'],
+  ['@/components/kpis/kpi-dashboard', '@/lib/kpi-client'],
   'La pantalla independiente de KPI',
+);
+requireAll(
+  'lib/kpi-client.ts',
+  ['/api/kpis', '/api/kpi-work-logs'],
+  'El cliente independiente de KPI',
 );
 requireAll(
   'lib/kpi-service.ts',
   ['@/lib/kpi-metrics', 'calculateKpiSnapshot'],
   'El servicio independiente de KPI',
+);
+requireAll(
+  'app/api/kpi-work-logs/route.ts',
+  ['getSessionUser', 'validateKpiWorkLog', 'kpiWorkLogs'],
+  'El registro protegido de tiempos KPI',
+);
+requireAll(
+  'drizzle/0006_kpi_work_logs.sql',
+  ['CREATE TABLE `kpi_work_logs`', 'idx_kpi_work_date'],
+  'La migración aislada de tiempos KPI',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

@@ -59,6 +59,7 @@ for (const path of [
   '/api/shipping?order=SMOKE999999999',
   '/api/search?number=SMOKE-INVALID',
   '/api/kpis?from=2026-11-01&to=2026-11-30',
+  '/api/kpi-work-logs?from=2026-11-01&to=2026-11-30',
 ]) {
   const protectedResponse = await json(path, [401]);
   if (typeof protectedResponse.data?.error !== 'string')

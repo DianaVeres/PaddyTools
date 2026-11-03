@@ -70,6 +70,7 @@
     "test:dashboard-draggable-dialog": "node scripts/test-dashboard-draggable-dialog.mjs",
     "test:kpi-metrics": "node scripts/test-kpi-metrics.mjs",
     "test:kpi-module": "node scripts/test-kpi-module.mjs",
+    "test:kpi-work-log": "node scripts/test-kpi-work-log.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",

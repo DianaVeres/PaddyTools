@@ -126,6 +126,30 @@ export const incidentRecords = sqliteTable(
   ],
 );
 
+export const kpiWorkLogs = sqliteTable(
+  'kpi_work_logs',
+  {
+    id: text('id').primaryKey(),
+    workDate: text('work_date').notNull(),
+    workerEmail: text('worker_email').notNull(),
+    workerName: text('worker_name').notNull(),
+    activity: text('activity').notNull(),
+    startedAt: text('started_at').notNull(),
+    endedAt: text('ended_at').notNull(),
+    minutes: integer('minutes').notNull(),
+    orders: integer('orders').notNull().default(0),
+    products: integer('products').notNull().default(0),
+    packingLists: integer('packing_lists').notNull().default(0),
+    notes: text('notes').notNull().default(''),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [
+    index('idx_kpi_work_date').on(table.workDate),
+    index('idx_kpi_work_worker').on(table.workerEmail, table.workDate),
+    index('idx_kpi_work_activity').on(table.activity, table.workDate),
+  ],
+);
+
 // PackingList conserva su D1 histórica separada; así integramos el código sin
 // mover ni duplicar datos de producción.
 export const packingLists = sqliteTable(

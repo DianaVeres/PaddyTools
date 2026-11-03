@@ -5,8 +5,11 @@ import { ArrowLeft, BarChart3, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KpiDashboard } from '@/components/kpis/kpi-dashboard';
-import { readJsonResponse } from '@/lib/http-response';
+import { WorkLogForm } from '@/components/kpis/work-log-form';
+import { ProductivityDashboard } from '@/components/kpis/productivity-dashboard';
+import { deleteKpiWorkLog, loadKpiSnapshot, loadKpiWorkLogs } from '@/lib/kpi-client';
 import type { KpiSnapshot } from '@/lib/kpi-metrics';
+import type { KpiWorkLog } from '@/lib/kpi-work-log';
 import './kpis.css';
 
 const localDate = (date: Date) => date.toLocaleDateString('en-CA');
@@ -21,6 +24,7 @@ const initialDates = () => {
 export default function KpisPage() {
   const [dates, setDates] = useState(initialDates);
   const [data, setData] = useState<KpiSnapshot | null>(null);
+  const [logs, setLogs] = useState<KpiWorkLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -28,13 +32,15 @@ export default function KpisPage() {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams(nextDates);
-      const response = await fetch(`/api/kpis?${params}`, { cache: 'no-store' });
-      const result = await readJsonResponse<KpiSnapshot & { error?: string }>(response);
-      if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los KPI.');
-      setData(result);
+      const [snapshot, workLogs] = await Promise.all([
+        loadKpiSnapshot(nextDates.from, nextDates.to),
+        loadKpiWorkLogs(nextDates.from, nextDates.to),
+      ]);
+      setData(snapshot);
+      setLogs(workLogs);
     } catch (loadError) {
       setData(null);
+      setLogs([]);
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los KPI.');
     } finally {
       setLoading(false);
@@ -48,6 +54,15 @@ export default function KpisPage() {
   function submit(event: FormEvent) {
     event.preventDefault();
     void loadKpis();
+  }
+  async function removeLog(id: string) {
+    if (!window.confirm('¿Eliminar este registro de trabajo?')) return;
+    try {
+      await deleteKpiWorkLog(id);
+      await loadKpis();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el registro.');
+    }
   }
 
   return (
@@ -69,7 +84,7 @@ export default function KpisPage() {
         <Button type="submit" disabled={loading}>{loading ? <RefreshCw className="spin" /> : <BarChart3 />} Actualizar indicadores</Button>
       </form>
       {error && <div className="kpi-error">{error}</div>}
-      {loading && !data ? <div className="kpi-loading"><RefreshCw className="spin" /> Calculando indicadores…</div> : data && <KpiDashboard data={data} />}
+      {loading && !data ? <div className="kpi-loading"><RefreshCw className="spin" /> Calculando indicadores…</div> : data && <><KpiDashboard data={data} /><ProductivityDashboard data={data} logs={logs} onDelete={(id) => void removeLog(id)} /><WorkLogForm onSaved={() => void loadKpis()} /></>}
     </main>
   );
 }
