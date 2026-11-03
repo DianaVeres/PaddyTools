@@ -70,10 +70,14 @@ requireAll(
   [
     '@/lib/incident-record',
     'incidentLabelLines',
-    'incidentStatusLabel',
     'sent: incidentDraft.sent ? 1 : 0',
   ],
   'Los datos e impresión de incidencias',
+);
+requireAll(
+  'components/dashboard/incident-registry-dialog.tsx',
+  ['@/lib/incident-record', 'incidentStatusLabel'],
+  'Los estados del registro de incidencias',
 );
 requireAll(
   'components/dashboard/incident-details-section.tsx',
@@ -538,6 +542,11 @@ requireAll(
     'ReservationRegistryDialog',
   ],
   'El registro de reservas',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/incident-registry-dialog', 'IncidentRegistryDialog'],
+  'El registro de incidencias y recogidas',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

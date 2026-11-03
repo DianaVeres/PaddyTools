@@ -9,16 +9,11 @@ import {
   useState,
 } from 'react';
 import {
-  Archive,
-  Check,
   ChevronRight,
-  ClipboardList,
   FileText,
   Printer,
   RefreshCw,
-  Shirt,
   Tag,
-  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +30,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { readJsonResponse } from '@/lib/http-response';
 import {
   incidentLabelLines,
-  incidentStatusLabel,
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
 import { canDeleteIncidents } from '@/lib/permissions';
@@ -107,6 +101,7 @@ import { ReservationFormDialog } from '@/components/dashboard/reservation-form-d
 import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
 import { ShippingHistoryDialog } from '@/components/dashboard/shipping-history-dialog';
 import { ReservationRegistryDialog } from '@/components/dashboard/reservation-registry-dialog';
+import { IncidentRegistryDialog } from '@/components/dashboard/incident-registry-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1934,159 +1929,25 @@ export default function Home() {
         onEdit={(row) => void openReservation(row)}
         onPrintLabel={(row) => requestReservationPrint(row, 'label')}
       />
-      <Dialog
-        open={modal === 'registro' || modal === 'recogidas'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="registry-dialog">
-          <DialogHeader>
-            <div
-              className={`modal-icon ${modal === 'recogidas' ? 'green' : 'orange'}`}
-            >
-              {modal === 'recogidas' ? <Shirt /> : <ClipboardList />}
-            </div>
-            <DialogTitle>
-              {modal === 'recogidas'
-                ? 'Prendas para recoger en colegios'
-                : 'Registro de incidencias'}
-            </DialogTitle>
-            <DialogDescription>
-              {modal === 'recogidas'
-                ? 'Marca las prendas cuando hayan llegado.'
-                : 'Consulta y reimprime cualquier incidencia generada.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="registry-tools">
-            <Input
-              value={registryFilter}
-              onChange={(e) => setRegistryFilter(e.target.value)}
-              placeholder="Buscar pedido, cliente, colegio o artículo…"
-            />
-            {modal === 'recogidas' && (
-              <label className="show-received">
-                <input
-                  type="checkbox"
-                  checked={showReceivedPickups}
-                  onChange={(e) => setShowReceivedPickups(e.target.checked)}
-                />{' '}
-                Mostrar también las recibidas
-              </label>
-            )}
-          </div>
-          <div className="registry-list">
-            {registryLoading ? (
-              <div className="registry-empty">
-                <RefreshCw className="spin" /> Cargando el registro…
-              </div>
-            ) : visibleRegistryRows.length ? (
-              visibleRegistryRows.map((row) => (
-                <article
-                  className="registry-row"
-                  key={`${modal}-${row.orderNumber}`}
-                >
-                  <div className="registry-reference">
-                    <b>#{row.orderNumber}</b>
-                    <small>{row.incidentDate || 'Sin fecha'}</small>
-                  </div>
-                  <div className="registry-summary">
-                    <b>{row.customerName || 'Cliente sin nombre'}</b>
-                    <span>
-                      {modal === 'recogidas'
-                        ? row.pickupDetails || 'Sin detalle de prendas'
-                        : row.incidentText || 'Sin descripción'}
-                    </span>
-                    {modal === 'registro' && (
-                      <>
-                        <small>
-                          Email: {row.customerEmail || 'No indicado'}
-                        </small>
-                        <small>
-                          Observaciones:{' '}
-                          {row.observations || 'Sin observaciones'}
-                        </small>
-                      </>
-                    )}
-                    <small>
-                      {row.pickupSchoolName ||
-                        row.school ||
-                        'Colegio sin indicar'}
-                    </small>
-                  </div>
-                  <span
-                    className={`status ${modal === 'recogidas' ? (row.pickupReceived ? 'status-green' : 'status-amber') : row.solved ? 'status-green' : 'status-amber'}`}
-                  >
-                    {modal === 'recogidas'
-                      ? row.pickupReceived
-                        ? 'Recibida'
-                        : 'Pendiente'
-                      : incidentStatusLabel(row)}
-                  </span>
-                  <div className="registry-actions">
-                    {modal === 'registro' ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => showIncidentDocument(row)}
-                        >
-                          Ver
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => printIncidentDocument(row)}
-                        >
-                          <Printer /> Reimprimir
-                        </Button>
-                        {!row.solved && (
-                          <Button
-                            onClick={() => void setIncidentSolved(row, true)}
-                          >
-                            <Check /> Cerrar incidencia
-                          </Button>
-                        )}
-                        {canDeleteIncidents(sessionUser) && (
-                          <Button
-                            variant="outline"
-                            className="incident-delete"
-                            disabled={deletingIncident === row.orderNumber}
-                            onClick={() => void deleteIncident(row)}
-                          >
-                            <Trash2 />
-                            {deletingIncident === row.orderNumber
-                              ? 'Eliminando…'
-                              : 'Eliminar'}
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <Button
-                        variant={row.pickupReceived ? 'outline' : 'default'}
-                        onClick={() =>
-                          void setPickupReceived(row, !row.pickupReceived)
-                        }
-                      >
-                        {row.pickupReceived
-                          ? 'Volver a pendiente'
-                          : 'Marcar recibida'}
-                      </Button>
-                    )}
-                  </div>
-                </article>
-              ))
-            ) : (
-              <div className="registry-empty">
-                <Archive />
-                <b>No hay registros para mostrar</b>
-                <span>Prueba a cambiar la búsqueda o los filtros.</span>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <IncidentRegistryDialog
+        mode={modal === 'registro' || modal === 'recogidas' ? modal : null}
+        loading={registryLoading}
+        filter={registryFilter}
+        rows={visibleRegistryRows}
+        showReceived={showReceivedPickups}
+        canDelete={canDeleteIncidents(sessionUser)}
+        deletingReference={deletingIncident}
+        onClose={() => setModal(null)}
+        onFilterChange={setRegistryFilter}
+        onShowReceivedChange={setShowReceivedPickups}
+        onView={showIncidentDocument}
+        onPrint={printIncidentDocument}
+        onSolve={(row) => void setIncidentSolved(row, true)}
+        onDelete={(row) => void deleteIncident(row)}
+        onPickupReceivedChange={(row, received) =>
+          void setPickupReceived(row, received)
+        }
+      />
       <IncidentDocumentDialog
         open={modal === 'detalle-incidencia'}
         incident={selectedIncident}
