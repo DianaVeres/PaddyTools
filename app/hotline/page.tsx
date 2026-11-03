@@ -13,8 +13,15 @@ import {
   Plus,
   Save,
   Search,
+  Timer,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  beginAutomaticWork,
+  cancelAutomaticWork,
+  completeAutomaticWork,
+  readAutomaticWork,
+} from '@/lib/kpi-auto-timer';
 import styles from './hotline.module.css';
 
 type HotlineCase = {
@@ -60,6 +67,7 @@ const STATUSES = [
   'Resuelto',
   'Incidencia',
 ];
+const HOTLINE_TIMER_KEY = 'hotline-reply';
 
 async function readJson<T>(response: Response): Promise<T> {
   const raw = await response.text();
@@ -89,6 +97,7 @@ export default function HotlinePage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Todos');
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [timerStartedIso, setTimerStartedIso] = useState('');
   const [templateDraft, setTemplateDraft] = useState({
     titulo: '',
     categoria: 'General',
@@ -120,7 +129,19 @@ export default function HotlinePage() {
     refresh().catch((error) =>
       setNotice(error instanceof Error ? error.message : 'No se pudo cargar Hotline.'),
     );
+    setTimerStartedIso(readAutomaticWork(HOTLINE_TIMER_KEY)?.startedIso || '');
   }, []);
+
+  function updateIncoming(value: string) {
+    setIncoming(value);
+    if (!value.trim()) return;
+    const timer = beginAutomaticWork(
+      HOTLINE_TIMER_KEY,
+      'correos',
+      'Respuesta gestionada desde Hotline',
+    );
+    setTimerStartedIso(timer.startedIso);
+  }
 
   async function analyze() {
     if (!incoming.trim()) {
@@ -178,6 +199,17 @@ export default function HotlinePage() {
       });
       const data = await readJson<{ error?: string }>(response);
       if (!response.ok) throw new Error(data.error || 'No se pudo guardar el contacto.');
+      let timingWarning = '';
+      try {
+        await completeAutomaticWork(HOTLINE_TIMER_KEY, {
+          notes: [email.trim(), subject.trim()].filter(Boolean).join(' · '),
+        });
+      } catch (error) {
+        console.error('El contacto se guardó, pero falló su medición KPI.', error);
+        cancelAutomaticWork(HOTLINE_TIMER_KEY);
+        timingWarning = ' No se pudo registrar automáticamente el tiempo.';
+      }
+      setTimerStartedIso('');
       await refresh();
       setIncoming('');
       setReply('');
@@ -185,7 +217,7 @@ export default function HotlinePage() {
       setProcedure('');
       setCategory('General');
       setKind('Consulta');
-      setNotice('Contacto guardado. Puedes continuar el mismo caso.');
+      setNotice(`Contacto guardado. Puedes continuar el mismo caso.${timingWarning}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No se pudo guardar.');
     } finally {
@@ -219,6 +251,8 @@ export default function HotlinePage() {
   }
 
   function reset() {
+    cancelAutomaticWork(HOTLINE_TIMER_KEY);
+    setTimerStartedIso('');
     setEmail('');
     setSubject('');
     setIncoming('');
@@ -296,7 +330,8 @@ export default function HotlinePage() {
                   <Field label="Email"><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="clienta@email.com" /></Field>
                   <Field label="Asunto / caso"><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Se detectará si lo dejas vacío" /></Field>
                 </div>
-                <Field label="Email recibido"><textarea className={styles.largeText} value={incoming} onChange={(e) => setIncoming(e.target.value)} placeholder="Pega aquí el mensaje recibido…" /></Field>
+                <Field label="Email recibido"><textarea className={styles.largeText} value={incoming} onChange={(e) => updateIncoming(e.target.value)} placeholder="Pega aquí el mensaje recibido…" /></Field>
+                {timerStartedIso && <p className={styles.timerNotice}><Timer /> Medición activa desde {new Date(timerStartedIso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>}
                 <Field label="Información para redactar (opcional)"><textarea value={guidance} onChange={(e) => setGuidance(e.target.value)} placeholder="Datos o indicaciones que debe incluir la respuesta…" /></Field>
                 <button className={styles.primary} onClick={analyze} disabled={busy}>{busy ? <Loader2 className={styles.spin} /> : <Mail />} Analizar y redactar</button>
               </div>

@@ -18,6 +18,7 @@ export type KpiSnapshot = {
   preparationMinutesPerProduct: number;
   orderWorkMinutesPerOrder: number;
   packingMinutesPerList: number;
+  replyMinutesPerMessage: number;
   activityBreakdown: Array<{ activity: string; minutes: number; entries: number }>;
   workerBreakdown: Array<{
     workerName: string;
@@ -97,6 +98,7 @@ export function calculateKpiSnapshot(input: {
     row.activity === 'preparacion' || row.activity === 'comprobacion',
   );
   const packingWork = workLogs.filter((row) => row.activity === 'packing');
+  const replyWork = workLogs.filter((row) => row.activity === 'correos');
   const sum = (rows: KpiWork[], field: 'minutes' | 'orders' | 'products' | 'packingLists') =>
     rows.reduce((total, row) => total + (row[field] || 0), 0);
   const activities = new Map<string, { minutes: number; entries: number }>();
@@ -144,6 +146,10 @@ export function calculateKpiSnapshot(input: {
     preparationMinutesPerProduct: average(sum(preparation, 'minutes'), sum(preparation, 'products')),
     orderWorkMinutesPerOrder: average(sum(orderWork, 'minutes'), sum(orderWork, 'orders')),
     packingMinutesPerList: average(sum(packingWork, 'minutes'), sum(packingWork, 'packingLists')),
+    replyMinutesPerMessage: average(
+      sum(replyWork, 'minutes'),
+      replyWork.length,
+    ),
     activityBreakdown: [...activities.entries()].map(([activity, value]) => ({ activity, ...value })).sort((a, b) => b.minutes - a.minutes),
     workerBreakdown: [...workers.values()].sort((a, b) => b.minutes - a.minutes),
   };

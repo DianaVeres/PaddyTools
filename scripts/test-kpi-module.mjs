@@ -22,7 +22,7 @@ for (const fragment of ['listIncidents', 'listPackingLists', 'calculateKpiSnapsh
   if (!service.includes(fragment)) throw new Error(`El servicio KPI ha perdido: ${fragment}`);
 for (const fragment of ['¿Quién ha hecho qué?', 'N.º pedidos', 'N.º productos', 'N.º PackingLists'])
   if (!workForm.includes(fragment)) throw new Error(`El registro de tiempos ha perdido: ${fragment}`);
-for (const fragment of ['Personas necesarias', 'Preparación / pedido', 'Tiempo por persona', 'Tiempo por tarea'])
+for (const fragment of ['Personas necesarias', 'Preparación / pedido', 'Tiempo / mensaje', 'Tiempo por persona', 'Tiempo por tarea'])
   if (!productivity.includes(fragment)) throw new Error(`La productividad ha perdido: ${fragment}`);
 if (!migration.includes('CREATE TABLE `kpi_work_logs`') || migration.includes('CREATE TABLE `auth_users`'))
   throw new Error('La migración KPI no está aislada correctamente.');

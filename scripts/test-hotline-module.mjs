@@ -17,10 +17,22 @@ for (const fragment of [
   '/api/hotline/templates',
   'Guardar contacto',
   'Nueva plantilla',
+  "beginAutomaticWork(\n      HOTLINE_TIMER_KEY,\n      'correos'",
+  'completeAutomaticWork(HOTLINE_TIMER_KEY',
+  'Medición activa desde',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`El módulo Hotline ha perdido: ${fragment}`);
 }
+
+const saved = page.indexOf(
+  "if (!response.ok) throw new Error(data.error || 'No se pudo guardar el contacto.')",
+);
+const completed = page.indexOf('await completeAutomaticWork(HOTLINE_TIMER_KEY');
+if (saved < 0 || completed < saved)
+  throw new Error(
+    'Hotline termina el contador antes de confirmar el guardado del contacto.',
+  );
 
 for (const fragment of [
   "new Set(['analyze', 'cases', 'templates'])",

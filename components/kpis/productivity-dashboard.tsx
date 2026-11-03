@@ -24,6 +24,7 @@ export function ProductivityDashboard({ data, logs, onDelete }: { data: KpiSnaps
           <KpiCard label="Preparación / producto" value={`${data.preparationMinutesPerProduct} min`} detail="Según artículos preparados" icon={<Clock3 />} tone="green" />
           <KpiCard label="Trabajo / pedido" value={`${data.orderWorkMinutesPerOrder} min`} detail="Preparación + comprobación" icon={<Users />} tone="burgundy" />
           <KpiCard label="Tiempo / PackingList" value={`${data.packingMinutesPerList} min`} detail="PackingList completo" icon={<Clock3 />} tone="orange" />
+          <KpiCard label="Tiempo / mensaje" value={`${data.replyMinutesPerMessage} min`} detail="Media de contactos guardados en Hotline" icon={<Clock3 />} tone="green" />
         </div>
       </section>
       <section className="kpi-planner">
