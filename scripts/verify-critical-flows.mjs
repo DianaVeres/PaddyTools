@@ -531,6 +531,14 @@ requireAll(
   ],
   'El diálogo de histórico de envíos',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/reservation-registry-dialog',
+    'ReservationRegistryDialog',
+  ],
+  'El registro de reservas',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

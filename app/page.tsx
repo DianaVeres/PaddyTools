@@ -10,7 +10,6 @@ import {
 } from 'react';
 import {
   Archive,
-  CalendarDays,
   Check,
   ChevronRight,
   ClipboardList,
@@ -107,6 +106,7 @@ import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog'
 import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
 import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
 import { ShippingHistoryDialog } from '@/components/dashboard/shipping-history-dialog';
+import { ReservationRegistryDialog } from '@/components/dashboard/reservation-registry-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1923,125 +1923,17 @@ export default function Home() {
         }}
         onSearch={() => void checkShipping()}
       />
-      <Dialog
+      <ReservationRegistryDialog
         open={modal === 'reservas'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="registry-dialog reservation-registry-dialog">
-          <DialogHeader>
-            <div className="modal-icon green">
-              <CalendarDays />
-            </div>
-            <DialogTitle>Reservas</DialogTitle>
-            <DialogDescription>
-              Consulta las reservas de Monday y completa desde aquí cualquier
-              casilla pendiente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="registry-tools">
-            <Input
-              value={registryFilter}
-              onChange={(e) => setRegistryFilter(e.target.value)}
-              placeholder="Buscar reserva, cliente, teléfono, colegio o artículo…"
-            />
-            <Button onClick={() => void openReservation()}>
-              <CalendarDays /> Generar reserva libre
-            </Button>
-          </div>
-          <div className="registry-list">
-            {reservationsLoading ? (
-              <div className="registry-empty">
-                <RefreshCw className="spin" /> Cargando reservas…
-              </div>
-            ) : visibleReservationRows.length ? (
-              <div className="reservation-table-wrap">
-                <table className="reservation-table">
-                  <thead>
-                    <tr>
-                      {[
-                        'Nº RESERVA',
-                        'CLIENTE',
-                        'TELÉFONO',
-                        'COLEGIO',
-                        'FECHA RESERVA',
-                        'CÓDIGO ART.',
-                        'DESCRIPCIÓN ARTÍCULO',
-                        'TALLA',
-                        'UDS.',
-                        'U. ENVIADAS',
-                        'U. PENDIENTES',
-                        'PAGADA',
-                        'OBSERVACIONES',
-                        'ESTADO',
-                        'FECHA FIN',
-                        'ENTREGA ESTIMADA PRODUCCIÓN',
-                        'FÓRMULA',
-                        'EDITAR',
-                        'ETIQUETA',
-                      ].map((heading) => (
-                        <th key={heading}>{heading}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleReservationRows.map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <b>{row.reference || row.id}</b>
-                        </td>
-                        <td>{row.customer || 'Pendiente'}</td>
-                        <td>{row.phone || 'Pendiente'}</td>
-                        <td>{row.school || 'Pendiente'}</td>
-                        <td>{row.date || 'Pendiente'}</td>
-                        <td>{row.code || 'Pendiente'}</td>
-                        <td>
-                          {row.articleDescription || row.article || 'Pendiente'}
-                        </td>
-                        <td>{row.size || 'Pendiente'}</td>
-                        <td>{row.units || 'Pendiente'}</td>
-                        <td>{row.sentUnits || 'Pendiente'}</td>
-                        <td>{row.pending || 'Pendiente'}</td>
-                        <td>{row.paid || 'Pendiente'}</td>
-                        <td>{row.observations || 'Pendiente'}</td>
-                        <td>{row.status || 'Pendiente'}</td>
-                        <td>{row.endDate || 'Pendiente'}</td>
-                        <td>{row.estimatedProduction || 'Pendiente'}</td>
-                        <td>{row.formula || 'Calculada en Monday'}</td>
-                        <td className="reservation-table-edit">
-                          <Button onClick={() => void openReservation(row)}>
-                            Completar / editar
-                          </Button>
-                        </td>
-                        <td className="reservation-table-actions">
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              requestReservationPrint(row, 'label')
-                            }
-                          >
-                            <Printer /> Imprimir etiqueta
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="registry-empty">
-                <Archive />
-                <b>No hay reservas para mostrar</b>
-                <span>Prueba a cambiar la búsqueda.</span>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        loading={reservationsLoading}
+        filter={registryFilter}
+        rows={visibleReservationRows}
+        onClose={() => setModal(null)}
+        onFilterChange={setRegistryFilter}
+        onCreate={() => void openReservation()}
+        onEdit={(row) => void openReservation(row)}
+        onPrintLabel={(row) => requestReservationPrint(row, 'label')}
+      />
       <Dialog
         open={modal === 'registro' || modal === 'recogidas'}
         onOpenChange={(open) => !open && setModal(null)}
