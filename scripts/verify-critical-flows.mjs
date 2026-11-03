@@ -502,6 +502,14 @@ requireAll(
   ],
   'Los datos de cliente del formulario de reservas',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/reservation-details-section',
+    'ReservationDetailsSection',
+  ],
+  'Los detalles del formulario de reservas',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

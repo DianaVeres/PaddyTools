@@ -111,6 +111,7 @@ import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
 import { ReservationCustomerSection } from '@/components/dashboard/reservation-customer-section';
+import { ReservationDetailsSection } from '@/components/dashboard/reservation-details-section';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1900,166 +1901,12 @@ export default function Home() {
                 onChange={setReservationDraft}
                 onNewCustomerChange={setNewReservationCustomer}
               />
-              <Field label="Fecha reserva">
-                <Input
-                  type="date"
-                  value={reservationDraft.date}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      date: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Código / artículo">
-                <select
-                  value={reservationDraft.articleId}
-                  disabled={!reservationDraft.school}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      articleId: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">
-                    {reservationDraft.school
-                      ? 'Selecciona un artículo'
-                      : 'Selecciona primero un colegio'}
-                  </option>
-                  {reservationArticles.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.code}
-                      {item.description ? ` · ${item.description}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Talla">
-                <Input
-                  value={reservationDraft.size}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      size: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Unidades">
-                <Input
-                  type="number"
-                  min={1}
-                  value={reservationDraft.units}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      units: Number(e.target.value),
-                    })
-                  }
-                />
-              </Field>
-              <Field label="U. enviadas">
-                <Input
-                  type="number"
-                  min={0}
-                  value={reservationDraft.sentUnits}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      sentUnits: Number(e.target.value),
-                    })
-                  }
-                />
-              </Field>
-              <Field label="U. pendientes">
-                <Input
-                  type="number"
-                  min={0}
-                  value={reservationDraft.pending}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      pending: Number(e.target.value),
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Pagada">
-                <select
-                  value={reservationDraft.paid}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      paid: e.target.value,
-                    })
-                  }
-                >
-                  {reservationOptions?.paid.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Observaciones">
-                <select
-                  value={reservationDraft.observations}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      observations: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Sin indicar</option>
-                  {reservationOptions?.observations.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Estado">
-                <select
-                  value={reservationDraft.status}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      status: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Sin estado</option>
-                  {reservationOptions?.status.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Fecha fin">
-                <Input
-                  type="date"
-                  value={reservationDraft.endDate}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      endDate: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Entrega estimada producción">
-                <Input
-                  type="date"
-                  value={reservationDraft.estimatedProduction}
-                  onChange={(e) =>
-                    setReservationDraft({
-                      ...reservationDraft,
-                      estimatedProduction: e.target.value,
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Fórmula (calculada por Monday)">
-                <Input value={reservationDraft.formula} disabled />
-              </Field>
+              <ReservationDetailsSection
+                draft={reservationDraft}
+                options={reservationOptions}
+                articles={reservationArticles}
+                onChange={setReservationDraft}
+              />
             </div>
           )}
           <DialogFooter>
