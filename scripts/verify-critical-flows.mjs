@@ -523,6 +523,14 @@ requireAll(
   ],
   'El diálogo de email y WhatsApp',
 );
+requireAll(
+  'app/page.tsx',
+  [
+    '@/components/dashboard/shipping-history-dialog',
+    'ShippingHistoryDialog',
+  ],
+  'El diálogo de histórico de envíos',
+);
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de
 // imprimir y la búsqueda histórica completa, aunque la lista visible se filtre.

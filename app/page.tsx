@@ -17,11 +17,9 @@ import {
   FileText,
   Printer,
   RefreshCw,
-  Search,
   Shirt,
   Tag,
   Trash2,
-  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,6 +106,7 @@ import { IncidentDocumentDialog } from '@/components/dashboard/incident-document
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
 import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
 import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
+import { ShippingHistoryDialog } from '@/components/dashboard/shipping-history-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1912,114 +1911,18 @@ export default function Home() {
         onWhatsApp={launchWhatsApp}
         onEmail={launchEmail}
       />
-      <Dialog
+      <ShippingHistoryDialog
         open={shippingOpen}
-        onOpenChange={(open) => {
-          if (!shippingLoading) setShippingOpen(open);
+        loading={shippingLoading}
+        reference={shippingReference}
+        shipments={shipments}
+        onOpenChange={setShippingOpen}
+        onReferenceChange={(reference) => {
+          setShippingReference(reference);
+          setShipments(null);
         }}
-      >
-        <DialogContent className="shipping-dialog">
-          <DialogHeader>
-            <div className="modal-icon blue">
-              <Truck />
-            </div>
-            <DialogTitle>¿Cuándo se hizo el envío?</DialogTitle>
-            <DialogDescription>
-              Elige la referencia exacta que quieres localizar en Paddy Packing
-              List.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="shipping-reference-picker">
-            <label>
-              <span>Referencia a buscar</span>
-              <Input
-                value={shippingReference}
-                disabled={shippingLoading}
-                placeholder="Ej. PA12345, R12345 o IPA12345"
-                onChange={(event) => {
-                  setShippingReference(event.target.value);
-                  setShipments(null);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && shippingReference.trim())
-                    void checkShipping();
-                }}
-              />
-            </label>
-            <Button
-              disabled={shippingLoading || !shippingReference.trim()}
-              onClick={() => void checkShipping()}
-            >
-              <Search /> Buscar esta referencia
-            </Button>
-          </div>
-          {shippingLoading ? (
-            <div className="shipping-loading">
-              <RefreshCw className="spin" />
-              Buscando en Paddy Packing List…
-            </div>
-          ) : shipments === null ? (
-            <div className="shipping-empty shipping-prompt">
-              <Archive />
-              <b>Introduce una referencia</b>
-              <span>Buscaremos exactamente el PA, R, IPA o RPA indicado.</span>
-            </div>
-          ) : shipments.length ? (
-            <div className="shipment-list">
-              {shipments.map((item, index) => (
-                <article
-                  className="shipment-result"
-                  key={`${item.file}-${index}`}
-                >
-                  <span className="shipment-ok">
-                    <Check />
-                  </span>
-                  <div>
-                    <small>Fecha de envío</small>
-                    <strong>
-                      {item.date
-                        ? new Intl.DateTimeFormat('es-ES', {
-                            dateStyle: 'long',
-                          }).format(new Date(`${item.date}T12:00:00`))
-                        : 'No indicada'}
-                    </strong>
-                    <dl>
-                      <div>
-                        <dt>Colegio</dt>
-                        <dd>{item.school}</dd>
-                      </div>
-                      <div>
-                        <dt>Caja</dt>
-                        <dd>{item.box || 'No indicada'}</dd>
-                      </div>
-                      <div>
-                        <dt>Pedido registrado</dt>
-                        <dd>{item.order}</dd>
-                      </div>
-                      <div>
-                        <dt>Archivo</dt>
-                        <dd>{item.file}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="shipping-empty">
-              <Archive />
-              <b>No aparece en los PackingList</b>
-              <span>
-                No se ha encontrado la referencia {shippingReference} en los
-                PackingList guardados.
-              </span>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setShippingOpen(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onSearch={() => void checkShipping()}
+      />
       <Dialog
         open={modal === 'reservas'}
         onOpenChange={(open) => !open && setModal(null)}

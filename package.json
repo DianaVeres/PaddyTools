@@ -58,6 +58,7 @@
     "test:dashboard-reservation-details-section": "node scripts/test-dashboard-reservation-details-section.mjs",
     "test:dashboard-reservation-form-dialog": "node scripts/test-dashboard-reservation-form-dialog.mjs",
     "test:dashboard-customer-message-dialog": "node scripts/test-dashboard-customer-message-dialog.mjs",
+    "test:dashboard-shipping-history-dialog": "node scripts/test-dashboard-shipping-history-dialog.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
     "test:store-ticket": "node scripts/test-store-ticket.mjs",
     "test:monday-client": "node scripts/test-monday-client.mjs",
