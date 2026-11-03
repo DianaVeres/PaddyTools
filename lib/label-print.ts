@@ -28,14 +28,29 @@ export function buildStandaloneLabelHtml(lines: string[]) {
 
   return `<!doctype html><html><head><meta charset="utf-8"><title></title><style>
     @page { size: 150mm 100mm; margin: 0; }
-    html, body { width: 150mm; height: 100mm; margin: 0; padding: 0; overflow: hidden; }
+    * { box-sizing: border-box; }
+    html, body { width: 0; height: 0; margin: 0; padding: 0; overflow: hidden; }
     body { background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-weight: 700; }
-    .label { position: relative; width: 150mm; height: 100mm; overflow: hidden; }
+    .label {
+      position: fixed;
+      inset: 0 auto auto 0;
+      width: 149.8mm;
+      height: 99.8mm;
+      overflow: hidden;
+      break-inside: avoid;
+      break-after: avoid;
+      page-break-inside: avoid;
+      page-break-after: avoid;
+    }
     p { position: absolute; left: 15mm; width: 120mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
     .line-1 { bottom: 75mm; }
     .line-2 { bottom: 62mm; }
     .line-3 { bottom: 49mm; }
     .line-4 { bottom: 36mm; }
+    @media print {
+      html, body { width: 0 !important; height: 0 !important; }
+      .label { display: block !important; }
+    }
   </style></head><body><article class="label">${rows}</article></body></html>`;
 }
 
