@@ -120,8 +120,8 @@ requireAll(
   'Los elementos comunes del panel principal',
 );
 requireAll(
-  'app/page.tsx',
-  ['@/components/dashboard/print-components'],
+  'components/dashboard/reservation-result-dialog.tsx',
+  ['@/components/dashboard/print-components', 'ReservationPrintCard'],
   'Los impresos compartidos del panel principal',
 );
 requireAll(
@@ -547,6 +547,11 @@ requireAll(
   'app/page.tsx',
   ['@/components/dashboard/incident-registry-dialog', 'IncidentRegistryDialog'],
   'El registro de incidencias y recogidas',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/components/dashboard/reservation-result-dialog', 'ReservationResultDialog'],
+  'La confirmación de reserva creada',
 );
 
 // PackingList debe conservar la comprobación de colegio, el aviso antes de

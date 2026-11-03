@@ -11,9 +11,7 @@ import {
 import {
   ChevronRight,
   FileText,
-  Printer,
   RefreshCw,
-  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,7 +77,6 @@ import {
   DashboardField as Field,
   formatDashboardDate as fmt,
 } from '@/components/dashboard/common';
-import { ReservationPrintCard } from '@/components/dashboard/print-components';
 import { OrderItems as Items } from '@/components/dashboard/order-items';
 import { StoreTicketCard } from '@/components/dashboard/store-ticket-card';
 import { OrderActivity } from '@/components/dashboard/order-activity';
@@ -102,6 +99,7 @@ import { CustomerMessageDialog } from '@/components/dashboard/customer-message-d
 import { ShippingHistoryDialog } from '@/components/dashboard/shipping-history-dialog';
 import { ReservationRegistryDialog } from '@/components/dashboard/reservation-registry-dialog';
 import { IncidentRegistryDialog } from '@/components/dashboard/incident-registry-dialog';
+import { ReservationResultDialog } from '@/components/dashboard/reservation-result-dialog';
 
 export default function Home() {
   const today = new Date().toLocaleDateString('en-CA');
@@ -1858,44 +1856,13 @@ export default function Home() {
         onDragMove={moveReservationDialog}
         onDragStop={stopReservationDrag}
       />
-      <Dialog
+      <ReservationResultDialog
         open={modal === 'reserva-creada'}
-        onOpenChange={(open) => !open && setModal(null)}
-      >
-        <DialogContent className="reservation-result-dialog">
-          <DialogHeader>
-            <DialogTitle>Reserva creada</DialogTitle>
-            <DialogDescription>
-              La reserva se ha guardado correctamente en Monday.
-            </DialogDescription>
-          </DialogHeader>
-          {createdReservation && (
-            <ReservationPrintCard record={createdReservation} />
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModal(null)}>
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                createdReservation &&
-                requestReservationPrint(createdReservation, 'label')
-              }
-            >
-              <Tag /> Generar etiqueta
-            </Button>
-            <Button
-              onClick={() =>
-                createdReservation &&
-                requestReservationPrint(createdReservation)
-              }
-            >
-              <Printer /> Imprimir reserva
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        record={createdReservation}
+        onClose={() => setModal(null)}
+        onPrintLabel={(record) => requestReservationPrint(record, 'label')}
+        onPrint={(record) => requestReservationPrint(record)}
+      />
       <CustomerMessageDialog
         open={modal === 'email'}
         draft={emailDraft}
