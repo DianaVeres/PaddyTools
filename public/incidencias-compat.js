@@ -347,6 +347,27 @@
   imageField('solved', 'order');
   imageField('storeSolved', 'store');
   imageField('ownSolved', 'own');
+  const ticketImageInput = document.getElementById('storeImage');
+  if (ticketImageInput) ticketImageInput.onchange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const error = document.getElementById('storeIncidentImageError');
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024) {
+      error.textContent = 'Usa una imagen JPG, PNG o WebP de 5 MB como máximo.';
+      event.target.value = '';
+      return;
+    }
+    if ((imageRecords.store?.images?.length || 0) + imageDrafts.store.length >= 4) {
+      error.textContent = 'Puedes adjuntar un máximo de 4 imágenes.';
+      event.target.value = '';
+      return;
+    }
+    error.textContent = '';
+    imageDrafts.store.push(file);
+    document.getElementById('storePreview').src = URL.createObjectURL(file);
+    document.getElementById('storePreview').classList.remove('hidden');
+    renderIncidentImages('store');
+  };
   const showWithImages = show; show = function (row) { showWithImages(row); resetIncidentImages('order', row); };
   const showStoreWithImages = showStore; showStore = function (row) { showStoreWithImages(row); resetIncidentImages('store', row); };
   const showOwnWithImages = showOwn; showOwn = function (row) { showOwnWithImages(row); resetIncidentImages('own', row); };
