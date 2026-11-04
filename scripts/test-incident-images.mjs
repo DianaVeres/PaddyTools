@@ -36,6 +36,14 @@ assert.ok(
   'El bloque integrado de incidencias no sube imágenes.',
 );
 assert.ok(
+  compatibility.includes('function printableImages'),
+  'La impresión no incorpora las imágenes.',
+);
+assert.ok(
+  compatibility.includes('Imágenes de la incidencia'),
+  'Falta el bloque de imágenes en el impreso.',
+);
+assert.ok(
   read('drizzle/0008_incident_images.sql').includes(
     'CREATE TABLE `incident_images`',
   ),
