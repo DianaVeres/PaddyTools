@@ -7,6 +7,7 @@ const service = read('lib/incident-images.ts');
 const route = read('app/api/incidents/images/route.ts');
 const form = read('components/dashboard/incident-images-field.tsx');
 const compatibility = read('public/incidencias-compat.js');
+const legacyForm = read('public/incidencias-app.html');
 
 for (const expected of [
   'MAX_INCIDENT_IMAGES = 4',
@@ -34,6 +35,10 @@ assert.ok(
 assert.ok(
   compatibility.includes('uploadIncidentImages'),
   'El bloque integrado de incidencias no sube imágenes.',
+);
+assert.ok(
+  legacyForm.includes("status('Incidencia del pedido #'+current.order_number+' guardada.','ok');return current"),
+  'El formulario de pedidos no devuelve la incidencia guardada para poder subir sus imágenes.',
 );
 assert.ok(
   compatibility.includes('function printableImages'),
