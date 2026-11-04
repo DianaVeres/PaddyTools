@@ -1,16 +1,7 @@
 'use client';
 
-import {
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  ChevronRight,
-  FileText,
-  RefreshCw,
-} from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChevronRight, FileText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +44,7 @@ import {
   fetchShippingMatches,
   patchIncident,
   postIncident,
+  uploadIncidentImages,
   postOrderNote,
   removeIncident,
   removeOrderNote,
@@ -80,10 +72,7 @@ import {
   updateDeliveryEmailDraft,
   type DeliveryEmailDraft as EmailDraft,
 } from '@/lib/delivery-message';
-import {
-  buildEmailLink,
-  buildWhatsAppLink,
-} from '@/lib/contact-links';
+import { buildEmailLink, buildWhatsAppLink } from '@/lib/contact-links';
 import {
   selectedPickupLines,
   validateIncidentDraft,
@@ -240,6 +229,8 @@ export default function Home() {
     recurrence: false,
     solved: false,
     sent: false,
+    images: [],
+    newImages: [],
     pickupItems: {},
   });
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
@@ -441,11 +432,7 @@ export default function Home() {
         setMondayRecords(mondayMatches);
         setIncidentSearchMatches(incidentMatches);
         if (
-          !hasConnectedSearchResults(
-            wooMatches,
-            mondayMatches,
-            incidentMatches,
-          )
+          !hasConnectedSearchResults(wooMatches, mondayMatches, incidentMatches)
         )
           setError(emptyConnectedSearchMessage(searchTerm));
         return;
@@ -496,14 +483,12 @@ export default function Home() {
     setSaved('');
     try {
       const returnAttended = await setRemoteReturnAttended({
-          orderId: order.id,
-          orderNumber: order.number,
-          attended,
+        orderId: order.id,
+        orderNumber: order.number,
+        attended,
       });
       setOrder((current) =>
-        current
-          ? { ...current, returnAttended }
-          : current,
+        current ? { ...current, returnAttended } : current,
       );
       setSaved(
         attended
@@ -564,9 +549,9 @@ export default function Home() {
     }
     try {
       const note = await postOrderNote({
-          orderNumber: normalizeOrderNoteReference(noteReference),
-          kind: noteKind,
-          content,
+        orderNumber: normalizeOrderNoteReference(noteReference),
+        kind: noteKind,
+        content,
       });
       setOrderNotes((notes) => [note, ...notes]);
       setNoteDraft('');
@@ -589,8 +574,8 @@ export default function Home() {
     setSaved('');
     try {
       await removeOrderNote({
-          id: note.id,
-          orderNumber: normalizeOrderNoteReference(noteReference),
+        id: note.id,
+        orderNumber: normalizeOrderNoteReference(noteReference),
       });
       setOrderNotes((notes) =>
         notes.filter((current) => current.id !== note.id),
@@ -658,12 +643,15 @@ export default function Home() {
       recurrence: false,
       solved: incident?.solved || false,
       sent: incident?.sent || false,
+      images: incident?.images || [],
+      newImages: [],
       pickupItems: {},
     });
     setModal('incidencia');
     if (!schoolOptions.length)
-      void fetchSchools()
-        .then((data) => Array.isArray(data) && setSchoolOptions(data));
+      void fetchSchools().then(
+        (data) => Array.isArray(data) && setSchoolOptions(data),
+      );
     if (incident?.pickupSchool && pickupSchool)
       void loadPickupProducts(pickupSchool);
   }
@@ -733,18 +721,17 @@ export default function Home() {
         fetchReservationOptions(),
         fetchReservations().catch(() => []),
       ]);
-      const recoveredArticles = reservations.flatMap(
-        (record) =>
-          (record.articleIds || []).map((id) => ({
-            id,
-            code: record.code || '',
-            description: [
-              record.articleDescription || record.article,
-              record.school,
-            ]
-              .filter(Boolean)
-              .join(' · '),
-          })),
+      const recoveredArticles = reservations.flatMap((record) =>
+        (record.articleIds || []).map((id) => ({
+          id,
+          code: record.code || '',
+          description: [
+            record.articleDescription || record.article,
+            record.school,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        })),
       );
       const articleMap = new Map(
         [...(data.articles || []), ...recoveredArticles].map((article) => [
@@ -819,9 +806,7 @@ export default function Home() {
       kind === 'reserva'
         ? reservationDraft.reference
         : order?.number || incident?.orderNumber || mondayRecords[0]?.reference;
-    const reference = rawReference
-      ? linkedWooOrderReference(rawReference)
-      : '';
+    const reference = rawReference ? linkedWooOrderReference(rawReference) : '';
     if (!reference) return;
     if (kind === 'reserva' && reservationSaving) return;
     try {
@@ -854,34 +839,37 @@ export default function Home() {
           .filter(Boolean)
           .join('\n');
         record = await postIncident({
-            order_number: incidentStorageReference(reference),
-            order_id: order?.id || '',
-            customer_name: customerName,
-            customer_email: incidentDraft.customerEmail,
-            customer_phone: phone,
-            order_date: order?.dateCreated || '',
-            order_status: order?.status || '',
-            order_total: order?.total || '',
-            shipping_address: order?.customer.address || '',
-            billing_address: order?.customer.address || '',
-            products_json: JSON.stringify(
-              order?.items || incident?.products || [],
-            ),
-            incident_text: `${incidentDraft.text}${incidentDraft.observations.trim() ? `\n\nOBSERVACIONES: ${incidentDraft.observations.trim()}` : ''}`,
-            incident_date: incidentDraft.date,
-            pickup_school: incidentDraft.pickup ? 1 : 0,
-            pickup_school_name: incidentDraft.pickup
-              ? incidentDraft.pickupSchool
-              : '',
-            pickup_details: incidentDraft.pickup ? pickupDetails : '',
-            pickup_received: incident?.pickupReceived ? 1 : 0,
-            solved: forceSolved || incidentDraft.solved ? 1 : 0,
-            sent: incidentDraft.sent ? 1 : 0,
-            incident_school_name: incidentDraft.school,
-            is_recurrence: incidentDraft.recurrence ? 1 : 0,
-            source_type: 'pedido',
-            record_id: incidentDraft.recurrence ? '' : incident?.id || '',
+          order_number: incidentStorageReference(reference),
+          order_id: order?.id || '',
+          customer_name: customerName,
+          customer_email: incidentDraft.customerEmail,
+          customer_phone: phone,
+          order_date: order?.dateCreated || '',
+          order_status: order?.status || '',
+          order_total: order?.total || '',
+          shipping_address: order?.customer.address || '',
+          billing_address: order?.customer.address || '',
+          products_json: JSON.stringify(
+            order?.items || incident?.products || [],
+          ),
+          incident_text: `${incidentDraft.text}${incidentDraft.observations.trim() ? `\n\nOBSERVACIONES: ${incidentDraft.observations.trim()}` : ''}`,
+          incident_date: incidentDraft.date,
+          pickup_school: incidentDraft.pickup ? 1 : 0,
+          pickup_school_name: incidentDraft.pickup
+            ? incidentDraft.pickupSchool
+            : '',
+          pickup_details: incidentDraft.pickup ? pickupDetails : '',
+          pickup_received: incident?.pickupReceived ? 1 : 0,
+          solved: forceSolved || incidentDraft.solved ? 1 : 0,
+          sent: incidentDraft.sent ? 1 : 0,
+          incident_school_name: incidentDraft.school,
+          is_recurrence: incidentDraft.recurrence ? 1 : 0,
+          source_type: 'pedido',
+          record_id: incidentDraft.recurrence ? '' : incident?.id || '',
         });
+        if (record.id && incidentDraft.newImages.length) {
+          await uploadIncidentImages(record.id, incidentDraft.newImages);
+        }
       } else {
         const linkedCustomerFromSearch = Boolean(
           order?.customer.name ||
@@ -1103,15 +1091,16 @@ export default function Home() {
       school: incidentDraft.school,
       recurrenceCount: incident?.recurrenceCount || 0,
       products: order?.items || incident?.products || [],
+      images: incidentDraft.images,
     };
     printIncidentDocument(row, mode);
   }
   async function setPickupReceived(row: Incident, received: boolean) {
     try {
       await patchIncident({
-          id: row.id,
-          orderNumber: row.orderNumber,
-          received,
+        id: row.id,
+        orderNumber: row.orderNumber,
+        received,
       });
       setRegistryRows((rows) =>
         rows.map((item) =>
@@ -1146,9 +1135,9 @@ export default function Home() {
   async function setIncidentSolved(row: Incident, solved: boolean) {
     try {
       const data = await patchIncident({
-          id: row.id,
-          orderNumber: row.orderNumber,
-          solved,
+        id: row.id,
+        orderNumber: row.orderNumber,
+        solved,
       });
       const updated = data.incident || {
         ...row,
@@ -1416,6 +1405,7 @@ export default function Home() {
       {ticket && <StoreTicketCard ticket={ticket} />}
       <IncidentFormDialog
         open={modal === 'incidencia'}
+        incidentId={incident?.id || ''}
         reference={
           order?.number ||
           incident?.orderNumber ||

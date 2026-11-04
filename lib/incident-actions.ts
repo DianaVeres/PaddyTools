@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { env } from 'cloudflare:workers';
 import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
 import { incidentReferenceCandidates } from '@/lib/global-search';
@@ -60,10 +61,7 @@ export async function updateIncidentStatus(changes: IncidentStatusChanges) {
     .update(incidentRecords)
     .set(incidentFieldsFor(stored.id, data))
     .where(eq(incidentRecords.id, stored.id));
-  return mapStoredIncident(
-    { id: stored.id, data },
-    changes.orderNumber,
-  );
+  return mapStoredIncident({ id: stored.id, data }, changes.orderNumber);
 }
 
 export async function deleteStoredIncident(selector: IncidentSelector) {
@@ -72,6 +70,24 @@ export async function deleteStoredIncident(selector: IncidentSelector) {
   await getDb()
     .delete(incidentRecords)
     .where(eq(incidentRecords.id, stored.id));
+  try {
+    const images = JSON.parse(
+      incidentTextValue(stored.data.images_json) || '[]',
+    ) as Array<{ key?: string }>;
+    for (const image of images) {
+      if (!image.key) continue;
+      await env.DB.prepare(
+        'DELETE FROM incident_image_chunks WHERE image_id = ?',
+      )
+        .bind(image.key)
+        .run();
+      await env.DB.prepare('DELETE FROM incident_images WHERE id = ?')
+        .bind(image.key)
+        .run();
+    }
+  } catch {
+    // La incidencia ya se ha eliminado; una imagen antigua no debe bloquearlo.
+  }
   return {
     deleted: true,
     id: stored.id,

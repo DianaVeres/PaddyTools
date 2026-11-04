@@ -33,6 +33,7 @@ $incidentStoreCheck = Join-Path $officialRoot 'scripts\test-incident-store.mjs'
 $incidentActionsCheck = Join-Path $officialRoot 'scripts\test-incident-actions.mjs'
 $incidentWriteCheck = Join-Path $officialRoot 'scripts\test-incident-write.mjs'
 $incidentQueryCheck = Join-Path $officialRoot 'scripts\test-incident-query.mjs'
+$incidentImagesCheck = Join-Path $officialRoot 'scripts\test-incident-images.mjs'
 $permissionsCheck = Join-Path $officialRoot 'scripts\test-permissions.mjs'
 $apiAccessCheck = Join-Path $officialRoot 'scripts\test-api-access.mjs'
 $globalSearchCheck = Join-Path $officialRoot 'scripts\test-global-search.mjs'
@@ -165,6 +166,10 @@ try {
   & $node $incidentQueryCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La consulta de incidencias ha fallado. No se desplegará nada."
+  }
+  & $node $incidentImagesCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La gestión de imágenes de incidencias ha fallado. No se desplegará nada."
   }
   & $node $permissionsCheck
   if ($LASTEXITCODE -ne 0) {

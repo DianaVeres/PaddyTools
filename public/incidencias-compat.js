@@ -2,6 +2,7 @@
   const originalApi = api;
   const text = (value) => String(value ?? '');
   const asLegacy = (row) => ({
+    record_id: row.id,
     order_number: row.orderNumber,
     ticket_number: row.ticketNumber || row.orderNumber,
     source_type: row.sourceType || 'order',
@@ -30,6 +31,7 @@
     is_recurrence: row.isRecurrence ? 1 : 0,
     recurrence_count: row.recurrenceCount || 0,
     products_json: JSON.stringify(row.products || []),
+    images: row.images || [],
   });
 
   const request = async (url, options) => {
@@ -299,10 +301,67 @@
     document.getElementById('ownAutoId').checked = false;
   };
 
+  // Imágenes privadas de incidencias. Los archivos se guardan en R2 y la
+  // incidencia conserva solo sus referencias, para no cargar la base de datos.
+  const imageDrafts = { order: [], store: [], own: [] };
+  const imageRecords = { order: null, store: null, own: null };
+  const imageField = (anchorId, kind) => {
+    const anchor = document.getElementById(anchorId);
+    if (!anchor || document.getElementById(kind + 'IncidentImages')) return;
+    (anchor.closest('.actions') || anchor).insertAdjacentHTML('beforebegin', `<section class="incident-images"><label>IMÁGENES DE LA INCIDENCIA</label><small>Hasta 4 imágenes JPG, PNG o WebP · máximo 5 MB cada una</small><input id="${kind}IncidentImages" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="${kind}IncidentImageGrid" class="incident-image-grid"></div><p id="${kind}IncidentImageError" class="error"></p></section>`);
+    document.getElementById(kind + 'IncidentImages').onchange = (event) => {
+      const files = Array.from(event.target.files || []);
+      const current = imageRecords[kind]?.images?.length || 0;
+      const invalid = files.find((file) => !['image/jpeg','image/png','image/webp'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024);
+      const error = document.getElementById(kind + 'IncidentImageError');
+      if (invalid) error.textContent = 'Usa imágenes JPG, PNG o WebP de 5 MB como máximo.';
+      else if (current + imageDrafts[kind].length + files.length > 4) error.textContent = 'Puedes adjuntar un máximo de 4 imágenes.';
+      else { error.textContent = ''; imageDrafts[kind].push(...files); }
+      event.target.value = '';
+      renderIncidentImages(kind);
+    };
+  };
+  const renderIncidentImages = (kind) => {
+    const grid = document.getElementById(kind + 'IncidentImageGrid');
+    if (!grid) return;
+    const row = imageRecords[kind];
+    const saved = (row?.images || []).map((image) => `<a href="/api/incidents/images?incidentId=${encodeURIComponent(row.record_id)}&key=${encodeURIComponent(image.key)}" target="_blank"><img src="/api/incidents/images?incidentId=${encodeURIComponent(row.record_id)}&key=${encodeURIComponent(image.key)}" alt="${esc(image.name)}"><span>${esc(image.name)}</span></a>`).join('');
+    const pending = imageDrafts[kind].map((file, index) => `<div><img src="${URL.createObjectURL(file)}" alt="Vista previa"><span>${esc(file.name)}</span><button type="button" data-remove-image="${kind}:${index}">Quitar</button></div>`).join('');
+    grid.innerHTML = saved + pending;
+    grid.querySelectorAll('[data-remove-image]').forEach((button) => button.onclick = () => { const index = Number(button.dataset.removeImage.split(':')[1]); imageDrafts[kind].splice(index, 1); renderIncidentImages(kind); });
+  };
+  const resetIncidentImages = (kind, row = null) => { imageDrafts[kind] = []; imageRecords[kind] = row; renderIncidentImages(kind); };
+  const uploadIncidentImages = async (kind, row) => {
+    const files = imageDrafts[kind];
+    if (!files.length) return row;
+    const incidentId = row?.record_id;
+    if (!incidentId) throw new Error('No se pudo identificar la incidencia para guardar las imágenes.');
+    const form = new FormData();
+    form.set('incidentId', incidentId);
+    files.forEach((file) => form.append('images', file));
+    const data = await request('/api/incidents/images', { method: 'POST', body: form });
+    const updated = asLegacy(data.incident);
+    resetIncidentImages(kind, updated);
+    return updated;
+  };
+  imageField('solved', 'order');
+  imageField('storeSolved', 'store');
+  imageField('ownSolved', 'own');
+  const showWithImages = show; show = function (row) { showWithImages(row); resetIncidentImages('order', row); };
+  const showStoreWithImages = showStore; showStore = function (row) { showStoreWithImages(row); resetIncidentImages('store', row); };
+  const showOwnWithImages = showOwn; showOwn = function (row) { showOwnWithImages(row); resetIncidentImages('own', row); };
+  const clearStoreWithImages = clearStore; clearStore = function () { clearStoreWithImages(); resetIncidentImages('store'); };
+  const clearOwnWithImages = clearOwn; clearOwn = function () { clearOwnWithImages(); resetIncidentImages('own'); };
+  const saveWithImages = save; save = async function (force = false) { const row = await saveWithImages(force); return row ? await uploadIncidentImages('order', row) : row; };
+  const saveStoreWithImages = saveStore; saveStore = async function () { const row = await saveStoreWithImages(); return row ? await uploadIncidentImages('store', row) : row; };
+  const saveOwnWithImages = saveOwn; saveOwn = async function () { const row = await saveOwnWithImages(); return row ? await uploadIncidentImages('own', row) : row; };
+
   document.getElementById('storeSaveBtn').onclick = saveStore;
   document.getElementById('storeNewBtn').onclick = clearStore;
   document.getElementById('ownSaveBtn').onclick = saveOwn;
   document.getElementById('ownNewBtn').onclick = clearOwn;
+  document.getElementById('saveBtn').onclick = () => save(false);
+  document.getElementById('solveBtn').onclick = () => save(true);
   clearOwn();
 
   installPrintButton('printBtn', async () => { await save(); return current; }, false);

@@ -12,10 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { IncidentDetailsSection } from '@/components/dashboard/incident-details-section';
 import { IncidentPickupSection } from '@/components/dashboard/incident-pickup-section';
+import { IncidentImagesField } from '@/components/dashboard/incident-images-field';
 import type { IncidentDraft, SchoolProduct } from '@/lib/dashboard-types';
 
 type IncidentFormDialogProps = {
   open: boolean;
+  incidentId: string;
   reference: string;
   customerName: string;
   customerEmail: string;
@@ -34,6 +36,7 @@ type IncidentFormDialogProps = {
 
 export function IncidentFormDialog({
   open,
+  incidentId,
   reference,
   customerName,
   customerEmail,
@@ -68,6 +71,11 @@ export function IncidentFormDialog({
             customerEmail={customerEmail}
             customerPhone={customerPhone}
             schools={schools}
+            onChange={onDraftChange}
+          />
+          <IncidentImagesField
+            incidentId={incidentId}
+            draft={draft}
             onChange={onDraftChange}
           />
           <IncidentPickupSection

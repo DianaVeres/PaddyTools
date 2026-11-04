@@ -90,6 +90,8 @@ export type IncidentDraft = {
   recurrence: boolean;
   solved: boolean;
   sent: boolean;
+  images: import('@/lib/incident-record').IncidentImage[];
+  newImages: File[];
   pickupItems: Record<
     number,
     { selected: boolean; size: string; units: number }

@@ -1,4 +1,10 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  blob,
+  index,
+  integer,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core';
 
 // Drizzle describe las tablas con TypeScript. Después genera/ejecuta SQL para D1.
 
@@ -126,6 +132,35 @@ export const incidentRecords = sqliteTable(
   ],
 );
 
+export const incidentImages = sqliteTable(
+  'incident_images',
+  {
+    id: text('id').primaryKey(),
+    incidentId: text('incident_id').notNull(),
+    name: text('name').notNull(),
+    mimeType: text('mime_type').notNull(),
+    size: integer('size').notNull(),
+    uploadedAt: text('uploaded_at').notNull(),
+  },
+  (table) => [index('idx_incident_images_incident').on(table.incidentId)],
+);
+
+export const incidentImageChunks = sqliteTable(
+  'incident_image_chunks',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    imageId: text('image_id').notNull(),
+    chunkIndex: integer('chunk_index').notNull(),
+    data: blob('data', { mode: 'buffer' }).notNull(),
+  },
+  (table) => [
+    index('idx_incident_image_chunks_image').on(
+      table.imageId,
+      table.chunkIndex,
+    ),
+  ],
+);
+
 export const kpiWorkLogs = sqliteTable(
   'kpi_work_logs',
   {
@@ -169,9 +204,7 @@ export const qualityErrors = sqliteTable(
     recurrence: integer('recurrence', { mode: 'boolean' })
       .notNull()
       .default(false),
-    resolved: integer('resolved', { mode: 'boolean' })
-      .notNull()
-      .default(false),
+    resolved: integer('resolved', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   },

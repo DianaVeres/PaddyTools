@@ -19,12 +19,21 @@ export type IncidentRecord = {
   school: string;
   recurrenceCount: number;
   products: unknown[];
+  images: IncidentImage[];
 };
 
-export const formatIncidentDate = (
-  value: string,
-  fallback = 'No indicada',
-) => {
+export type IncidentImage = {
+  key: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+};
+
+export const incidentImageUrl = (incidentId: string, key: string) =>
+  `/api/incidents/images?incidentId=${encodeURIComponent(incidentId)}&key=${encodeURIComponent(key)}`;
+
+export const formatIncidentDate = (value: string, fallback = 'No indicada') => {
   const raw = value?.slice(0, 10) || '';
   return /^\d{4}-\d{2}-\d{2}$/.test(raw)
     ? `${raw.slice(8, 10)}/${raw.slice(5, 7)}/${raw.slice(0, 4)}`
@@ -42,6 +51,7 @@ export const incidentLabelLines = (incident: IncidentRecord) => [
 ];
 
 export const incidentStatusLabel = (incident: IncidentRecord) =>
-  [incident.solved ? 'Resuelta' : 'Pendiente', incident.sent ? 'Enviada' : 'No enviada'].join(
-    ' · ',
-  );
+  [
+    incident.solved ? 'Resuelta' : 'Pendiente',
+    incident.sent ? 'Enviada' : 'No enviada',
+  ].join(' · ');

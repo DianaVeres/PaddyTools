@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (path) =>
+  readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const service = read('lib/incident-images.ts');
+const route = read('app/api/incidents/images/route.ts');
+const form = read('components/dashboard/incident-images-field.tsx');
+const compatibility = read('public/incidencias-compat.js');
+
+for (const expected of [
+  'MAX_INCIDENT_IMAGES = 4',
+  'MAX_INCIDENT_IMAGE_BYTES = 5 * 1024 * 1024',
+  'incident_image_chunks',
+  'images_json',
+])
+  assert.ok(
+    service.includes(expected),
+    `Falta la regla de imágenes: ${expected}`,
+  );
+
+assert.ok(
+  route.includes('getSessionUser'),
+  'Las imágenes deben exigir una sesión.',
+);
+assert.ok(
+  route.includes("'X-Content-Type-Options': 'nosniff'"),
+  'Falta la protección del tipo de archivo.',
+);
+assert.ok(
+  form.includes('image/jpeg,image/png,image/webp'),
+  'El formulario no limita los formatos permitidos.',
+);
+assert.ok(
+  compatibility.includes('uploadIncidentImages'),
+  'El bloque integrado de incidencias no sube imágenes.',
+);
+assert.ok(
+  read('drizzle/0008_incident_images.sql').includes(
+    'CREATE TABLE `incident_images`',
+  ),
+  'Falta la migración de imágenes.',
+);
+
+console.log('Imágenes privadas de incidencias verificadas.');

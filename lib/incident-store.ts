@@ -2,6 +2,7 @@ import { desc } from 'drizzle-orm';
 import { env } from 'cloudflare:workers';
 import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
+import type { IncidentImage } from '@/lib/incident-record';
 
 export const incidentTextValue = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
@@ -33,10 +34,17 @@ export async function readAllIncidentRows() {
 export function mapStoredIncident(stored: StoredIncident, fallback = '') {
   const row = stored.data;
   let products: unknown[] = [];
+  let images: IncidentImage[] = [];
   try {
     products = JSON.parse(incidentTextValue(row.products_json) || '[]');
   } catch {
     products = [];
+  }
+  try {
+    const parsed = JSON.parse(incidentTextValue(row.images_json) || '[]');
+    images = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    images = [];
   }
   const storedText = incidentTextValue(row.incident_text);
   const observationMatch = storedText.match(/\n\nOBSERVACIONES:\s*([\s\S]*)$/i);
@@ -78,20 +86,17 @@ export function mapStoredIncident(stored: StoredIncident, fallback = '') {
     pickupReceived: Boolean(Number(row.pickup_received)),
     pickupReceivedAt: incidentTextValue(row.pickup_received_at),
     school: incidentTextValue(row.incident_school_name),
-    amount:
-      incidentTextValue(row.amount) || incidentTextValue(row.order_total),
+    amount: incidentTextValue(row.amount) || incidentTextValue(row.order_total),
     shippingAddress: incidentTextValue(row.shipping_address),
     ticketFileId: incidentTextValue(row.ticket_file_id),
     isRecurrence: Boolean(Number(row.is_recurrence)),
     recurrenceCount: Number(row.recurrence_count || 0),
     products,
+    images,
   };
 }
 
-export function incidentFieldsFor(
-  id: string,
-  data: Record<string, unknown>,
-) {
+export function incidentFieldsFor(id: string, data: Record<string, unknown>) {
   return {
     id,
     orderNumber: incidentTextValue(data.order_number).trim().toUpperCase(),

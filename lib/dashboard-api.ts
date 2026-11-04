@@ -24,7 +24,10 @@ async function requestJson<T>(
     source,
   });
   if (!response.ok)
-    throw new Error(data.error || `No se pudo completar la petición a ${source || 'PaddyTools'}.`);
+    throw new Error(
+      data.error ||
+        `No se pudo completar la petición a ${source || 'PaddyTools'}.`,
+    );
   return data;
 }
 
@@ -116,7 +119,21 @@ export async function fetchSchoolProducts(school: string) {
 }
 
 export function postIncident(body: unknown) {
-  return requestJson<{ id?: string }>('/api/incidents', jsonMutation('POST', body));
+  return requestJson<{ id?: string; incident?: IncidentRecord }>(
+    '/api/incidents',
+    jsonMutation('POST', body),
+  );
+}
+
+export async function uploadIncidentImages(incidentId: string, images: File[]) {
+  if (!images.length) return null;
+  const form = new FormData();
+  form.set('incidentId', incidentId);
+  images.forEach((image) => form.append('images', image));
+  return requestJson<{ incident?: IncidentRecord }>('/api/incidents/images', {
+    method: 'POST',
+    body: form,
+  });
 }
 
 export function saveMondayReservation(body: unknown, editing: boolean) {
@@ -189,8 +206,12 @@ async function safeJson<T>(
 
 export async function searchConnectedRecords(searchTerm: string) {
   const [wooResponse, mondayResponse, incidentsResponse] = await Promise.all([
-    fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, { cache: 'no-store' }),
-    fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, { cache: 'no-store' }),
+    fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, {
+      cache: 'no-store',
+    }),
+    fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, {
+      cache: 'no-store',
+    }),
     fetch('/api/incidents?scope=all', { cache: 'no-store' }),
   ]);
   const [woo, monday, incidents] = await Promise.all([
@@ -229,24 +250,40 @@ export async function searchExactConnected(input: {
       fetch(`/api/monday?number=${encodeURIComponent(input.reference)}`, {
         cache: 'no-store',
       }),
-      fetch(`/api/tickets?number=${encodeURIComponent(input.ticketReference)}`, {
-        cache: 'no-store',
-      }),
+      fetch(
+        `/api/tickets?number=${encodeURIComponent(input.ticketReference)}`,
+        {
+          cache: 'no-store',
+        },
+      ),
     ]);
   const [woo, incident, monday, ticket] = await Promise.all([
     wooResponse
       ? safeJson<DashboardOrder>(wooResponse, 'WooCommerce')
-      : Promise.resolve({ ok: false, data: {} as DashboardOrder & { error?: string } }),
+      : Promise.resolve({
+          ok: false,
+          data: {} as DashboardOrder & { error?: string },
+        }),
     safeJson<{ found?: boolean; incident?: IncidentRecord }>(incidentResponse),
-    safeJson<{ found?: boolean; records?: DashboardMondayRecord[] }>(mondayResponse, 'Monday'),
+    safeJson<{ found?: boolean; records?: DashboardMondayRecord[] }>(
+      mondayResponse,
+      'Monday',
+    ),
     safeJson<{ found?: boolean; ticket?: StoreTicketRecord }>(ticketResponse),
   ]);
   return {
     order: woo.ok ? woo.data : null,
-    incident: incident.ok && incident.data.found ? incident.data.incident || null : null,
+    incident:
+      incident.ok && incident.data.found
+        ? incident.data.incident || null
+        : null,
     mondayRecords: monday.ok ? monday.data.records || [] : [],
     ticket: ticket.ok && ticket.data.found ? ticket.data.ticket || null : null,
-    found: woo.ok || Boolean(incident.data.found || monday.data.found || ticket.data.found),
-    errors: [woo.data.error, incident.data.error, monday.data.error].filter(Boolean),
+    found:
+      woo.ok ||
+      Boolean(incident.data.found || monday.data.found || ticket.data.found),
+    errors: [woo.data.error, incident.data.error, monday.data.error].filter(
+      Boolean,
+    ),
   };
 }
