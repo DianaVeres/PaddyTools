@@ -9,19 +9,21 @@ for (const fragment of [
   'export function mapStoredIncident',
   'export function incidentFieldsFor',
   'export async function nextAutomaticIncidentId',
-  "match(/^I?INC-(\\d+)$/)",
+  'match(/^I?INC-(\\d+)$/)',
   "padStart(6, '0')",
   'observations:',
   'pickupReceived:',
   'sent:',
   'recurrenceCount:',
+  "['order', 'pedido', 'reservation', 'reserva'].includes(storedSource)",
+  'explicitSource ||',
 ]) {
   if (!source.includes(fragment))
     throw new Error(`El almacén de incidencias ha perdido: ${fragment}`);
 }
 
 for (const fragment of [
-  "@/lib/incident-query",
+  '@/lib/incident-query',
   'findIncidents',
   'listIncidents',
 ]) {
@@ -29,7 +31,10 @@ for (const fragment of [
     throw new Error(`La ruta de incidencias no usa el servicio: ${fragment}`);
 }
 
-if (route.includes('function mapIncident(') || route.includes('function fieldsFor('))
+if (
+  route.includes('function mapIncident(') ||
+  route.includes('function fieldsFor(')
+)
   throw new Error('La ruta ha recuperado lógica duplicada de incidencias.');
 
 console.log('Almacén de incidencias verificado.');

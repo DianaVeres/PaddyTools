@@ -49,16 +49,21 @@ export function mapStoredIncident(stored: StoredIncident, fallback = '') {
   const storedText = incidentTextValue(row.incident_text);
   const observationMatch = storedText.match(/\n\nOBSERVACIONES:\s*([\s\S]*)$/i);
   const storedSource = incidentTextValue(row.source_type).toLowerCase();
-  const sourceType =
+  const explicitSource =
     storedSource === 'store' || storedSource === 'tienda'
       ? 'tienda'
       : storedSource === 'manual'
         ? 'manual'
-        : incidentTextValue(row.ticket_number) ||
-            incidentTextValue(row.amount) ||
-            incidentTextValue(row.ticket_file_id)
-          ? 'tienda'
-          : storedSource || 'order';
+        : ['order', 'pedido', 'reservation', 'reserva'].includes(storedSource)
+          ? 'order'
+          : '';
+  const sourceType =
+    explicitSource ||
+    (incidentTextValue(row.ticket_number) ||
+    incidentTextValue(row.amount) ||
+    incidentTextValue(row.ticket_file_id)
+      ? 'tienda'
+      : storedSource || 'order');
   return {
     id: stored.id,
     orderNumber: incidentTextValue(row.order_number) || fallback,

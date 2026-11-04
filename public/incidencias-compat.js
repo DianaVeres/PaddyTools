@@ -4,7 +4,7 @@
   const asLegacy = (row) => ({
     record_id: row.id,
     order_number: row.orderNumber,
-    ticket_number: row.ticketNumber || row.orderNumber,
+    ticket_number: row.sourceType === 'tienda' ? row.ticketNumber || row.orderNumber : '',
     source_type: row.sourceType || 'order',
     customer_name: row.customerName,
     customer_email: row.customerEmail,
