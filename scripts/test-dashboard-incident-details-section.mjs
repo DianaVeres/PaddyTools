@@ -21,22 +21,28 @@ for (const fragment of [
   'Observaciones',
   "['recurrence', 'Es una reincidencia']",
   "['pickup', 'Recoger en el cole']",
+  "['shippingRequired', 'Requiere envío']",
   "['solved', 'Incidencia solucionada']",
   "['sent', 'Enviado']",
+  "field === 'sent' && !draft.shippingRequired",
+  'draft.pickup || draft.shippingRequired',
+  'se solucionará automáticamente',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los datos de incidencia han perdido: ${fragment}`);
 }
 
 for (const fragment of [
-  "@/components/dashboard/incident-details-section",
+  '@/components/dashboard/incident-details-section',
   '<IncidentDetailsSection',
   'draft={draft}',
   'schools={schools}',
   'onChange={onDraftChange}',
 ]) {
   if (!dialog.includes(fragment))
-    throw new Error(`El diálogo no conecta los datos de incidencia: ${fragment}`);
+    throw new Error(
+      `El diálogo no conecta los datos de incidencia: ${fragment}`,
+    );
 }
 if (!page.includes('@/components/dashboard/incident-form-dialog'))
   throw new Error('La pantalla no conecta el diálogo de incidencias.');

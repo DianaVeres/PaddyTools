@@ -53,6 +53,16 @@ export function IncidentCard({
                 : 'No solicitada'}
             </dd>
           </div>
+          <div>
+            <dt>Envío</dt>
+            <dd>
+              {incident.shippingRequired
+                ? incident.sent
+                  ? 'Enviado'
+                  : 'Pendiente'
+                : 'No requerido'}
+            </dd>
+          </div>
           {incident.pickupDetails && (
             <div className="wide">
               <dt>Detalles de recogida</dt>

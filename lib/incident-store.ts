@@ -82,6 +82,7 @@ export function mapStoredIncident(stored: StoredIncident, fallback = '') {
     incidentDate:
       incidentTextValue(row.incident_date) || incidentTextValue(row.created_at),
     solved: Boolean(Number(row.solved)),
+    shippingRequired: Boolean(Number(row.shipping_required)),
     sent: Boolean(Number(row.sent)),
     solvedAt: incidentTextValue(row.solved_at),
     updatedAt: incidentTextValue(row.updated_at),

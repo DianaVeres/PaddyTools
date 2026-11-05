@@ -15,6 +15,7 @@ const incident = {
   observations: '',
   incidentDate: '2026-10-30T12:00:00.000Z',
   solved: false,
+  shippingRequired: true,
   sent: true,
   solvedAt: '',
   updatedAt: '',
@@ -39,7 +40,11 @@ assert.deepEqual(incidentLabelLines(incident), [
 assert.equal(incidentStatusLabel(incident), 'Pendiente · Enviada');
 assert.equal(
   incidentStatusLabel({ ...incident, solved: true, sent: false }),
-  'Resuelta · No enviada',
+  'Resuelta · Envío pendiente',
+);
+assert.equal(
+  incidentStatusLabel({ ...incident, shippingRequired: false, sent: false }),
+  'Pendiente · Sin envío requerido',
 );
 
 console.log('Datos imprimibles de incidencias verificados.');

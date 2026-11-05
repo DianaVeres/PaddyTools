@@ -89,6 +89,7 @@ export type IncidentDraft = {
   pickupNotes: string;
   recurrence: boolean;
   solved: boolean;
+  shippingRequired: boolean;
   sent: boolean;
   images: import('@/lib/incident-record').IncidentImage[];
   newImages: File[];

@@ -233,6 +233,7 @@ export default function Home() {
     pickupNotes: '',
     recurrence: false,
     solved: false,
+    shippingRequired: false,
     sent: false,
     images: [],
     newImages: [],
@@ -654,6 +655,7 @@ export default function Home() {
       pickupNotes: incident?.pickupDetails || '',
       recurrence: false,
       solved: incident?.solved || false,
+      shippingRequired: incident?.shippingRequired || false,
       sent: incident?.sent || false,
       images: incident?.images || [],
       newImages: [],
@@ -880,6 +882,7 @@ export default function Home() {
           pickup_details: incidentDraft.pickup ? pickupDetails : '',
           pickup_received: incident?.pickupReceived ? 1 : 0,
           solved: forceSolved || incidentDraft.solved ? 1 : 0,
+          shipping_required: incidentDraft.shippingRequired ? 1 : 0,
           sent: incidentDraft.sent ? 1 : 0,
           incident_school_name: incidentDraft.school,
           is_recurrence: incidentDraft.recurrence ? 1 : 0,
@@ -1124,6 +1127,7 @@ export default function Home() {
       observations: incidentDraft.observations,
       incidentDate: incidentDraft.date,
       solved: incidentDraft.solved,
+      shippingRequired: incidentDraft.shippingRequired,
       sent: incidentDraft.sent,
       solvedAt: '',
       updatedAt: '',
@@ -1141,28 +1145,21 @@ export default function Home() {
   }
   async function setPickupReceived(row: Incident, received: boolean) {
     try {
-      await patchIncident({
+      const data = await patchIncident({
         id: row.id,
         orderNumber: row.orderNumber,
         received,
       });
+      const updated = data.incident || {
+        ...row,
+        pickupReceived: received,
+        pickupReceivedAt: received ? new Date().toISOString() : '',
+      };
       setRegistryRows((rows) =>
-        rows.map((item) =>
-          item.id === row.id
-            ? {
-                ...item,
-                pickupReceived: received,
-                pickupReceivedAt: received ? new Date().toISOString() : '',
-              }
-            : item,
-        ),
+        rows.map((item) => (item.id === row.id ? updated : item)),
       );
-      if (incident?.id === row.id)
-        setIncident({
-          ...incident,
-          pickupReceived: received,
-          pickupReceivedAt: received ? new Date().toISOString() : '',
-        });
+      if (incident?.id === row.id) setIncident(updated);
+      if (selectedIncident?.id === row.id) setSelectedIncident(updated);
       setSaved(
         received
           ? `Recogida del pedido #${row.orderNumber} marcada como recibida.`

@@ -13,6 +13,7 @@ for (const fragment of [
   "padStart(6, '0')",
   'observations:',
   'pickupReceived:',
+  'shippingRequired:',
   'sent:',
   'recurrenceCount:',
   "['order', 'pedido', 'reservation', 'reserva'].includes(storedSource)",

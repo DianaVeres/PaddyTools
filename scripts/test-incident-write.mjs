@@ -13,6 +13,9 @@ for (const fragment of [
   'record_id',
   'products_json:',
   'recurrence_count:',
+  'resolvedIncidentState(',
+  'incidentResolutionFromRecord(saved)',
+  'saved.solved = solved ? 1 : 0',
   '.insert(incidentRecords)',
   '.update(incidentRecords)',
 ]) {

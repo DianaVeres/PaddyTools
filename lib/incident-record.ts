@@ -8,6 +8,7 @@ export type IncidentRecord = {
   observations: string;
   incidentDate: string;
   solved: boolean;
+  shippingRequired: boolean;
   sent: boolean;
   solvedAt: string;
   updatedAt: string;
@@ -53,5 +54,9 @@ export const incidentLabelLines = (incident: IncidentRecord) => [
 export const incidentStatusLabel = (incident: IncidentRecord) =>
   [
     incident.solved ? 'Resuelta' : 'Pendiente',
-    incident.sent ? 'Enviada' : 'No enviada',
+    incident.shippingRequired
+      ? incident.sent
+        ? 'Enviada'
+        : 'Envío pendiente'
+      : 'Sin envío requerido',
   ].join(' · ');

@@ -15,6 +15,7 @@
     ].filter(Boolean).join('\n\n'),
     incident_date: text(row.incidentDate).slice(0, 10),
     solved: row.solved ? 1 : 0,
+    shipping_required: row.shippingRequired ? 1 : 0,
     sent: row.sent ? 1 : 0,
     solved_at: row.solvedAt,
     updated_at: row.updatedAt,
@@ -400,6 +401,155 @@
   installPrintButton('storePrintBtn', async () => await saveStore(), false);
   installPrintButton('ownPrintBtn', async () => await saveOwn(), false);
   installPrintButton('ownLabelBtn', async () => await saveOwn(), true);
+
+  // La resolución automática distingue una acción requerida de una acción ya
+  // completada. Así una incidencia con recogida y envío espera a ambas.
+  const addResolutionControls = (solvedId, requiredId, sentId, sentExists = false) => {
+    const solvedInput = document.getElementById(solvedId);
+    const actions = solvedInput?.closest('.actions');
+    if (!actions || document.getElementById(requiredId)) return;
+    actions.insertAdjacentHTML('beforebegin', `<div class="actions"><label class="check"><input type="checkbox" id="${requiredId}"> Requiere envío</label>${sentExists ? '' : `<label class="check"><input type="checkbox" id="${sentId}"> Enviado</label>`}</div>`);
+  };
+  addResolutionControls('solved', 'shippingRequired', 'sent');
+  addResolutionControls('storeSolved', 'storeShippingRequired', 'storeSent', true);
+  addResolutionControls('ownSolved', 'ownShippingRequired', 'ownSent');
+  const syncResolutionControls = (prefix = '') => {
+    const pickup = prefix === 'own' ? false : Boolean(document.getElementById(prefix ? `${prefix}PickupSchool` : 'pickupSchool')?.checked);
+    const required = Boolean(document.getElementById(prefix ? `${prefix}ShippingRequired` : 'shippingRequired')?.checked);
+    const sentInput = document.getElementById(prefix ? `${prefix}Sent` : 'sent');
+    const solvedInput = document.getElementById(prefix ? `${prefix}Solved` : 'solved');
+    if (sentInput) sentInput.disabled = !required;
+    if (solvedInput) solvedInput.disabled = pickup || required;
+    if (!prefix) document.getElementById('solveBtn').disabled = pickup || required;
+  };
+  for (const prefix of ['', 'store', 'own']) {
+    const required = document.getElementById(prefix ? `${prefix}ShippingRequired` : 'shippingRequired');
+    const pickup = prefix === 'own' ? null : document.getElementById(prefix ? `${prefix}PickupSchool` : 'pickupSchool');
+    if (required) required.onchange = () => {
+      const sentInput = document.getElementById(prefix ? `${prefix}Sent` : 'sent');
+      if (!required.checked && sentInput) sentInput.checked = false;
+      syncResolutionControls(prefix);
+    };
+    if (pickup) {
+      const previous = pickup.onchange;
+      pickup.onchange = (event) => {
+        if (previous) previous.call(pickup, event);
+        syncResolutionControls(prefix);
+      };
+    }
+  }
+  const showWithResolution = show;
+  show = function (row) {
+    showWithResolution(row);
+    document.getElementById('shippingRequired').checked = Boolean(row.shipping_required);
+    document.getElementById('sent').checked = Boolean(row.sent);
+    syncResolutionControls('');
+  };
+  const showStoreWithResolution = showStore;
+  showStore = function (row) {
+    showStoreWithResolution(row);
+    document.getElementById('storeShippingRequired').checked = Boolean(row.shipping_required);
+    syncResolutionControls('store');
+  };
+  const showOwnWithResolution = showOwn;
+  showOwn = function (row) {
+    showOwnWithResolution(row);
+    document.getElementById('ownShippingRequired').checked = Boolean(row.shipping_required);
+    document.getElementById('ownSent').checked = Boolean(row.sent);
+    syncResolutionControls('own');
+  };
+  const clearStoreWithResolution = clearStore;
+  clearStore = function () {
+    clearStoreWithResolution();
+    document.getElementById('storeShippingRequired').checked = false;
+    syncResolutionControls('store');
+  };
+  const clearOwnWithResolution = clearOwn;
+  clearOwn = function () {
+    clearOwnWithResolution();
+    document.getElementById('ownShippingRequired').checked = false;
+    document.getElementById('ownSent').checked = false;
+    syncResolutionControls('own');
+  };
+  const saveWithResolution = save;
+  save = async function (force = false) {
+    if (current) {
+      current.shipping_required = document.getElementById('shippingRequired').checked ? 1 : 0;
+      current.sent = document.getElementById('sent').checked ? 1 : 0;
+    }
+    return saveWithResolution(force);
+  };
+  const saveStoreWithResolution = saveStore;
+  saveStore = async function () {
+    currentStore = currentStore || {};
+    currentStore.shipping_required = document.getElementById('storeShippingRequired').checked ? 1 : 0;
+    return saveStoreWithResolution();
+  };
+  const saveOwnWithResolution = saveOwn;
+  saveOwn = async function () {
+    currentOwn = currentOwn || {};
+    currentOwn.shipping_required = document.getElementById('ownShippingRequired').checked ? 1 : 0;
+    currentOwn.sent = document.getElementById('ownSent').checked ? 1 : 0;
+    return saveOwnWithResolution();
+  };
+  setIncidentSolved = async function (input) {
+    const tr = input.closest('tr');
+    const pill = tr.querySelector('.incident-state');
+    input.disabled = true;
+    try {
+      const row = await api('/api/solved', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: tr.dataset.id, source_type: tr.dataset.source, solved: input.checked }) });
+      input.checked = Boolean(row.solved);
+      pill.textContent = row.solved ? 'Solucionada' : 'Pendiente';
+      pill.classList.toggle('solved', Boolean(row.solved));
+      if (!row.solved && (row.pickup_school || row.shipping_required)) status('Esta incidencia se cerrará automáticamente cuando se completen todas sus acciones.','error');
+    } catch (error) {
+      input.checked = !input.checked;
+      status(error.message, 'error');
+    } finally {
+      input.disabled = false;
+    }
+  };
+  setIncidentSent = async function (input) {
+    const tr = input.closest('tr');
+    const sentLabel = tr.querySelector('.sent-state');
+    const solvedInput = tr.querySelector('.incident-state-control input');
+    const solvedLabel = tr.querySelector('.incident-state');
+    input.disabled = true;
+    try {
+      const row = await api('/api/sent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: tr.dataset.id, sent: input.checked }) });
+      input.checked = Boolean(row.sent);
+      sentLabel.textContent = row.sent ? 'ENVIADO' : 'Pendiente';
+      sentLabel.classList.toggle('solved', Boolean(row.sent));
+      if (solvedInput) solvedInput.checked = Boolean(row.solved);
+      if (solvedLabel) {
+        solvedLabel.textContent = row.solved ? 'Solucionada' : 'Pendiente';
+        solvedLabel.classList.toggle('solved', Boolean(row.solved));
+      }
+    } catch (error) {
+      input.checked = !input.checked;
+      status(error.message, 'error');
+    } finally {
+      input.disabled = false;
+    }
+  };
+  const registryWithResolution = registry;
+  registry = async function () {
+    await registryWithResolution();
+    try {
+      const rows = await api('/api/incidents?q=' + encodeURIComponent(document.getElementById('filter').value));
+      const byReference = new Map(rows.map((row) => [String(row.order_number), row]));
+      document.querySelectorAll('#rows tr[data-id]').forEach((tr) => {
+        const row = byReference.get(String(tr.dataset.id));
+        if (!row) return;
+        const solvedInput = tr.querySelector('.incident-state-control input');
+        const sentInput = tr.querySelector('.sent-state')?.closest('label')?.querySelector('input');
+        if (solvedInput) solvedInput.disabled = Boolean(row.pickup_school || row.shipping_required);
+        if (sentInput) sentInput.disabled = !row.shipping_required;
+      });
+    } catch {
+      // El registro ya está visible; un fallo decorativo no debe ocultarlo.
+    }
+  };
 
   // El módulo de incidencias vive dentro de un iframe. Comunica el inicio y
   // el final al contador central de PaddyTools para compartir la misma lógica

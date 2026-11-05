@@ -19,6 +19,7 @@
     "test:incident-record": "node scripts/test-incident-record.mjs",
     "test:incident-store": "node scripts/test-incident-store.mjs",
     "test:incident-actions": "node scripts/test-incident-actions.mjs",
+    "test:incident-resolution": "node scripts/test-incident-resolution.mjs",
     "test:incident-write": "node scripts/test-incident-write.mjs",
     "test:incident-query": "node scripts/test-incident-query.mjs",
     "test:incident-images": "node scripts/test-incident-images.mjs",

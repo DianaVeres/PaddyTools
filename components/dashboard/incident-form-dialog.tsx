@@ -100,7 +100,11 @@ export function IncidentFormDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button variant="outline" onClick={() => onSave(true)}>
+          <Button
+            variant="outline"
+            disabled={draft.pickup || draft.shippingRequired}
+            onClick={() => onSave(true)}
+          >
             Guardar como solucionada
           </Button>
           <Button className="save-incident" onClick={() => onSave()}>

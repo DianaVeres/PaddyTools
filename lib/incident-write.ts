@@ -8,6 +8,10 @@ import {
   nextAutomaticIncidentId,
   readAllIncidentRows,
 } from '@/lib/incident-store';
+import {
+  incidentResolutionFromRecord,
+  resolvedIncidentState,
+} from '@/lib/incident-resolution';
 
 export class IncidentValidationError extends Error {}
 
@@ -62,6 +66,14 @@ export async function saveIncident(incoming: Record<string, unknown>) {
       Number(previous?.data.recurrence_count || 0) +
       (Boolean(record.is_recurrence) ? 1 : 0),
   };
+  const solved = resolvedIncidentState(
+    incidentResolutionFromRecord(saved),
+    Boolean(Number(saved.solved)),
+  );
+  saved.solved = solved ? 1 : 0;
+  saved.solved_at = solved
+    ? incidentTextValue(previous?.data.solved_at) || now
+    : '';
   const id = previous?.id || `INC-${crypto.randomUUID()}`;
   if (previous)
     await getDb()
@@ -69,9 +81,7 @@ export async function saveIncident(incoming: Record<string, unknown>) {
       .set(incidentFieldsFor(id, saved))
       .where(eq(incidentRecords.id, id));
   else
-    await getDb()
-      .insert(incidentRecords)
-      .values(incidentFieldsFor(id, saved));
+    await getDb().insert(incidentRecords).values(incidentFieldsFor(id, saved));
   return {
     ok: true,
     id,

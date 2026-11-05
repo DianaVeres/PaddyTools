@@ -10,6 +10,10 @@ import {
   readAllIncidentRows,
   type StoredIncident,
 } from '@/lib/incident-store';
+import {
+  incidentResolutionFromRecord,
+  resolvedIncidentState,
+} from '@/lib/incident-resolution';
 
 export type IncidentSelector = { id?: string; orderNumber?: string };
 export type IncidentStatusChanges = IncidentSelector & {
@@ -38,7 +42,7 @@ export async function updateIncidentStatus(changes: IncidentStatusChanges) {
   const stored = findStoredIncident(await readAllIncidentRows(), changes);
   if (!stored) return null;
   const now = new Date().toISOString();
-  const data = {
+  const requested = {
     ...stored.data,
     ...(typeof changes.received === 'boolean'
       ? {
@@ -56,6 +60,15 @@ export async function updateIncidentStatus(changes: IncidentStatusChanges) {
       ? { sent: changes.sent ? 1 : 0 }
       : {}),
     updated_at: now,
+  };
+  const solved = resolvedIncidentState(
+    incidentResolutionFromRecord(requested),
+    Boolean(Number(requested.solved)),
+  );
+  const data = {
+    ...requested,
+    solved: solved ? 1 : 0,
+    solved_at: solved ? incidentTextValue(stored.data.solved_at) || now : '',
   };
   await getDb()
     .update(incidentRecords)

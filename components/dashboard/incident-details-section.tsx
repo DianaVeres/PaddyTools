@@ -91,24 +91,49 @@ export function IncidentDetailsSection({
         {[
           ['recurrence', 'Es una reincidencia'],
           ['pickup', 'Recoger en el cole'],
-          ['solved', 'Incidencia solucionada'],
+          ['shippingRequired', 'Requiere envío'],
           ['sent', 'Enviado'],
+          ['solved', 'Incidencia solucionada'],
         ].map(([field, label]) => (
           <label key={field}>
             <input
               type="checkbox"
-              checked={draft[field as keyof Pick<
-                IncidentDraft,
-                'recurrence' | 'pickup' | 'solved' | 'sent'
-              >]}
+              checked={
+                draft[
+                  field as keyof Pick<
+                    IncidentDraft,
+                    | 'recurrence'
+                    | 'pickup'
+                    | 'shippingRequired'
+                    | 'solved'
+                    | 'sent'
+                  >
+                ]
+              }
+              disabled={
+                (field === 'sent' && !draft.shippingRequired) ||
+                (field === 'solved' && (draft.pickup || draft.shippingRequired))
+              }
               onChange={(event) =>
-                onChange({ ...draft, [field]: event.target.checked })
+                onChange({
+                  ...draft,
+                  [field]: event.target.checked,
+                  ...(field === 'shippingRequired' && !event.target.checked
+                    ? { sent: false }
+                    : {}),
+                })
               }
             />{' '}
             {label}
           </label>
         ))}
       </div>
+      {(draft.pickup || draft.shippingRequired) && (
+        <p className="form-hint">
+          La incidencia se solucionará automáticamente cuando se completen todas
+          las acciones requeridas.
+        </p>
+      )}
     </>
   );
 }
