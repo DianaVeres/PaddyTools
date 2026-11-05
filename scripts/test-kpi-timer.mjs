@@ -12,6 +12,10 @@ const form = readFileSync(
   resolve(root, 'components/kpis/work-log-form.tsx'),
   'utf8',
 );
+const timerStyles = readFileSync(
+  resolve(root, 'components/kpis/kpi-timer.module.css'),
+  'utf8',
+);
 for (const fragment of [
   'paddytools-kpi-active-timer',
   'KPI_ACTIVITIES',
@@ -42,6 +46,13 @@ for (const fragment of [
     throw new Error(`El catálogo manual de KPI ha perdido: ${fragment}`);
 if (!form.includes('MANUAL_KPI_ACTIVITIES.map('))
   throw new Error('El formulario no usa el catálogo de mediciones manuales.');
+for (const fragment of [
+  'box-sizing:border-box',
+  '.closed select { flex:1 1 0; min-width:0',
+  '.closed button { flex:0 0 auto;',
+])
+  if (!timerStyles.includes(fragment))
+    throw new Error(`El contador puede desbordar la pantalla: ${fragment}`);
 for (const fragment of ['@/components/kpis/kpi-timer', '<KpiTimer />'])
   if (!layout.includes(fragment))
     throw new Error(`El layout no conecta el contador: ${fragment}`);
