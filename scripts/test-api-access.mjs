@@ -19,6 +19,7 @@ for (const path of [
   '/api/search',
   '/api/monday',
   '/api/order-documents',
+  '/api/kpi-order-count',
   '/api/return-attended',
   '/api/shipping',
 ])

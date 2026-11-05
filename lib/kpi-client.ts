@@ -5,7 +5,8 @@ import type { KpiWorkLog } from '@/lib/kpi-work-log';
 async function request<T>(url: string, init?: RequestInit) {
   const response = await fetch(url, init);
   const data = await readJsonResponse<T & { error?: string }>(response);
-  if (!response.ok) throw new Error(data.error || 'No se pudo completar la operación de KPI.');
+  if (!response.ok)
+    throw new Error(data.error || 'No se pudo completar la operación de KPI.');
   return data;
 }
 
@@ -17,7 +18,10 @@ export function loadKpiSnapshot(from: string, to: string, worker = '') {
 
 export async function loadKpiWorkLogs(from: string, to: string) {
   const params = new URLSearchParams({ from, to });
-  const data = await request<{ logs?: KpiWorkLog[] }>(`/api/kpi-work-logs?${params}`, { cache: 'no-store' });
+  const data = await request<{ logs?: KpiWorkLog[] }>(
+    `/api/kpi-work-logs?${params}`,
+    { cache: 'no-store' },
+  );
   return data.logs || [];
 }
 
@@ -29,6 +33,15 @@ export async function saveKpiWorkLog(input: Record<string, unknown>) {
   });
   if (!data.log) throw new Error('No se pudo guardar el registro de trabajo.');
   return data.log;
+}
+
+export function loadInitialStatusOrderCount(exclusiveCutoffDate: string) {
+  const params = new URLSearchParams({ before: exclusiveCutoffDate });
+  return request<{
+    orders: number;
+    status: string;
+    cutoffDate: string;
+  }>(`/api/kpi-order-count?${params}`, { cache: 'no-store' });
 }
 
 export function deleteKpiWorkLog(id: string) {

@@ -74,6 +74,7 @@
     "test:kpi-module": "node scripts/test-kpi-module.mjs",
     "test:kpi-work-log": "node scripts/test-kpi-work-log.mjs",
     "test:kpi-timer": "node scripts/test-kpi-timer.mjs",
+    "test:kpi-initial-status-count": "node scripts/test-kpi-initial-status-count.mjs",
     "test:kpi-auto-timer": "node scripts/test-kpi-auto-timer.mjs",
     "test:hotline-module": "node scripts/test-hotline-module.mjs",
     "test:quality-errors": "node scripts/test-quality-errors.mjs",

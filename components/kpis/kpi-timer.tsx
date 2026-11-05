@@ -6,7 +6,7 @@ import {
   MANUAL_KPI_ACTIVITIES,
   type KpiActivity,
 } from '@/lib/kpi-work-log';
-import { saveKpiWorkLog } from '@/lib/kpi-client';
+import { loadInitialStatusOrderCount, saveKpiWorkLog } from '@/lib/kpi-client';
 import {
   AUTOMATIC_WORK_MESSAGE,
   beginAutomaticWork,
@@ -16,7 +16,12 @@ import {
 } from '@/lib/kpi-auto-timer';
 import styles from './kpi-timer.module.css';
 
-type ActiveTimer = { activity: KpiActivity; startedIso: string };
+type ActiveTimer = {
+  activity: KpiActivity;
+  startedIso: string;
+  initialOrders?: number;
+  volumeCutoff?: string;
+};
 const storageKey = 'paddytools-kpi-active-timer';
 const clock = (date: Date) =>
   date.toLocaleTimeString('es-ES', {
@@ -42,6 +47,7 @@ export function KpiTimer() {
   const [active, setActive] = useState<ActiveTimer | null>(null);
   const [now, setNow] = useState(Date.now());
   const [completing, setCompleting] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [counts, setCounts] = useState({
     orders: 0,
     products: 0,
@@ -67,6 +73,19 @@ export function KpiTimer() {
     if (!active) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
+  }, [active]);
+  useEffect(() => {
+    if (active?.activity !== 'estado_inicial') return;
+    setCounts((current) => ({
+      ...current,
+      orders:
+        typeof active.initialOrders === 'number'
+          ? active.initialOrders
+          : current.orders,
+      notes: active.volumeCutoff
+        ? `Pedidos en Pago Aceptado hasta ${active.volumeCutoff}.`
+        : current.notes,
+    }));
   }, [active]);
   useEffect(() => {
     const receiveAutomaticWork = (
@@ -96,12 +115,39 @@ export function KpiTimer() {
     [active, now],
   );
   if (!available) return null;
-  function start() {
-    const next = { activity, startedIso: new Date().toISOString() };
-    localStorage.setItem(storageKey, JSON.stringify(next));
-    setActive(next);
-    setNow(Date.now());
+  async function start() {
+    setStarting(true);
     setError('');
+    try {
+      const started = new Date();
+      let initialOrders: number | undefined;
+      let volumeCutoff: string | undefined;
+      if (activity === 'estado_inicial') {
+        const exclusiveCutoff = started.toLocaleDateString('en-CA');
+        const result = await loadInitialStatusOrderCount(exclusiveCutoff);
+        initialOrders = result.orders;
+        const previousDay = new Date(started);
+        previousDay.setDate(previousDay.getDate() - 1);
+        volumeCutoff = previousDay.toLocaleDateString('en-CA');
+      }
+      const next = {
+        activity,
+        startedIso: started.toISOString(),
+        initialOrders,
+        volumeCutoff,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      setActive(next);
+      setNow(Date.now());
+    } catch (startError) {
+      setError(
+        startError instanceof Error
+          ? startError.message
+          : 'No se pudo iniciar el contador.',
+      );
+    } finally {
+      setStarting(false);
+    }
   }
   async function finish() {
     if (!active) return;
@@ -149,7 +195,10 @@ export function KpiTimer() {
               </option>
             ))}
           </select>
-          <button onClick={start}>Iniciar</button>
+          <button disabled={starting} onClick={() => void start()}>
+            {starting ? 'Contando pedidos…' : 'Iniciar'}
+          </button>
+          {error && <p className={styles.error}>{error}</p>}
         </div>
       ) : completing ? (
         <div className={styles.form}>
@@ -166,6 +215,11 @@ export function KpiTimer() {
                 type="number"
                 min={0}
                 value={counts[field]}
+                readOnly={
+                  active.activity === 'estado_inicial' &&
+                  field === 'orders' &&
+                  typeof active.initialOrders === 'number'
+                }
                 onChange={(e) =>
                   setCounts({ ...counts, [field]: Number(e.target.value) })
                 }
