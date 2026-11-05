@@ -20,7 +20,7 @@ const base = {
   delivery: 'colegio',
 };
 const schoolDraft = createDeliveryEmailDraft(base);
-assert.equal(schoolDraft.subject, 'Reserva R10692 preparado');
+assert.equal(schoolDraft.subject, 'Reserva R10692 preparada');
 assert.match(schoolDraft.body, /COLEGIO PURISIMA/);
 assert.match(schoolDraft.body, /reserva R10692/);
 
@@ -36,5 +36,12 @@ const storeDraft = updateDeliveryEmailDraft(schoolDraft, {
   delivery: 'tienda',
 });
 assert.match(storeDraft.body, /tienda de Paddy/);
+
+const incidentDraft = updateDeliveryEmailDraft(homeDraft, {
+  recordKind: 'incidencia',
+});
+assert.equal(incidentDraft.subject, 'Incidencia R10692 preparada');
+assert.match(incidentDraft.body, /Su incidencia R10692 está preparada/);
+assert.doesNotMatch(incidentDraft.body, /Su pedido/);
 
 console.log('Mensajes de entrega verificados.');

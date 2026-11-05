@@ -16,6 +16,7 @@ import { DashboardField as Field } from '@/components/dashboard/common';
 import type {
   DeliveryEmailDraft as EmailDraft,
   DeliveryEmailKind,
+  DeliveryRecordKind,
 } from '@/lib/delivery-message';
 
 type CustomerMessageDialogProps = {
@@ -54,6 +55,20 @@ export function CustomerMessageDialog({
         </DialogHeader>
         {draft && (
           <div className="email-form">
+            <Field label="¿Qué estás enviando?">
+              <select
+                value={draft.recordKind}
+                onChange={(event) =>
+                  onGeneratedChange({
+                    recordKind: event.target.value as DeliveryRecordKind,
+                  })
+                }
+              >
+                <option value="pedido">El pedido</option>
+                <option value="reserva">La reserva</option>
+                <option value="incidencia">La incidencia</option>
+              </select>
+            </Field>
             <Field label="Tipo de entrega">
               <select
                 value={draft.delivery}

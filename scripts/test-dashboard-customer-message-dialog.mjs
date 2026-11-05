@@ -10,6 +10,8 @@ const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
 
 for (const fragment of [
   'Preparar aviso al cliente',
+  '¿Qué estás enviando?',
+  'La incidencia',
   'Entrega en colegio',
   'Envío a domicilio',
   'Recogida en tienda',
