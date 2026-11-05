@@ -22,6 +22,11 @@ import {
   completeAutomaticWork,
   readAutomaticWork,
 } from '@/lib/kpi-auto-timer';
+import {
+  splitSpanishHotlineReply,
+  storedHotlineIncoming,
+  withSpanishHotlineInstruction,
+} from '@/lib/hotline-language';
 import styles from './hotline.module.css';
 
 type HotlineCase = {
@@ -85,6 +90,7 @@ export default function HotlinePage() {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [incoming, setIncoming] = useState('');
+  const [translatedIncoming, setTranslatedIncoming] = useState('');
   const [guidance, setGuidance] = useState('');
   const [reply, setReply] = useState('');
   const [nextStep, setNextStep] = useState('');
@@ -134,6 +140,7 @@ export default function HotlinePage() {
 
   function updateIncoming(value: string) {
     setIncoming(value);
+    setTranslatedIncoming('');
     if (!value.trim()) return;
     const timer = beginAutomaticWork(
       HOTLINE_TIMER_KEY,
@@ -154,11 +161,18 @@ export default function HotlinePage() {
       const response = await fetch('/api/hotline/analyze', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, subject, incoming, guidance }),
+        body: JSON.stringify({
+          email,
+          subject,
+          incoming,
+          guidance: withSpanishHotlineInstruction(guidance),
+        }),
       });
       const data = await readJson<AnalyzeResult>(response);
       if (!response.ok) throw new Error(data.error || 'No se pudo generar la respuesta.');
-      setReply(data.reply || '');
+      const localized = splitSpanishHotlineReply(data.reply || '');
+      setTranslatedIncoming(localized.translation);
+      setReply(localized.reply);
       setNextStep(data.next_step || '');
       setStatus(STATUSES.includes(data.case_status || '') ? data.case_status! : 'Abierto');
       setProcedure(data.procedure_reference || 'Respuesta nueva');
@@ -188,7 +202,7 @@ export default function HotlinePage() {
         body: JSON.stringify({
           email,
           asunto: subject,
-          consulta: incoming,
+          consulta: storedHotlineIncoming(incoming, translatedIncoming),
           respuesta: reply,
           estado: status,
           siguiente_paso: nextStep,
@@ -212,6 +226,7 @@ export default function HotlinePage() {
       setTimerStartedIso('');
       await refresh();
       setIncoming('');
+      setTranslatedIncoming('');
       setReply('');
       setNextStep('');
       setProcedure('');
@@ -256,6 +271,7 @@ export default function HotlinePage() {
     setEmail('');
     setSubject('');
     setIncoming('');
+    setTranslatedIncoming('');
     setGuidance('');
     setReply('');
     setNextStep('');
@@ -331,6 +347,7 @@ export default function HotlinePage() {
                   <Field label="Asunto / caso"><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Se detectará si lo dejas vacío" /></Field>
                 </div>
                 <Field label="Email recibido"><textarea className={styles.largeText} value={incoming} onChange={(e) => updateIncoming(e.target.value)} placeholder="Pega aquí el mensaje recibido…" /></Field>
+                {translatedIncoming && <Field label="Traducción al castellano"><textarea className={styles.translatedText} value={translatedIncoming} readOnly /></Field>}
                 {timerStartedIso && <p className={styles.timerNotice}><Timer /> Medición activa desde {new Date(timerStartedIso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>}
                 <Field label="Información para redactar (opcional)"><textarea value={guidance} onChange={(e) => setGuidance(e.target.value)} placeholder="Datos o indicaciones que debe incluir la respuesta…" /></Field>
                 <button className={styles.primary} onClick={analyze} disabled={busy}>{busy ? <Loader2 className={styles.spin} /> : <Mail />} Analizar y redactar</button>

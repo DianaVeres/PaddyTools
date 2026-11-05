@@ -151,6 +151,11 @@
 .field .largeText {
   min-height: 245px;
 }
+.field .translatedText {
+  min-height: 150px;
+  border-color: #b9d9cd;
+  background: #f1f9f6;
+}
 .field small {
   overflow: hidden;
   color: #60756e;

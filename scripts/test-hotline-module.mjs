@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {
+  splitSpanishHotlineReply,
+  storedHotlineIncoming,
+  withSpanishHotlineInstruction,
+} from '../lib/hotline-language.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (path) => readFileSync(resolve(root, path), 'utf8');
@@ -20,6 +25,9 @@ for (const fragment of [
   "beginAutomaticWork(\n      HOTLINE_TIMER_KEY,\n      'correos'",
   'completeAutomaticWork(HOTLINE_TIMER_KEY',
   'Medición activa desde',
+  'Traducción al castellano',
+  'withSpanishHotlineInstruction(guidance)',
+  'storedHotlineIncoming(incoming, translatedIncoming)',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`El módulo Hotline ha perdido: ${fragment}`);
@@ -46,5 +54,21 @@ for (const fragment of [
 
 if (!config.includes('"service": "paddy-hotline"'))
   throw new Error('Cloudflare no tiene configurado el servicio privado Hotline.');
+
+const instruction = withSpanishHotlineInstruction('Incluye el número de pedido.');
+if (!instruction.includes('RESPUESTA EN CASTELLANO:'))
+  throw new Error('Hotline no obliga a generar la respuesta en castellano.');
+
+const localized = splitSpanishHotlineReply(`TRADUCCIÓN AL CASTELLANO:
+Hola, necesito cambiar la talla.
+
+RESPUESTA EN CASTELLANO:
+Hola. Te indicamos cómo realizar el cambio.`);
+if (localized.translation !== 'Hola, necesito cambiar la talla.')
+  throw new Error('Hotline no separa la traducción del mensaje original.');
+if (localized.reply !== 'Hola. Te indicamos cómo realizar el cambio.')
+  throw new Error('Hotline no separa la respuesta en castellano.');
+if (!storedHotlineIncoming('Hello', localized.translation).includes('Hello'))
+  throw new Error('Hotline no conserva el mensaje original al guardar.');
 
 console.log('Módulo Hotline y conexión privada verificados.');
