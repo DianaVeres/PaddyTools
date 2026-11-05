@@ -1,3 +1,8 @@
+export const MAINTENANCE_KPI_ACTIVITY = [
+  'mantenimiento',
+  'Mantenimiento',
+] as const;
+
 export const KPI_ACTIVITIES = [
   ['preparacion', 'Preparar pedidos'],
   ['estado_inicial', 'Cambiar estado inicial'],
@@ -11,6 +16,7 @@ export const KPI_ACTIVITIES = [
   ['incidencias', 'Preparar incidencias'],
   ['correos', 'Responder correos'],
   ['recogidas', 'Gestionar recogidas'],
+  MAINTENANCE_KPI_ACTIVITY,
   ['otro', 'Otra tarea'],
 ] as const;
 
@@ -23,10 +29,12 @@ export const AUTOMATIC_KPI_ACTIVITIES = [
   'incidencias',
 ] as const;
 export const RETIRED_KPI_ACTIVITIES = ['comprobacion'] as const;
+export const ADMIN_ONLY_KPI_ACTIVITIES = ['mantenimiento'] as const;
 export const MANUAL_KPI_ACTIVITIES = KPI_ACTIVITIES.filter(
   ([value]) =>
     !AUTOMATIC_KPI_ACTIVITIES.some((automatic) => automatic === value) &&
-    !RETIRED_KPI_ACTIVITIES.some((retired) => retired === value),
+    !RETIRED_KPI_ACTIVITIES.some((retired) => retired === value) &&
+    !ADMIN_ONLY_KPI_ACTIVITIES.some((restricted) => restricted === value),
 );
 
 export type KpiActivity = (typeof KPI_ACTIVITIES)[number][0];
@@ -88,6 +96,7 @@ export function validateKpiWorkLog(input: Record<string, unknown>) {
     activity !== 'correos' &&
     activity !== 'incidencias' &&
     activity !== 'recogidas' &&
+    activity !== 'mantenimiento' &&
     activity !== 'otro'
   )
     throw new Error('Indica al menos un pedido, producto o PackingList.');

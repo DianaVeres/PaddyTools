@@ -20,6 +20,9 @@ for (const fragment of [
   'measuredMinutes',
   'Guardar y terminar',
   'paddytools:kpi-saved',
+  'canManageMaintenance(data.user)',
+  'MAINTENANCE_KPI_ACTIVITY',
+  'timerActivities.map(',
 ])
   if (!timer.includes(fragment))
     throw new Error(`El contador KPI ha perdido: ${fragment}`);
@@ -30,6 +33,9 @@ for (const fragment of [
   "['reservas', 'Preparar reservas']",
   "['preparacion_reservas', 'Gestionar preparación de reservas']",
   "['avisos_colegios', 'Avisos llegada colegios']",
+  "'mantenimiento'",
+  "'Mantenimiento'",
+  "ADMIN_ONLY_KPI_ACTIVITIES = ['mantenimiento']",
   "RETIRED_KPI_ACTIVITIES = ['comprobacion']",
 ])
   if (!workLog.includes(fragment))

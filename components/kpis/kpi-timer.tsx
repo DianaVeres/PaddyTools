@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   KPI_ACTIVITIES,
+  MAINTENANCE_KPI_ACTIVITY,
   MANUAL_KPI_ACTIVITIES,
   type KpiActivity,
 } from '@/lib/kpi-work-log';
+import { canManageMaintenance } from '@/lib/permissions';
 import { loadInitialStatusOrderCount, saveKpiWorkLog } from '@/lib/kpi-client';
 import {
   AUTOMATIC_WORK_MESSAGE,
@@ -43,6 +45,7 @@ const elapsedText = (milliseconds: number) => {
 
 export function KpiTimer() {
   const [available, setAvailable] = useState(false);
+  const [maintenanceAllowed, setMaintenanceAllowed] = useState(false);
   const [activity, setActivity] = useState<KpiActivity>('preparacion');
   const [active, setActive] = useState<ActiveTimer | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -57,8 +60,12 @@ export function KpiTimer() {
   const [error, setError] = useState('');
   useEffect(() => {
     if (window.location.pathname === '/login') return;
-    fetch('/api/auth/session', { cache: 'no-store' }).then((response) => {
+    fetch('/api/auth/session', { cache: 'no-store' }).then(async (response) => {
       if (!response.ok) return;
+      const data = (await response.json()) as {
+        user?: { email: string; displayName: string };
+      };
+      setMaintenanceAllowed(canManageMaintenance(data.user));
       setAvailable(true);
       const stored = localStorage.getItem(storageKey);
       if (stored)
@@ -113,6 +120,13 @@ export function KpiTimer() {
   const elapsed = useMemo(
     () => (active ? now - new Date(active.startedIso).getTime() : 0),
     [active, now],
+  );
+  const timerActivities = useMemo(
+    () =>
+      maintenanceAllowed
+        ? [...MANUAL_KPI_ACTIVITIES, MAINTENANCE_KPI_ACTIVITY]
+        : MANUAL_KPI_ACTIVITIES,
+    [maintenanceAllowed],
   );
   if (!available) return null;
   async function start() {
@@ -193,7 +207,7 @@ export function KpiTimer() {
             value={activity}
             onChange={(e) => setActivity(e.target.value as KpiActivity)}
           >
-            {MANUAL_KPI_ACTIVITIES.map(([value, label]) => (
+            {timerActivities.map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

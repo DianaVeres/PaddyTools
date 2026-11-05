@@ -45,6 +45,15 @@ assert.throws(
 assert.equal(
   validateKpiWorkLog({
     workDate: '2026-11-03',
+    activity: 'mantenimiento',
+    startedAt: '08:00',
+    endedAt: '08:30',
+  }).minutes,
+  30,
+);
+assert.equal(
+  validateKpiWorkLog({
+    workDate: '2026-11-03',
     activity: 'preparacion',
     startedAt: '23:59',
     endedAt: '00:01',
@@ -71,6 +80,9 @@ for (const fragment of [
   'getSessionUser',
   'workerEmail: user.email',
   'workerName: user.displayName',
+  "data.activity === 'mantenimiento'",
+  'canManageMaintenance(user)',
+  'Solo Administración puede registrar Mantenimiento.',
 ])
   if (!route.includes(fragment))
     throw new Error(

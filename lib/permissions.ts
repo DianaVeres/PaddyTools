@@ -4,6 +4,7 @@ export type UserIdentity = {
 };
 
 const INCIDENT_MANAGER_USERS = new Set(['rociosaez', 'administracion']);
+const ADMINISTRATION_USERS = new Set(['administracion']);
 
 export const normalizedUserName = (value: string) =>
   value
@@ -20,3 +21,10 @@ export function canDeleteIncidents(user: UserIdentity | null | undefined) {
 }
 
 export const canCreateOwnIncidents = canDeleteIncidents;
+
+export function canManageMaintenance(user: UserIdentity | null | undefined) {
+  if (!user) return false;
+  return [user.email.split('@')[0] || '', user.displayName]
+    .map(normalizedUserName)
+    .some((value) => ADMINISTRATION_USERS.has(value));
+}

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   canCreateOwnIncidents,
   canDeleteIncidents,
+  canManageMaintenance,
   normalizedUserName,
 } from '../lib/permissions.ts';
 
@@ -10,6 +11,17 @@ assert.equal(normalizedUserName('Rocío Sáez'), 'rociosaez');
 assert.equal(
   canDeleteIncidents({ email: 'rociosaez@paddy.es', displayName: 'Rocío' }),
   true,
+);
+assert.equal(
+  canManageMaintenance({
+    email: 'administracion@paddy.es',
+    displayName: 'Administración',
+  }),
+  true,
+);
+assert.equal(
+  canManageMaintenance({ email: 'rociosaez@paddy.es', displayName: 'Rocío' }),
+  false,
 );
 assert.equal(
   canDeleteIncidents({
