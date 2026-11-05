@@ -1,5 +1,10 @@
 export const KPI_ACTIVITIES = [
   ['preparacion', 'Preparar pedidos'],
+  ['estado_inicial', 'Cambiar estado inicial'],
+  ['reservas', 'Preparar reservas'],
+  ['avisos_colegios', 'Avisos llegada colegios'],
+  // Se conserva para leer los registros históricos, pero ya no se ofrece
+  // como una medición manual nueva.
   ['comprobacion', 'Comprobar pedidos'],
   ['packing', 'Preparar PackingLists'],
   ['incidencias', 'Preparar incidencias'],
@@ -11,8 +16,11 @@ export const KPI_ACTIVITIES = [
 // PackingList y Hotline abren y cierran su propio contador. No deben aparecer
 // en el selector manual porque eso duplicaría el tiempo registrado.
 export const AUTOMATIC_KPI_ACTIVITIES = ['packing', 'correos'] as const;
+export const RETIRED_KPI_ACTIVITIES = ['comprobacion'] as const;
 export const MANUAL_KPI_ACTIVITIES = KPI_ACTIVITIES.filter(
-  ([value]) => !AUTOMATIC_KPI_ACTIVITIES.some((automatic) => automatic === value),
+  ([value]) =>
+    !AUTOMATIC_KPI_ACTIVITIES.some((automatic) => automatic === value) &&
+    !RETIRED_KPI_ACTIVITIES.some((retired) => retired === value),
 );
 
 export type KpiActivity = (typeof KPI_ACTIVITIES)[number][0];
@@ -62,11 +70,20 @@ export function validateKpiWorkLog(input: Record<string, unknown>) {
     throw new Error('Indica la fecha del trabajo.');
   if (!KPI_ACTIVITIES.some(([value]) => value === activity))
     throw new Error('Selecciona la tarea realizada.');
-  if (!minutes) throw new Error('La hora final debe ser posterior a la inicial.');
+  if (!minutes)
+    throw new Error('La hora final debe ser posterior a la inicial.');
   const orders = count(input.orders);
   const products = count(input.products);
   const packingLists = count(input.packingLists);
-  if (!orders && !products && !packingLists && activity !== 'correos' && activity !== 'incidencias' && activity !== 'recogidas' && activity !== 'otro')
+  if (
+    !orders &&
+    !products &&
+    !packingLists &&
+    activity !== 'correos' &&
+    activity !== 'incidencias' &&
+    activity !== 'recogidas' &&
+    activity !== 'otro'
+  )
     throw new Error('Indica al menos un pedido, producto o PackingList.');
   return {
     workDate,
@@ -77,6 +94,8 @@ export function validateKpiWorkLog(input: Record<string, unknown>) {
     orders,
     products,
     packingLists,
-    notes: String(input.notes || '').trim().slice(0, 500),
+    notes: String(input.notes || '')
+      .trim()
+      .slice(0, 500),
   };
 }
