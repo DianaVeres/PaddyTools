@@ -42,6 +42,25 @@
     return data;
   };
 
+  // Incidencias nuestras contiene el formulario interno. La interfaz lo
+  // muestra únicamente a los dos usuarios autorizados; la API vuelve a
+  // comprobar el permiso al guardar para que no pueda eludirse desde fuera.
+  const ownAccessButton = document.getElementById('ownBtn');
+  if (ownAccessButton) ownAccessButton.hidden = true;
+  request('/api/auth/session')
+    .then(({ user }) => {
+      const identity = `${user?.email || ''} ${user?.displayName || ''}`
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9@. ]/g, '');
+      const allowed =
+        identity.includes('rociosaez') || identity.includes('administracion');
+      if (allowed && ownAccessButton) ownAccessButton.hidden = false;
+      else ownAccessButton?.remove();
+    })
+    .catch(() => ownAccessButton?.remove());
+
   api = async function (url, options) {
     const parsed = new URL(url, location.origin);
     if (parsed.pathname === '/api/order') {
@@ -256,11 +275,11 @@
   automaticIdControl('storeTicket', 'storeAutoId', false);
   automaticIdControl('ownReference', 'ownAutoId', true);
 
-  async function reserveAutomaticIncidentId() {
+  async function reserveAutomaticIncidentId(sourceType) {
     const data = await request('/api/incidents', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ allocate_id_only: true }),
+      body: JSON.stringify({ allocate_id_only: true, source_type: sourceType }),
     });
     if (!data.generatedId) throw new Error('No se pudo generar el ID automático.');
     return data.generatedId;
@@ -272,7 +291,7 @@
     const automatic = document.getElementById('storeAutoId');
     if (!input.value.trim() && automatic?.checked) {
       storeMessage('Generando un ID único…');
-      input.value = await reserveAutomaticIncidentId();
+      input.value = await reserveAutomaticIncidentId('tienda');
     }
     return saveStoreWithAutomaticId();
   };
@@ -297,7 +316,7 @@
     }
     if (!input.value.trim() && automatic?.checked) {
       ownMessage('Generando un ID único…');
-      input.value = await reserveAutomaticIncidentId();
+      input.value = await reserveAutomaticIncidentId('manual');
     }
     return saveOwnWithAutomaticId();
   };

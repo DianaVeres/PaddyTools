@@ -59,11 +59,7 @@ for (const path of ['app/packing-list/page.tsx']) {
     ['@/lib/http-response'],
     'La lectura segura de respuestas en las pantallas',
   );
-  forbid(
-    path,
-    ['.json()'],
-    'La lectura segura de respuestas en las pantallas',
-  );
+  forbid(path, ['.json()'], 'La lectura segura de respuestas en las pantallas');
 }
 requireAll(
   'lib/dashboard-api.ts',
@@ -102,11 +98,7 @@ for (const path of ['app/page.tsx', 'app/api/order-notes/route.ts']) {
   );
 }
 for (const path of ['app/page.tsx', 'app/api/tickets/route.ts']) {
-  requireAll(
-    path,
-    ['@/lib/store-ticket'],
-    'Los tickets de tienda compartidos',
-  );
+  requireAll(path, ['@/lib/store-ticket'], 'Los tickets de tienda compartidos');
 }
 requireAll(
   'app/page.tsx',
@@ -141,7 +133,10 @@ requireAll(
 );
 requireAll(
   'components/dashboard/order-linked-records.tsx',
-  ['@/components/dashboard/incident-card', '@/components/dashboard/monday-cards'],
+  [
+    '@/components/dashboard/incident-card',
+    '@/components/dashboard/monday-cards',
+  ],
   'Las tarjetas conectadas del pedido WooCommerce',
 );
 requireAll(
@@ -155,11 +150,7 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/lib/contact-links',
-    'buildEmailLink',
-    'buildWhatsAppLink',
-  ],
+  ['@/lib/contact-links', 'buildEmailLink', 'buildWhatsAppLink'],
   'Los enlaces aislados de contacto',
 );
 requireAll(
@@ -346,7 +337,7 @@ requireAll(
     'normalizeReferenceInput',
     '@/lib/incident-write',
     '@/lib/incident-query',
-    'saveIncident(incoming)',
+    'saveIncident(incoming, { allowManual })',
   ],
   'Las incidencias individuales',
 );
@@ -375,11 +366,7 @@ requireAll(
 );
 requireAll(
   'app/api/incidents/route.ts',
-  [
-    '@/lib/incident-query',
-    'findIncidents',
-    'listIncidents',
-  ],
+  ['@/lib/incident-query', 'findIncidents', 'listIncidents'],
   'El almacenamiento compartido de incidencias',
 );
 requireAll(
@@ -485,26 +472,17 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/components/dashboard/incident-document-dialog',
-    'IncidentDocumentDialog',
-  ],
+  ['@/components/dashboard/incident-document-dialog', 'IncidentDocumentDialog'],
   'El diálogo de documento de incidencia',
 );
 requireAll(
   'components/dashboard/incident-form-dialog.tsx',
-  [
-    '@/components/dashboard/incident-pickup-section',
-    'IncidentPickupSection',
-  ],
+  ['@/components/dashboard/incident-pickup-section', 'IncidentPickupSection'],
   'La recogida del formulario de incidencias',
 );
 requireAll(
   'components/dashboard/incident-form-dialog.tsx',
-  [
-    '@/components/dashboard/incident-details-section',
-    'IncidentDetailsSection',
-  ],
+  ['@/components/dashboard/incident-details-section', 'IncidentDetailsSection'],
   'Los datos del formulario de incidencias',
 );
 requireAll(
@@ -535,18 +513,12 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/components/dashboard/customer-message-dialog',
-    'CustomerMessageDialog',
-  ],
+  ['@/components/dashboard/customer-message-dialog', 'CustomerMessageDialog'],
   'El diálogo de email y WhatsApp',
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/components/dashboard/shipping-history-dialog',
-    'ShippingHistoryDialog',
-  ],
+  ['@/components/dashboard/shipping-history-dialog', 'ShippingHistoryDialog'],
   'El diálogo de histórico de envíos',
 );
 requireAll(
@@ -564,22 +536,37 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  ['@/components/dashboard/reservation-result-dialog', 'ReservationResultDialog'],
+  [
+    '@/components/dashboard/reservation-result-dialog',
+    'ReservationResultDialog',
+  ],
   'La confirmación de reserva creada',
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-registry-filter', 'filterIncidentRegistry', 'filterReservationRegistry'],
+  [
+    '@/lib/dashboard-registry-filter',
+    'filterIncidentRegistry',
+    'filterReservationRegistry',
+  ],
   'Los filtros compartidos de registros',
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-reservation-options', 'mondayReservationUpdateItemIds', 'reservationArticlesForSchool'],
+  [
+    '@/lib/dashboard-reservation-options',
+    'mondayReservationUpdateItemIds',
+    'reservationArticlesForSchool',
+  ],
   'Las opciones compartidas de reservas',
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-search-results', 'hasConnectedSearchResults', 'emptyConnectedSearchMessage'],
+  [
+    '@/lib/dashboard-search-results',
+    'hasConnectedSearchResults',
+    'emptyConnectedSearchMessage',
+  ],
   'Los resultados compartidos de consulta global',
 );
 requireAll(
@@ -589,12 +576,22 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-api', 'searchConnectedRecords', 'searchExactConnected', 'fetchIncidentRegistry'],
+  [
+    '@/lib/dashboard-api',
+    'searchConnectedRecords',
+    'searchExactConnected',
+    'fetchIncidentRegistry',
+  ],
   'El cliente único del panel principal',
 );
 requireAll(
   'app/page.tsx',
-  ['@/lib/dashboard-form-rules', 'selectedPickupLines', 'validateIncidentDraft', 'validateReservationDraft'],
+  [
+    '@/lib/dashboard-form-rules',
+    'selectedPickupLines',
+    'validateIncidentDraft',
+    'validateReservationDraft',
+  ],
   'Las reglas compartidas de formularios',
 );
 requireAll(
@@ -639,7 +636,12 @@ requireAll(
 );
 requireAll(
   'app/packing-list/page.tsx',
-  ['@/lib/kpi-auto-timer', 'beginAutomaticWork', 'completeAutomaticWork', 'orders: found.length'],
+  [
+    '@/lib/kpi-auto-timer',
+    'beginAutomaticWork',
+    'completeAutomaticWork',
+    'orders: found.length',
+  ],
   'La medición automática de PackingList',
 );
 

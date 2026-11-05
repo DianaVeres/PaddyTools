@@ -9,6 +9,7 @@ for (const fragment of [
   'allocateAutomaticIncidentId',
   'saveIncident',
   'IncidentValidationError',
+  'IncidentPermissionError',
   'auto_generate_id',
   'record_id',
   'products_json:',
@@ -16,6 +17,8 @@ for (const fragment of [
   'resolvedIncidentState(',
   'incidentResolutionFromRecord(saved)',
   'saved.solved = solved ? 1 : 0',
+  "saved.source_type).toLowerCase() === 'manual'",
+  '!options.allowManual',
   '.insert(incidentRecords)',
   '.update(incidentRecords)',
 ]) {
@@ -25,7 +28,8 @@ for (const fragment of [
 for (const fragment of [
   '@/lib/incident-write',
   'allocateAutomaticIncidentId()',
-  'saveIncident(incoming)',
+  'saveIncident(incoming, { allowManual })',
+  'error instanceof IncidentPermissionError',
   'error instanceof IncidentValidationError',
 ]) {
   if (!route.includes(fragment))

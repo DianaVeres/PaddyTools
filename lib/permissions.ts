@@ -3,7 +3,7 @@ export type UserIdentity = {
   displayName: string;
 };
 
-const INCIDENT_DELETE_USERS = new Set(['rociosaez', 'administracion']);
+const INCIDENT_MANAGER_USERS = new Set(['rociosaez', 'administracion']);
 
 export const normalizedUserName = (value: string) =>
   value
@@ -16,5 +16,7 @@ export function canDeleteIncidents(user: UserIdentity | null | undefined) {
   if (!user) return false;
   return [user.email.split('@')[0] || '', user.displayName]
     .map(normalizedUserName)
-    .some((value) => INCIDENT_DELETE_USERS.has(value));
+    .some((value) => INCIDENT_MANAGER_USERS.has(value));
 }
+
+export const canCreateOwnIncidents = canDeleteIncidents;

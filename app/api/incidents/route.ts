@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
-import { canDeleteIncidents } from '@/lib/permissions';
-import {
-  normalizeReferenceInput,
-} from '@/lib/global-search';
+import { canCreateOwnIncidents, canDeleteIncidents } from '@/lib/permissions';
+import { normalizeReferenceInput } from '@/lib/global-search';
 import {
   deleteStoredIncident,
   updateIncidentStatus,
 } from '@/lib/incident-actions';
 import {
   allocateAutomaticIncidentId,
+  IncidentPermissionError,
   IncidentValidationError,
   saveIncident,
 } from '@/lib/incident-write';
@@ -90,12 +89,21 @@ export async function PATCH(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const incoming = (await request.json()) as Record<string, unknown>;
+    const user = await getSessionUser(request);
+    const allowManual = canCreateOwnIncidents(user);
+    const sourceType = String(incoming.source_type || '').toLowerCase();
+    if (sourceType === 'manual' && !allowManual)
+      throw new IncidentPermissionError(
+        'Solo Rocío o Administración pueden crear Incidencias nuestras.',
+      );
     if (Boolean(incoming.allocate_id_only))
       return NextResponse.json({
         generatedId: await allocateAutomaticIncidentId(),
       });
-    return NextResponse.json(await saveIncident(incoming));
+    return NextResponse.json(await saveIncident(incoming, { allowManual }));
   } catch (error) {
+    if (error instanceof IncidentPermissionError)
+      return NextResponse.json({ error: error.message }, { status: 403 });
     if (error instanceof IncidentValidationError)
       return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(

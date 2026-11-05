@@ -14,12 +14,16 @@ import {
 } from '@/lib/incident-resolution';
 
 export class IncidentValidationError extends Error {}
+export class IncidentPermissionError extends Error {}
 
 export async function allocateAutomaticIncidentId() {
   return nextAutomaticIncidentId(await readAllIncidentRows());
 }
 
-export async function saveIncident(incoming: Record<string, unknown>) {
+export async function saveIncident(
+  incoming: Record<string, unknown>,
+  options: { allowManual?: boolean } = {},
+) {
   const rows = await readAllIncidentRows();
   let originalReference = incidentTextValue(incoming.order_number)
     .trim()
@@ -66,6 +70,13 @@ export async function saveIncident(incoming: Record<string, unknown>) {
       Number(previous?.data.recurrence_count || 0) +
       (Boolean(record.is_recurrence) ? 1 : 0),
   };
+  if (
+    incidentTextValue(saved.source_type).toLowerCase() === 'manual' &&
+    !options.allowManual
+  )
+    throw new IncidentPermissionError(
+      'Solo Rocío o Administración pueden crear Incidencias nuestras.',
+    );
   const solved = resolvedIncidentState(
     incidentResolutionFromRecord(saved),
     Boolean(Number(saved.solved)),
