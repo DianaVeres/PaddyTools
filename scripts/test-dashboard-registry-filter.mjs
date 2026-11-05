@@ -20,12 +20,15 @@ writeFileSync(resolve(folder, 'dashboard-registry-filter.js'), js);
 const { filterIncidentRegistry, filterReservationRegistry } = await import(`file:///${resolve(folder, 'dashboard-registry-filter.js').replaceAll('\\', '/')}?v=${Date.now()}`);
 
 const incidents = [
-  { orderNumber: 'IPA1', customerName: 'María Pérez', school: 'Teatinas Pinto', pickupReceived: false, incidentText: 'Chaqueta' },
-  { orderNumber: 'IPA2', customerName: 'Ana', school: 'Purísima', pickupReceived: true, pickupDetails: 'Pantalón' },
+  { orderNumber: 'IPA1', customerName: 'María Pérez', school: 'Teatinas Pinto', pickupReceived: false, solved: false, incidentText: 'Chaqueta' },
+  { orderNumber: 'IPA2', customerName: 'Ana', school: 'Purísima', pickupReceived: true, solved: false, pickupDetails: 'Pantalón' },
+  { orderNumber: 'IPA3', customerName: 'Lucía', school: 'Teatinas Pinto', pickupReceived: false, solved: true, incidentText: 'Incidencia cerrada' },
 ];
 assert.equal(filterIncidentRegistry(incidents, 'maria perez', false, true).length, 1);
-assert.equal(filterIncidentRegistry(incidents, '', true, false).length, 1);
-assert.equal(filterIncidentRegistry(incidents, '', true, true).length, 2);
+assert.equal(filterIncidentRegistry(incidents, '', true, false).length, 2);
+assert.equal(filterIncidentRegistry(incidents, '', true, true).length, 3);
+assert.equal(filterIncidentRegistry(incidents, '', false, true).length, 2);
+assert.equal(filterIncidentRegistry(incidents, 'incidencia cerrada', false, true).length, 0);
 const reservations = [{ reference: 'R100', customer: 'José López', school: 'Shackleton Web', status: 'ANULADA' }];
 assert.equal(filterReservationRegistry(reservations, 'jose lopez').length, 1);
 assert.equal(filterReservationRegistry(reservations, 'shackleton').length, 1);

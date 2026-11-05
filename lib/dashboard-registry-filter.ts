@@ -10,6 +10,9 @@ export function filterIncidentRegistry(
 ) {
   const term = foldSearchText(filter);
   return rows.filter((row) => {
+    // El registro operativo muestra únicamente incidencias pendientes. Las
+    // solucionadas siguen conservadas y disponibles desde la consulta global.
+    if (!pickupsOnly && row.solved) return false;
     if (pickupsOnly && !showReceived && row.pickupReceived) return false;
     if (!term) return true;
     return foldSearchText(
