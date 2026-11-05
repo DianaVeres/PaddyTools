@@ -39,6 +39,7 @@ for (const fragment of [
   "activity === 'estado_inicial'",
   'loadInitialStatusOrderCount(exclusiveCutoff)',
   'initialOrders = result.orders',
+  'No hay pedidos en Pago Aceptado hasta ayer',
   'Pedidos en Pago Aceptado hasta ${active.volumeCutoff}.',
   "active.activity === 'estado_inicial' &&",
   "field === 'orders' &&",

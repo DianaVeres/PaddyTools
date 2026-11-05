@@ -125,6 +125,10 @@ export function KpiTimer() {
       if (activity === 'estado_inicial') {
         const exclusiveCutoff = started.toLocaleDateString('en-CA');
         const result = await loadInitialStatusOrderCount(exclusiveCutoff);
+        if (!result.orders)
+          throw new Error(
+            'No hay pedidos en Pago Aceptado hasta ayer para medir esta tarea.',
+          );
         initialOrders = result.orders;
         const previousDay = new Date(started);
         previousDay.setDate(previousDay.getDate() - 1);
