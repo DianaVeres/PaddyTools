@@ -81,6 +81,9 @@ for (const fragment of [
   'Tiempo / mensaje',
   'Tiempo por persona',
   'Tiempo por tarea',
+  'Trabajo agrupado por tarea',
+  'groupedWorkLogs',
+  'Ver detalle',
 ])
   if (!productivity.includes(fragment))
     throw new Error(`La productividad ha perdido: ${fragment}`);
