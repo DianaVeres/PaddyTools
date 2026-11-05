@@ -25,6 +25,7 @@ import {
 import {
   splitSpanishHotlineReply,
   storedHotlineIncoming,
+  storedHotlineReply,
   withSpanishHotlineInstruction,
 } from '@/lib/hotline-language';
 import styles from './hotline.module.css';
@@ -93,6 +94,7 @@ export default function HotlinePage() {
   const [translatedIncoming, setTranslatedIncoming] = useState('');
   const [guidance, setGuidance] = useState('');
   const [reply, setReply] = useState('');
+  const [englishReply, setEnglishReply] = useState('');
   const [nextStep, setNextStep] = useState('');
   const [status, setStatus] = useState('Abierto');
   const [procedure, setProcedure] = useState('');
@@ -141,6 +143,7 @@ export default function HotlinePage() {
   function updateIncoming(value: string) {
     setIncoming(value);
     setTranslatedIncoming('');
+    setEnglishReply('');
     if (!value.trim()) return;
     const timer = beginAutomaticWork(
       HOTLINE_TIMER_KEY,
@@ -173,6 +176,7 @@ export default function HotlinePage() {
       const localized = splitSpanishHotlineReply(data.reply || '');
       setTranslatedIncoming(localized.translation);
       setReply(localized.reply);
+      setEnglishReply(localized.englishReply);
       setNextStep(data.next_step || '');
       setStatus(STATUSES.includes(data.case_status || '') ? data.case_status! : 'Abierto');
       setProcedure(data.procedure_reference || 'Respuesta nueva');
@@ -203,7 +207,7 @@ export default function HotlinePage() {
           email,
           asunto: subject,
           consulta: storedHotlineIncoming(incoming, translatedIncoming),
-          respuesta: reply,
+          respuesta: storedHotlineReply(reply, englishReply),
           estado: status,
           siguiente_paso: nextStep,
           procedimiento: procedure,
@@ -228,6 +232,7 @@ export default function HotlinePage() {
       setIncoming('');
       setTranslatedIncoming('');
       setReply('');
+      setEnglishReply('');
       setNextStep('');
       setProcedure('');
       setCategory('General');
@@ -274,6 +279,7 @@ export default function HotlinePage() {
     setTranslatedIncoming('');
     setGuidance('');
     setReply('');
+    setEnglishReply('');
     setNextStep('');
     setStatus('Abierto');
     setProcedure('');
@@ -354,14 +360,15 @@ export default function HotlinePage() {
               </div>
               <div className={styles.panel}>
                 <div><p className={styles.eyebrow}>Propuesta</p><h2>Respuesta lista para revisar</h2></div>
-                <Field label="Respuesta"><textarea className={styles.largeText} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Aquí aparecerá la propuesta…" /></Field>
+                <Field label={englishReply ? 'Respuesta en castellano' : 'Respuesta'}><textarea className={styles.largeText} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Aquí aparecerá la propuesta…" /></Field>
+                {englishReply && <Field label="Respuesta en inglés"><textarea className={styles.largeText} value={englishReply} onChange={(e) => setEnglishReply(e.target.value)} /></Field>}
                 <div className={styles.resultGrid}>
                   <Field label="Siguiente paso"><textarea value={nextStep} onChange={(e) => setNextStep(e.target.value)} /></Field>
                   <Field label="Estado"><select value={status} onChange={(e) => setStatus(e.target.value)}>{STATUSES.map((item) => <option key={item}>{item}</option>)}</select><small title={procedure}>{procedure || 'Sin plantilla seleccionada'}</small></Field>
                 </div>
                 <div className={styles.actions}>
                   <button className={styles.primary} onClick={saveCase} disabled={busy}><Save /> Guardar contacto</button>
-                  <button className={styles.secondary} onClick={() => { navigator.clipboard.writeText(reply); setNotice('Respuesta copiada.'); }} disabled={!reply}><Clipboard /> Copiar respuesta</button>
+                  <button className={styles.secondary} onClick={() => { navigator.clipboard.writeText(englishReply || reply); setNotice(englishReply ? 'Respuesta en inglés copiada.' : 'Respuesta copiada.'); }} disabled={!reply && !englishReply}><Clipboard /> {englishReply ? 'Copiar respuesta en inglés' : 'Copiar respuesta'}</button>
                 </div>
                 {notice && <p className={styles.notice}><Check /> {notice}</p>}
               </div>

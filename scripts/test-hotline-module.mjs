@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import {
   splitSpanishHotlineReply,
   storedHotlineIncoming,
+  storedHotlineReply,
   withSpanishHotlineInstruction,
 } from '../lib/hotline-language.ts';
 
@@ -26,6 +27,9 @@ for (const fragment of [
   'completeAutomaticWork(HOTLINE_TIMER_KEY',
   'Medición activa desde',
   'Traducción al castellano',
+  'Respuesta en castellano',
+  'Respuesta en inglés',
+  'Copiar respuesta en inglés',
   'withSpanishHotlineInstruction(guidance)',
   'storedHotlineIncoming(incoming, translatedIncoming)',
 ]) {
@@ -58,17 +62,26 @@ if (!config.includes('"service": "paddy-hotline"'))
 const instruction = withSpanishHotlineInstruction('Incluye el número de pedido.');
 if (!instruction.includes('RESPUESTA EN CASTELLANO:'))
   throw new Error('Hotline no obliga a generar la respuesta en castellano.');
+if (!instruction.includes('RESPONSE IN ENGLISH:'))
+  throw new Error('Hotline no obliga a generar la respuesta en inglés.');
 
 const localized = splitSpanishHotlineReply(`TRADUCCIÓN AL CASTELLANO:
 Hola, necesito cambiar la talla.
 
 RESPUESTA EN CASTELLANO:
-Hola. Te indicamos cómo realizar el cambio.`);
+Hola. Te indicamos cómo realizar el cambio.
+
+RESPONSE IN ENGLISH:
+Hello. We will explain how to make the exchange.`);
 if (localized.translation !== 'Hola, necesito cambiar la talla.')
   throw new Error('Hotline no separa la traducción del mensaje original.');
 if (localized.reply !== 'Hola. Te indicamos cómo realizar el cambio.')
   throw new Error('Hotline no separa la respuesta en castellano.');
+if (localized.englishReply !== 'Hello. We will explain how to make the exchange.')
+  throw new Error('Hotline no separa la respuesta en inglés.');
 if (!storedHotlineIncoming('Hello', localized.translation).includes('Hello'))
   throw new Error('Hotline no conserva el mensaje original al guardar.');
+if (!storedHotlineReply(localized.reply, localized.englishReply).includes('RESPONSE IN ENGLISH:'))
+  throw new Error('Hotline no conserva las dos respuestas al guardar.');
 
 console.log('Módulo Hotline y conexión privada verificados.');
