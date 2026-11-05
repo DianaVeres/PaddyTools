@@ -461,7 +461,7 @@ def build_document():
         ["Responder mensajes", "Al pegar el mensaje en Hotline", "Al guardar el contacto"],
     ], [4.0, 6.0, 6.0])
     add_heading(doc, "Tareas manuales", 2)
-    add_paragraph(doc, "Para preparar pedidos, comprobar, gestionar incidencias, recogidas u otras tareas usamos el contador rápido.")
+    add_paragraph(doc, "Para preparar pedidos, cambiar el estado inicial, gestionar la preparación de reservas, avisar a colegios, gestionar recogidas u otras tareas usamos el contador rápido. Mantenimiento solo está disponible para Administración.")
     add_steps(doc, [
         "Elegir la tarea.",
         "Pulsar Iniciar al empezar.",
@@ -469,6 +469,7 @@ def build_document():
         "Indicar las unidades realizadas y guardar.",
     ])
     add_paragraph(doc, "Si una tarea automática ya quedó guardada, no la añadimos otra vez de forma manual.")
+    add_paragraph(doc, "No existe un formulario para añadir tiempos después: todas las mediciones manuales deben iniciarse desde el contador.")
 
     page_break(doc)
     add_heading(doc, "Cómo usar los filtros de KPIs", 1)

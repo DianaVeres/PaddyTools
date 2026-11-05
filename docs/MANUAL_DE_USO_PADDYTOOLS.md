@@ -293,9 +293,11 @@ El contador rápido aparece en PaddyTools cuando hay una sesión iniciada.
 Se utiliza para tareas que todavía no tienen principio y final automáticos:
 
 - preparar pedidos;
-- comprobar pedidos;
-- preparar incidencias;
+- cambiar el estado inicial;
+- gestionar la preparación de reservas;
+- avisar de llegadas a colegios;
 - gestionar recogidas;
+- mantenimiento, solo para Administración;
 - otras tareas.
 
 ### Uso
@@ -306,9 +308,8 @@ Se utiliza para tareas que todavía no tienen principio y final automáticos:
 4. Indicar pedidos, productos o unidades correspondientes.
 5. Guardar y terminar.
 
-El formulario manual de KPIs permite corregir u obtener un registro histórico
-cuando un contador no se utilizó, pero no debe emplearse para duplicar una
-medición automática ya guardada.
+No existe un formulario para añadir tiempos después: la medición debe iniciarse
+desde el contador para evitar registros duplicados o tiempos estimados.
 
 ---
 
@@ -632,8 +633,8 @@ Ejemplos de decisiones:
 - **Pedido o reserva incorrectos:** revisar primero WooCommerce o Monday.
 - **Colegio marcado en rojo incorrectamente:** revisar los colegios de origen y
   comunicar la equivalencia que falta.
-- **Tiempo duplicado:** eliminar el registro manual incorrecto desde KPIs si el
-  usuario tiene permiso.
+- **Tiempo duplicado:** eliminar el registro incorrecto desde KPIs si el usuario
+  tiene permiso.
 - **Error asignado incorrectamente:** eliminarlo o corregirlo y volver a
   registrarlo correctamente.
 - **Incidencia duplicada:** utilizar la eliminación autorizada en su hoja de

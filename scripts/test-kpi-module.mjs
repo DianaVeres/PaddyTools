@@ -10,10 +10,6 @@ const dashboard = readFileSync(
 const route = readFileSync(resolve(root, 'app/api/kpis/route.ts'), 'utf8');
 const service = readFileSync(resolve(root, 'lib/kpi-service.ts'), 'utf8');
 const client = readFileSync(resolve(root, 'lib/kpi-client.ts'), 'utf8');
-const workForm = readFileSync(
-  resolve(root, 'components/kpis/work-log-form.tsx'),
-  'utf8',
-);
 const productivity = readFileSync(
   resolve(root, 'components/kpis/productivity-dashboard.tsx'),
   'utf8',
@@ -29,7 +25,6 @@ for (const fragment of [
   'KpiDashboard',
   'ProductivityDashboard',
   'QualityDashboard',
-  'WorkLogForm',
 ])
   if (!page.includes(fragment))
     throw new Error(`La pantalla KPI ha perdido: ${fragment}`);
@@ -67,14 +62,10 @@ for (const fragment of [
 ])
   if (!service.includes(fragment))
     throw new Error(`El servicio KPI ha perdido: ${fragment}`);
-for (const fragment of [
-  '¿Quién ha hecho qué?',
-  'N.º pedidos',
-  'N.º productos',
-  'N.º PackingLists',
-])
-  if (!workForm.includes(fragment))
-    throw new Error(`El registro de tiempos ha perdido: ${fragment}`);
+if (page.includes('WorkLogForm') || page.includes('¿Quién ha hecho qué?'))
+  throw new Error(
+    'La pantalla KPI vuelve a mostrar el formulario manual retirado.',
+  );
 for (const fragment of [
   'Personas necesarias',
   'Preparación / pedido',

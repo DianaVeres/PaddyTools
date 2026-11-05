@@ -5,7 +5,6 @@ import { ArrowLeft, BarChart3, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KpiDashboard } from '@/components/kpis/kpi-dashboard';
-import { WorkLogForm } from '@/components/kpis/work-log-form';
 import { ProductivityDashboard } from '@/components/kpis/productivity-dashboard';
 import { QualityDashboard } from '@/components/kpis/quality-dashboard';
 import {
@@ -206,7 +205,6 @@ export default function KpisPage() {
               data={quality}
               onChanged={() => void loadKpis()}
             />
-            <WorkLogForm onSaved={() => void loadKpis()} />
           </>
         )
       )}
