@@ -64,6 +64,8 @@ if (!instruction.includes('RESPUESTA EN CASTELLANO:'))
   throw new Error('Hotline no obliga a generar la respuesta en castellano.');
 if (!instruction.includes('RESPONSE IN ENGLISH:'))
   throw new Error('Hotline no obliga a generar la respuesta en inglés.');
+if (!instruction.includes('máximo 120 palabras'))
+  throw new Error('Hotline ha perdido el límite que agiliza la respuesta bilingüe.');
 
 const localized = splitSpanishHotlineReply(`TRADUCCIÓN AL CASTELLANO:
 Hola, necesito cambiar la talla.

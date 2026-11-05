@@ -6,12 +6,13 @@ TRADUCCIÓN AL CASTELLANO:
 [traducción completa y fiel]
 
 RESPUESTA EN CASTELLANO:
-[respuesta para el cliente]
+[respuesta clara y completa para el cliente, máximo 120 palabras]
 
 RESPONSE IN ENGLISH:
-[traducción fiel al inglés de la respuesta anterior, lista para enviar al cliente]
+[traducción fiel al inglés de la respuesta anterior, máximo 120 palabras y lista para enviar al cliente]
 - Si el mensaje ya está en castellano, reply debe contener únicamente la respuesta, sin esos encabezados.
 - No omitas datos, números, referencias, fechas ni enlaces al traducir.
+- Evita introducciones, explicaciones y pasos repetidos. Da cada instrucción una sola vez.
 `.trim();
 
 export function withSpanishHotlineInstruction(guidance: string) {
