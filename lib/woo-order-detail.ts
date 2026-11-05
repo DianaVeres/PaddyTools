@@ -136,15 +136,11 @@ export async function loadWooOrderDetail(
 
   // La colección puede omitir metadatos protegidos. La lectura completa con
   // context=edit mantiene sincronizado el check de devolución atendida.
-  const detailResponse = await wooFetch(
-    `orders/${order.id}?context=edit&_=${Date.now()}`,
-    config,
-  );
+  const [detailResponse, notesResponse] = await Promise.all([
+    wooFetch(`orders/${order.id}?context=edit&_=${Date.now()}`, config),
+    wooFetch(`orders/${order.id}/notes?per_page=100`, config),
+  ]);
   if (detailResponse.ok) order = (await detailResponse.json()) as WooOrder;
-  const notesResponse = await wooFetch(
-    `orders/${order.id}/notes?per_page=100`,
-    config,
-  );
   const notes = notesResponse.ok
     ? ((await notesResponse.json()) as WooOrderNote[])
     : [];

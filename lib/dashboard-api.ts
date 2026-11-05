@@ -204,20 +204,45 @@ async function safeJson<T>(
   return { ok: response.ok, data };
 }
 
-export async function searchConnectedRecords(searchTerm: string) {
-  const [wooResponse, mondayResponse, incidentsResponse] = await Promise.all([
-    fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, {
+type ConnectedSearchCallbacks = {
+  onWooMatches?: (matches: OrderSearchMatch[]) => void;
+  onMondayMatches?: (records: DashboardMondayRecord[]) => void;
+  onIncidentMatches?: (incidents: IncidentRecord[]) => void;
+};
+
+export async function searchConnectedRecords(
+  searchTerm: string,
+  callbacks: ConnectedSearchCallbacks = {},
+) {
+  const wooPromise = fetch(`/api/search?query=${encodeURIComponent(searchTerm)}`, {
       cache: 'no-store',
-    }),
-    fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, {
+    }).then((response) => safeJson<{ matches?: OrderSearchMatch[] }>(response, 'WooCommerce'))
+    .then((result) => {
+      const matches = result.ok ? result.data.matches || [] : [];
+      callbacks.onWooMatches?.(matches);
+      return result;
+    });
+  const mondayPromise = fetch(`/api/monday?query=${encodeURIComponent(searchTerm)}`, {
       cache: 'no-store',
-    }),
-    fetch('/api/incidents?scope=all', { cache: 'no-store' }),
-  ]);
+    }).then((response) => safeJson<{ records?: DashboardMondayRecord[] }>(response, 'Monday'))
+    .then((result) => {
+      const records = result.ok ? result.data.records || [] : [];
+      callbacks.onMondayMatches?.(records);
+      return result;
+    });
+  const incidentsPromise = fetch('/api/incidents?scope=all', { cache: 'no-store' })
+    .then((response) => safeJson<{ rows?: IncidentRecord[] }>(response))
+    .then((result) => {
+      const matches = result.ok
+        ? incidentsMatchingCustomerQuery(result.data.rows || [], searchTerm)
+        : [];
+      callbacks.onIncidentMatches?.(matches);
+      return result;
+    });
   const [woo, monday, incidents] = await Promise.all([
-    safeJson<{ matches?: OrderSearchMatch[] }>(wooResponse, 'WooCommerce'),
-    safeJson<{ records?: DashboardMondayRecord[] }>(mondayResponse, 'Monday'),
-    safeJson<{ rows?: IncidentRecord[] }>(incidentsResponse),
+    wooPromise,
+    mondayPromise,
+    incidentsPromise,
   ]);
   return {
     wooMatches: woo.ok ? woo.data.matches || [] : [],
@@ -233,43 +258,59 @@ export async function searchExactConnected(input: {
   ticketReference: string;
   incidentId?: string;
   wooOrder: boolean;
-}) {
-  const [wooResponse, incidentResponse, mondayResponse, ticketResponse] =
-    await Promise.all([
-      input.wooOrder
-        ? fetch(`/api/search?number=${encodeURIComponent(input.reference)}`, {
+}, callbacks: {
+  onOrder?: (order: DashboardOrder) => void;
+  onIncident?: (incident: IncidentRecord) => void;
+  onMondayRecords?: (records: DashboardMondayRecord[]) => void;
+  onTicket?: (ticket: StoreTicketRecord) => void;
+} = {}) {
+  const wooPromise = input.wooOrder
+    ? fetch(`/api/search?number=${encodeURIComponent(input.reference)}`, {
             cache: 'no-store',
           })
-        : Promise.resolve(null),
-      fetch(
+        .then((response) => safeJson<DashboardOrder>(response, 'WooCommerce'))
+        .then((result) => {
+          if (result.ok) callbacks.onOrder?.(result.data);
+          return result;
+        })
+    : Promise.resolve({
+        ok: false,
+        data: {} as DashboardOrder & { error?: string },
+      });
+  const incidentPromise = fetch(
         input.incidentId
           ? `/api/incidents?id=${encodeURIComponent(input.incidentId)}`
           : `/api/incidents?number=${encodeURIComponent(input.reference)}`,
         { cache: 'no-store' },
-      ),
-      fetch(`/api/monday?number=${encodeURIComponent(input.reference)}`, {
+      ).then((response) => safeJson<{ found?: boolean; incident?: IncidentRecord }>(response))
+      .then((result) => {
+        if (result.ok && result.data.found && result.data.incident)
+          callbacks.onIncident?.(result.data.incident);
+        return result;
+      });
+  const mondayPromise = fetch(`/api/monday?number=${encodeURIComponent(input.reference)}`, {
         cache: 'no-store',
-      }),
-      fetch(
+      }).then((response) => safeJson<{ found?: boolean; records?: DashboardMondayRecord[] }>(response, 'Monday'))
+      .then((result) => {
+        if (result.ok) callbacks.onMondayRecords?.(result.data.records || []);
+        return result;
+      });
+  const ticketPromise = fetch(
         `/api/tickets?number=${encodeURIComponent(input.ticketReference)}`,
         {
           cache: 'no-store',
         },
-      ),
-    ]);
+      ).then((response) => safeJson<{ found?: boolean; ticket?: StoreTicketRecord }>(response))
+      .then((result) => {
+        if (result.ok && result.data.found && result.data.ticket)
+          callbacks.onTicket?.(result.data.ticket);
+        return result;
+      });
   const [woo, incident, monday, ticket] = await Promise.all([
-    wooResponse
-      ? safeJson<DashboardOrder>(wooResponse, 'WooCommerce')
-      : Promise.resolve({
-          ok: false,
-          data: {} as DashboardOrder & { error?: string },
-        }),
-    safeJson<{ found?: boolean; incident?: IncidentRecord }>(incidentResponse),
-    safeJson<{ found?: boolean; records?: DashboardMondayRecord[] }>(
-      mondayResponse,
-      'Monday',
-    ),
-    safeJson<{ found?: boolean; ticket?: StoreTicketRecord }>(ticketResponse),
+    wooPromise,
+    incidentPromise,
+    mondayPromise,
+    ticketPromise,
   ]);
   return {
     order: woo.ok ? woo.data : null,

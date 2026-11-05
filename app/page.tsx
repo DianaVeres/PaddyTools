@@ -433,7 +433,20 @@ export default function Home() {
       );
       if (!isWooOrder && !isExactReference && !selectedOrderNumber) {
         const { wooMatches, mondayMatches, incidentMatches } =
-          await searchConnectedRecords(searchTerm);
+          await searchConnectedRecords(searchTerm, {
+            onWooMatches: (matches) => {
+              setOrderSearchMatches(matches);
+              if (matches.length) setLoading(false);
+            },
+            onMondayMatches: (records) => {
+              setMondayRecords(records);
+              if (records.length) setLoading(false);
+            },
+            onIncidentMatches: (matches) => {
+              setIncidentSearchMatches(matches);
+              if (matches.length) setLoading(false);
+            },
+          });
         setOrderSearchMatches(wooMatches);
         setMondayRecords(mondayMatches);
         setIncidentSearchMatches(incidentMatches);
@@ -443,12 +456,23 @@ export default function Home() {
           setError(emptyConnectedSearchMessage(searchTerm));
         return;
       }
-      const result = await searchExactConnected({
-        reference: selectedLinkedOrderNumber,
-        ticketReference: searchTerm,
-        incidentId: selectedIncidentId,
-        wooOrder: isWooOrder,
-      });
+      const result = await searchExactConnected(
+        {
+          reference: selectedLinkedOrderNumber,
+          ticketReference: searchTerm,
+          incidentId: selectedIncidentId,
+          wooOrder: isWooOrder,
+        },
+        {
+          onOrder: (foundOrder) => {
+            setOrder(foundOrder);
+            setLoading(false);
+          },
+          onIncident: setIncident,
+          onMondayRecords: setMondayRecords,
+          onTicket: setTicket,
+        },
+      );
       if (result.order) setOrder(result.order);
       if (result.incident) setIncident(result.incident);
       setMondayRecords(result.mondayRecords);

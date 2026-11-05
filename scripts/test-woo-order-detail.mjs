@@ -10,6 +10,7 @@ for (const fragment of [
   'export function formatWooOrderDetail',
   'context=edit',
   '/notes?per_page=100',
+  'const [detailResponse, notesResponse] = await Promise.all([',
   'returnAttended:',
   'schoolCandidates:',
   'wooOrderSchoolCandidates',

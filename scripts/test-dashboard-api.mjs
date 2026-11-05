@@ -36,5 +36,12 @@ for (const method of [
   'removeIncident',
 ]) assert.ok(page.includes(`${method}(`), `La pantalla no usa ${method}`);
 
+for (const fragment of [
+  'onWooMatches:',
+  'onMondayMatches:',
+  'onIncidentMatches:',
+  'onOrder:',
+]) assert.ok(page.includes(fragment), `La búsqueda progresiva ha perdido: ${fragment}`);
+
 assert.equal(page.includes('fetch('), false, 'La pantalla principal no debe realizar peticiones directas');
 console.log('Cliente único del panel principal verificado.');
