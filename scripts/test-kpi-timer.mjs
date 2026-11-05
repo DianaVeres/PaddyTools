@@ -28,6 +28,7 @@ if (timer.includes('>{KPI_ACTIVITIES.map('))
 for (const fragment of [
   "['estado_inicial', 'Cambiar estado inicial']",
   "['reservas', 'Preparar reservas']",
+  "['preparacion_reservas', 'Gestionar preparación de reservas']",
   "['avisos_colegios', 'Avisos llegada colegios']",
   "RETIRED_KPI_ACTIVITIES = ['comprobacion']",
 ])

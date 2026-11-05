@@ -2,6 +2,7 @@ export const KPI_ACTIVITIES = [
   ['preparacion', 'Preparar pedidos'],
   ['estado_inicial', 'Cambiar estado inicial'],
   ['reservas', 'Preparar reservas'],
+  ['preparacion_reservas', 'Gestionar preparación de reservas'],
   ['avisos_colegios', 'Avisos llegada colegios'],
   // Se conserva para leer los registros históricos, pero ya no se ofrece
   // como una medición manual nueva.
