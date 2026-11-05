@@ -29,6 +29,7 @@ $packingDatesCheck = Join-Path $officialRoot 'scripts\test-packing-dates.mjs'
 $packingExportCheck = Join-Path $officialRoot 'scripts\test-packing-export.mjs'
 $httpResponseCheck = Join-Path $officialRoot 'scripts\test-http-response.mjs'
 $incidentRecordCheck = Join-Path $officialRoot 'scripts\test-incident-record.mjs'
+$legacyIncidentRegistryCheck = Join-Path $officialRoot 'scripts\test-legacy-incident-registry.mjs'
 $incidentStoreCheck = Join-Path $officialRoot 'scripts\test-incident-store.mjs'
 $incidentActionsCheck = Join-Path $officialRoot 'scripts\test-incident-actions.mjs'
 $incidentWriteCheck = Join-Path $officialRoot 'scripts\test-incident-write.mjs'
@@ -151,6 +152,10 @@ try {
   & $node $incidentRecordCheck
   if ($LASTEXITCODE -ne 0) {
     throw "Los datos imprimibles de incidencias han fallado. No se desplegará nada."
+  }
+  & $node $legacyIncidentRegistryCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La hoja de registro de incidencias ha fallado. No se desplegará nada."
   }
   & $node $incidentStoreCheck
   if ($LASTEXITCODE -ne 0) {
