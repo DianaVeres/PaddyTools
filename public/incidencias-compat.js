@@ -400,4 +400,90 @@
   installPrintButton('storePrintBtn', async () => await saveStore(), false);
   installPrintButton('ownPrintBtn', async () => await saveOwn(), false);
   installPrintButton('ownLabelBtn', async () => await saveOwn(), true);
+
+  // El módulo de incidencias vive dentro de un iframe. Comunica el inicio y
+  // el final al contador central de PaddyTools para compartir la misma lógica
+  // de usuario, persistencia y Dashboard que el resto de la aplicación.
+  const automaticKpiMessage = (action, counts = {}, context = '') => {
+    if (window.parent === window) return;
+    window.parent.postMessage({
+      type: 'paddytools:kpi-automatic-work',
+      action,
+      key: 'incident-create',
+      activity: 'incidencias',
+      context,
+      counts,
+    }, window.location.origin);
+  };
+  const productUnits = (row) => {
+    try {
+      const products = typeof row?.products_json === 'string'
+        ? JSON.parse(row.products_json)
+        : row?.products_json || [];
+      return products.reduce((total, product) => total + Math.max(1, Number(product.quantity) || 1), 0);
+    } catch {
+      return 0;
+    }
+  };
+  const showWithAutomaticKpi = show;
+  show = function (row) {
+    showWithAutomaticKpi(row);
+    automaticKpiMessage(row?.record_id ? 'cancel' : 'start', {}, row?.order_number || '');
+  };
+  const showStoreWithAutomaticKpi = showStore;
+  showStore = function (row) {
+    showStoreWithAutomaticKpi(row);
+    automaticKpiMessage(row?.record_id ? 'cancel' : 'start', {}, row?.ticket_number || row?.order_number || '');
+  };
+  const showOwnWithAutomaticKpi = showOwn;
+  showOwn = function (row) {
+    showOwnWithAutomaticKpi(row);
+    automaticKpiMessage(row?.record_id ? 'cancel' : 'start', {}, row?.order_number || '');
+  };
+  const clearStoreWithAutomaticKpi = clearStore;
+  clearStore = function () {
+    clearStoreWithAutomaticKpi();
+    automaticKpiMessage('start');
+  };
+  const clearOwnWithAutomaticKpi = clearOwn;
+  clearOwn = function () {
+    clearOwnWithAutomaticKpi();
+    automaticKpiMessage('start');
+  };
+  const saveWithAutomaticKpi = save;
+  save = async function (force = false) {
+    const row = await saveWithAutomaticKpi(force);
+    if (row) automaticKpiMessage('complete', {
+      orders: 1,
+      products: productUnits(row),
+      notes: `Incidencia ${row.order_number || ''}`,
+    });
+    return row;
+  };
+  const saveStoreWithAutomaticKpi = saveStore;
+  saveStore = async function () {
+    const row = await saveStoreWithAutomaticKpi();
+    if (row) automaticKpiMessage('complete', {
+      orders: 1,
+      products: productUnits(row),
+      notes: `Incidencia ${row.ticket_number || row.order_number || ''}`,
+    });
+    return row;
+  };
+  const saveOwnWithAutomaticKpi = saveOwn;
+  saveOwn = async function () {
+    const row = await saveOwnWithAutomaticKpi();
+    if (row) automaticKpiMessage('complete', {
+      orders: 1,
+      products: productUnits(row),
+      notes: `Incidencia ${row.order_number || ''}`,
+    });
+    return row;
+  };
+  document.getElementById('storeSaveBtn').onclick = saveStore;
+  document.getElementById('storeNewBtn').onclick = clearStore;
+  document.getElementById('ownSaveBtn').onclick = saveOwn;
+  document.getElementById('ownNewBtn').onclick = clearOwn;
+  document.getElementById('saveBtn').onclick = () => save(false);
+  document.getElementById('solveBtn').onclick = () => save(true);
 })();

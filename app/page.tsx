@@ -74,6 +74,11 @@ import {
 } from '@/lib/delivery-message';
 import { buildEmailLink, buildWhatsAppLink } from '@/lib/contact-links';
 import {
+  beginAutomaticWork,
+  cancelAutomaticWork,
+  completeAutomaticWork,
+} from '@/lib/kpi-auto-timer';
+import {
   selectedPickupLines,
   validateIncidentDraft,
   validateReservationDraft,
@@ -631,6 +636,13 @@ export default function Home() {
       mondayRecords[0]?.school ||
       '';
     const pickupSchool = incident?.pickupSchoolName || school;
+    if (!incident?.id)
+      beginAutomaticWork(
+        'incident-create',
+        'incidencias',
+        order?.number || mondayRecords[0]?.reference || '',
+      );
+    else cancelAutomaticWork('incident-create');
     setIncidentDraft({
       date: incident?.incidentDate?.slice(0, 10) || today,
       school,
@@ -656,6 +668,13 @@ export default function Home() {
       void loadPickupProducts(pickupSchool);
   }
   async function openReservation(existing?: MondayRecord) {
+    if (!existing)
+      beginAutomaticWork(
+        'reservation-create',
+        'reservas',
+        order?.number || mondayRecords[0]?.reference || '',
+      );
+    else cancelAutomaticWork('reservation-create');
     reservationDialog.reset();
     setModal('reserva');
     setEditingReservationId(existing?.id || '');
@@ -898,13 +917,38 @@ export default function Home() {
           Boolean(editingReservationId),
         );
       }
-      setSaved(
+      let automaticKpiWarning = '';
+      try {
+        if (kind === 'incidencia') {
+          await completeAutomaticWork('incident-create', {
+            orders: 1,
+            products: order?.items
+              ? order.items.reduce(
+                  (total, item) =>
+                    total + Math.max(1, Number(item.quantity) || 1),
+                  0,
+                )
+              : incident?.products.length || 0,
+            notes: `Incidencia ${reference}`,
+          });
+        } else if (!editingReservationId) {
+          await completeAutomaticWork('reservation-create', {
+            orders: 1,
+            products: Math.max(1, reservationDraft.units || 1),
+            notes: `Reserva ${reservationStorageReference(reference)}`,
+          });
+        }
+      } catch {
+        automaticKpiWarning =
+          ' La gestión se guardó, pero no se pudo registrar automáticamente su tiempo.';
+      }
+      const savedMessage =
         kind === 'reserva'
           ? editingReservationId
             ? `Reserva actualizada correctamente en Monday (${record.id}).`
             : `Reserva creada correctamente en Monday (${record.id}).`
-          : `Incidencia del pedido #${reference} guardada en el registro compartido.`,
-      );
+          : `Incidencia del pedido #${reference} guardada en el registro compartido.`;
+      setSaved(`${savedMessage}${automaticKpiWarning}`);
       if (kind === 'reserva') {
         const article = reservationOptions?.articles.find(
           (item) => item.id === reservationDraft.articleId,

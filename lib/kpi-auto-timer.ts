@@ -10,6 +10,21 @@ type AutomaticTimer = {
 };
 const prefix = 'paddytools-kpi-auto:';
 const maximumAge = 12 * 60 * 60 * 1000;
+export const AUTOMATIC_WORK_MESSAGE = 'paddytools:kpi-automatic-work';
+
+export type AutomaticWorkMessage = {
+  type: typeof AUTOMATIC_WORK_MESSAGE;
+  action: 'start' | 'complete' | 'cancel';
+  key: string;
+  activity?: KpiActivity;
+  context?: string;
+  counts?: {
+    orders?: number;
+    products?: number;
+    packingLists?: number;
+    notes?: string;
+  };
+};
 const keyFor = (key: string) => `${prefix}${key}`;
 const localClock = (date: Date) =>
   date.toLocaleTimeString('es-ES', {

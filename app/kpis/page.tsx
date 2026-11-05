@@ -8,13 +8,19 @@ import { KpiDashboard } from '@/components/kpis/kpi-dashboard';
 import { WorkLogForm } from '@/components/kpis/work-log-form';
 import { ProductivityDashboard } from '@/components/kpis/productivity-dashboard';
 import { QualityDashboard } from '@/components/kpis/quality-dashboard';
-import { deleteKpiWorkLog, loadKpiSnapshot, loadKpiWorkLogs } from '@/lib/kpi-client';
+import {
+  deleteKpiWorkLog,
+  loadKpiSnapshot,
+  loadKpiWorkLogs,
+} from '@/lib/kpi-client';
 import { loadQuality, type QualityResponse } from '@/lib/quality-client';
 import type { KpiSnapshot } from '@/lib/kpi-metrics';
 import type { KpiWorkLog } from '@/lib/kpi-work-log';
 import './kpis.css';
 
 const localDate = (date: Date) => date.toLocaleDateString('en-CA');
+const sameWorker = (left: string, right: string) =>
+  left.trim().toLowerCase() === right.trim().toLowerCase();
 const initialDates = () => {
   const now = new Date();
   return {
@@ -44,14 +50,24 @@ export default function KpisPage() {
       ]);
       setData(snapshot);
       setAllLogs(workLogs);
-      setLogs(selectedWorker ? workLogs.filter((log) => log.workerEmail === selectedWorker) : workLogs);
+      setLogs(
+        selectedWorker
+          ? workLogs.filter((log) =>
+              sameWorker(log.workerEmail, selectedWorker),
+            )
+          : workLogs,
+      );
       setQuality(qualityData);
     } catch (loadError) {
       setData(null);
       setLogs([]);
       setAllLogs([]);
       setQuality(null);
-      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los KPI.');
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'No se pudieron cargar los KPI.',
+      );
     } finally {
       setLoading(false);
     }
@@ -79,31 +95,121 @@ export default function KpisPage() {
       await deleteKpiWorkLog(id);
       await loadKpis();
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el registro.');
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'No se pudo eliminar el registro.',
+      );
     }
   }
+
+  const selectedWorkerName = [
+    ...(quality?.workers || []).map(
+      (worker) => [worker.email, worker.displayName] as const,
+    ),
+    ...allLogs.map((log) => [log.workerEmail, log.workerName] as const),
+  ].find(([email]) => sameWorker(email, selectedWorker))?.[1];
 
   return (
     <main className="kpi-page">
       <header className="kpi-topbar">
         <a className="kpi-brand" href="/">
           <img src="/paddy-logo-granate.png" alt="Paddy" />
-          <span><strong>PaddyTools · KPIs</strong><small>Productividad y mejora continua</small></span>
+          <span>
+            <strong>PaddyTools · KPIs</strong>
+            <small>Productividad y mejora continua</small>
+          </span>
         </a>
-        <Button variant="outline" onClick={() => window.location.assign('/')}><ArrowLeft /> Gestión unificada</Button>
+        <Button variant="outline" onClick={() => window.location.assign('/')}>
+          <ArrowLeft /> Gestión unificada
+        </Button>
       </header>
       <section className="kpi-hero">
-        <div><span>CUADRO DE MANDO</span><h1>Indicadores de productividad</h1><p>Consulta el trabajo realizado, la calidad y la evolución de las incidencias.</p></div>
+        <div>
+          <span>CUADRO DE MANDO</span>
+          <h1>Indicadores de productividad</h1>
+          <p>
+            Consulta el trabajo realizado, la calidad y la evolución de las
+            incidencias.
+          </p>
+        </div>
         <BarChart3 />
       </section>
       <form className="kpi-filters" onSubmit={submit}>
-        <label>Desde<Input type="date" value={dates.from} onChange={(event) => setDates({ ...dates, from: event.target.value })} /></label>
-        <label>Hasta<Input type="date" value={dates.to} onChange={(event) => setDates({ ...dates, to: event.target.value })} /></label>
-        <label>Persona<select value={selectedWorker} onChange={(event) => setSelectedWorker(event.target.value)}><option value="">Todas las personas</option>{[...new Map([...(quality?.workers || []).map((worker) => [worker.email, worker.displayName] as const), ...allLogs.map((log) => [log.workerEmail, log.workerName] as const)]).entries()].map(([email,name]) => <option key={email} value={email}>{name}</option>)}</select></label>
-        <Button type="submit" disabled={loading}>{loading ? <RefreshCw className="spin" /> : <BarChart3 />} Actualizar indicadores</Button>
+        <label>
+          Desde
+          <Input
+            type="date"
+            value={dates.from}
+            onChange={(event) =>
+              setDates({ ...dates, from: event.target.value })
+            }
+          />
+        </label>
+        <label>
+          Hasta
+          <Input
+            type="date"
+            value={dates.to}
+            onChange={(event) => setDates({ ...dates, to: event.target.value })}
+          />
+        </label>
+        <label>
+          Persona
+          <select
+            value={selectedWorker}
+            onChange={(event) => setSelectedWorker(event.target.value)}
+          >
+            <option value="">Todas las personas</option>
+            {[
+              ...new Map([
+                ...(quality?.workers || []).map(
+                  (worker) => [worker.email, worker.displayName] as const,
+                ),
+                ...allLogs.map(
+                  (log) => [log.workerEmail, log.workerName] as const,
+                ),
+              ]).entries(),
+            ].map(([email, name]) => (
+              <option key={email} value={email}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button type="submit" disabled={loading}>
+          {loading ? <RefreshCw className="spin" /> : <BarChart3 />} Actualizar
+          indicadores
+        </Button>
       </form>
+      <p className="kpi-filter-scope">
+        {selectedWorker
+          ? `Vista individual: ${selectedWorkerName || selectedWorker}. Tiempos, tareas y calidad filtrados para esta persona.`
+          : 'Vista general: datos conjuntos de todas las personas.'}
+      </p>
       {error && <div className="kpi-error">{error}</div>}
-      {loading && !data ? <div className="kpi-loading"><RefreshCw className="spin" /> Calculando indicadores…</div> : data && quality && <><KpiDashboard data={data} /><ProductivityDashboard data={data} logs={logs} onDelete={(id) => void removeLog(id)} /><QualityDashboard data={quality} onChanged={() => void loadKpis()} /><WorkLogForm onSaved={() => void loadKpis()} /></>}
+      {loading && !data ? (
+        <div className="kpi-loading">
+          <RefreshCw className="spin" /> Calculando indicadores…
+        </div>
+      ) : (
+        data &&
+        quality && (
+          <>
+            {!selectedWorker && <KpiDashboard data={data} />}
+            <ProductivityDashboard
+              data={data}
+              logs={logs}
+              onDelete={(id) => void removeLog(id)}
+            />
+            <QualityDashboard
+              data={quality}
+              onChanged={() => void loadKpis()}
+            />
+            <WorkLogForm onSaved={() => void loadKpis()} />
+          </>
+        )
+      )}
     </main>
   );
 }

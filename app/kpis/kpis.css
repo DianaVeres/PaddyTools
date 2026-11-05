@@ -13,6 +13,7 @@
 .kpi-filters { width:min(1180px,calc(100% - 40px)); margin:28px auto; padding:20px; display:flex; align-items:end; gap:16px; border:1px solid #dbe4ea; border-radius:18px; background:#fff; box-shadow:0 12px 30px rgba(16,45,76,.06); }
 .kpi-filters label { display:grid; gap:7px; min-width:190px; font-size:13px; font-weight:800; }
 .kpi-filters select { height:36px; padding:0 10px; border:1px solid #d5dde4; border-radius:8px; background:#fff; }
+.kpi-filter-scope { width:min(1180px,calc(100% - 40px)); margin:-10px auto 20px; color:#5f6f67; font-size:13px; font-weight:650; }
 .kpi-section { width:min(1180px,calc(100% - 40px)); margin:34px auto; }
 .kpi-section-heading h2 { margin:5px 0 18px; font:700 28px Georgia,serif; }
 .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
