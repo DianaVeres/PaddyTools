@@ -9,6 +9,7 @@ export const KPI_ACTIVITIES = [
   ['reservas', 'Preparar reservas'],
   ['preparacion_reservas', 'Gestionar preparación de reservas'],
   ['avisos_colegios', 'Avisos llegada colegios'],
+  ['atencion_cliente', 'Atender emails y teléfono'],
   // Se conserva para leer los registros históricos, pero ya no se ofrece
   // como una medición manual nueva.
   ['comprobacion', 'Comprobar pedidos'],
@@ -96,6 +97,7 @@ export function validateKpiWorkLog(input: Record<string, unknown>) {
     activity !== 'correos' &&
     activity !== 'incidencias' &&
     activity !== 'recogidas' &&
+    activity !== 'atencion_cliente' &&
     activity !== 'mantenimiento' &&
     activity !== 'otro'
   )

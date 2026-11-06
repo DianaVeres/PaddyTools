@@ -40,6 +40,7 @@ for (const fragment of [
   "['reservas', 'Preparar reservas']",
   "['preparacion_reservas', 'Gestionar preparación de reservas']",
   "['avisos_colegios', 'Avisos llegada colegios']",
+  "['atencion_cliente', 'Atender emails y teléfono']",
   "'mantenimiento'",
   "'Mantenimiento'",
   "ADMIN_ONLY_KPI_ACTIVITIES = ['mantenimiento']",
