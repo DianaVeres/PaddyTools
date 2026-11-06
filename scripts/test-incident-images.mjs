@@ -49,6 +49,17 @@ assert.ok(
   'Falta el bloque de imágenes en el impreso.',
 );
 for (const expected of [
+  'async function preparePrintableRecord',
+  "credentials: 'same-origin'",
+  'URL.createObjectURL(await response.blob())',
+  'image.decode().catch',
+  'await preparePrintableRecord(record)',
+])
+  assert.ok(
+    compatibility.includes(expected),
+    `La impresión puede iniciarse sin cargar las imágenes: ${expected}`,
+  );
+for (const expected of [
   'const files = [...imageDrafts.order]',
   'const files = [...imageDrafts.store]',
   "document.getElementById('storeImage').value = ''",

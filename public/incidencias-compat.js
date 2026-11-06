@@ -221,10 +221,24 @@
   function printableImages(record) {
     if (!record.record_id || !Array.isArray(record.images) || !record.images.length) return '';
     const images = record.images.map((image) => {
-      const source = `/api/incidents/images?incidentId=${encodeURIComponent(record.record_id)}&key=${encodeURIComponent(image.key)}`;
+      const source = image.print_source || `/api/incidents/images?incidentId=${encodeURIComponent(record.record_id)}&key=${encodeURIComponent(image.key)}`;
       return `<figure><img src="${source}" alt="${esc(image.name || 'Imagen de la incidencia')}"><figcaption>${esc(image.name || 'Imagen')}</figcaption></figure>`;
     }).join('');
     return `<section class="print-images"><h2>Imágenes de la incidencia</h2><div>${images}</div></section>`;
+  }
+
+  async function preparePrintableRecord(record) {
+    if (!record?.record_id || !Array.isArray(record.images) || !record.images.length) return record;
+    const objectUrls = [];
+    const images = await Promise.all(record.images.map(async (image) => {
+      const source = `/api/incidents/images?incidentId=${encodeURIComponent(record.record_id)}&key=${encodeURIComponent(image.key)}`;
+      const response = await fetch(source, { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error(`No se pudo cargar la imagen ${image.name || ''} para imprimir.`);
+      const printSource = URL.createObjectURL(await response.blob());
+      objectUrls.push(printSource);
+      return { ...image, print_source: printSource };
+    }));
+    return { ...record, images, print_object_urls: objectUrls };
   }
 
   function renderPrintWindow(target, record, label) {
@@ -241,8 +255,10 @@
     const content = label
       ? `<main class="label"><h1>INCIDENCIA ${esc(reference)}</h1><p><b>${esc(record.customer_name || 'Sin nombre')}</b></p><p>${esc(record.customer_phone || '')}</p><p>${esc(record.incident_school_name || record.pickup_school_name || '')}</p><p>${esc(record.incident_text || '')}</p></main>`
       : `<main><header><div><h1>Paddy · Incidencia</h1><p>Documento de gestión</p></div><div class="reference">${esc(reference)}</div></header><section class="grid"><div><span>CLIENTE</span><b>${esc(record.customer_name || 'Sin nombre')}</b></div><div><span>FECHA</span><b>${esc(record.incident_date || '')}</b></div><div><span>TELÉFONO</span><b>${esc(record.customer_phone || '')}</b></div><div><span>COLEGIO</span><b>${esc(record.incident_school_name || '')}</b></div></section><section><h2>Descripción de la incidencia</h2><p>${esc(record.incident_text || '').replace(/\n/g, '<br>')}</p></section>${pickup}${products ? `<section><h2>Artículos</h2><table><thead><tr><th>Artículo</th><th>Código</th><th>Talla</th><th>Unidades</th></tr></thead><tbody>${products}</tbody></table></section>` : ''}${images}<footer>${record.solved ? 'INCIDENCIA SOLUCIONADA' : 'INCIDENCIA PENDIENTE'}</footer></main>`;
+    const objectUrls = record.print_object_urls || [];
+    target.addEventListener('afterprint', () => objectUrls.forEach((url) => URL.revokeObjectURL(url)), { once: true });
     target.document.open();
-    target.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Incidencia ${esc(reference)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#173c31;margin:0}main{max-width:780px;margin:auto}header{display:flex;justify-content:space-between;align-items:start;border-bottom:3px solid #285b43;padding-bottom:18px}.reference{font-size:24px;font-weight:800}h1{margin:0}h2{font-size:17px;margin:24px 0 10px}p{line-height:1.5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}.grid div{border:1px solid #d7e0db;border-radius:8px;padding:12px}.grid span{display:block;font-size:11px;color:#68766f}.grid b{display:block;margin-top:5px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #dfe5e1;padding:9px}.print-images>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-images figure{margin:0;break-inside:avoid}.print-images img{display:block;width:100%;height:85mm;object-fit:contain;border:1px solid #d7e0db}.print-images figcaption{font-size:11px;margin-top:4px;color:#68766f}footer{margin-top:30px;border-top:1px solid #ccd7d1;padding-top:12px;font-weight:700}.label{border:3px solid #173c31;padding:18px;width:100%;max-width:100mm}.label h1{font-size:22px;border-bottom:2px solid #173c31;padding-bottom:10px}.label p{margin:8px 0;font-size:16px}@media print{button{display:none}}</style></head><body>${content}<script>window.addEventListener('load',()=>{setTimeout(()=>window.print(),150)})<\/script></body></html>`);
+    target.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Incidencia ${esc(reference)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#173c31;margin:0}main{max-width:780px;margin:auto}header{display:flex;justify-content:space-between;align-items:start;border-bottom:3px solid #285b43;padding-bottom:18px}.reference{font-size:24px;font-weight:800}h1{margin:0}h2{font-size:17px;margin:24px 0 10px}p{line-height:1.5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}.grid div{border:1px solid #d7e0db;border-radius:8px;padding:12px}.grid span{display:block;font-size:11px;color:#68766f}.grid b{display:block;margin-top:5px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #dfe5e1;padding:9px}.print-images>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-images figure{margin:0;break-inside:avoid}.print-images img{display:block;width:100%;height:85mm;object-fit:contain;border:1px solid #d7e0db}.print-images figcaption{font-size:11px;margin-top:4px;color:#68766f}footer{margin-top:30px;border-top:1px solid #ccd7d1;padding-top:12px;font-weight:700}.label{border:3px solid #173c31;padding:18px;width:100%;max-width:100mm}.label h1{font-size:22px;border-bottom:2px solid #173c31;padding-bottom:10px}.label p{margin:8px 0;font-size:16px}@media print{button{display:none}}</style></head><body>${content}<script>window.addEventListener('load',async()=>{await Promise.all([...document.images].map((image)=>image.decode().catch(()=>undefined)));setTimeout(()=>window.print(),250)})<\/script></body></html>`);
     target.document.close();
   }
 
@@ -253,7 +269,7 @@
       const target = window.open('', '_blank');
       try {
         const record = await getRecord();
-        if (record) renderPrintWindow(target, record, label);
+        if (record) renderPrintWindow(target, await preparePrintableRecord(record), label);
         else target?.close();
       } catch (error) {
         target?.close();
