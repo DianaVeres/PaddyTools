@@ -329,6 +329,7 @@ export default function HotlinePage() {
             <h1>Hotline</h1>
             <p>Asistente de emails · Paddy</p>
           </div>
+          <div id="kpi-timer-slot" className="kpi-timer-slot" />
           <span className={styles.shared}>Datos compartidos</span>
         </div>
       </header>

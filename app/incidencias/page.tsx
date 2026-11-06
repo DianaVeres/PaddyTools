@@ -1,9 +1,14 @@
 export default function IncidenciasPage() {
   return (
-    <iframe
-      src="/incidencias-app.html"
-      title="Paddy · Incidencias de pedidos"
-      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 0 }}
-    />
+    <main className="incidents-page-shell">
+      <header className="incidents-timer-header">
+        <a href="/">PaddyTools · Incidencias</a>
+        <div id="kpi-timer-slot" className="kpi-timer-slot" />
+      </header>
+      <iframe
+        src="/incidencias-app.html"
+        title="Paddy · Incidencias de pedidos"
+      />
+    </main>
   );
 }

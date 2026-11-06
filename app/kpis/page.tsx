@@ -119,6 +119,7 @@ export default function KpisPage() {
             <small>Productividad y mejora continua</small>
           </span>
         </a>
+        <div id="kpi-timer-slot" className="kpi-timer-slot" />
         <Button variant="outline" onClick={() => window.location.assign('/')}>
           <ArrowLeft /> Gestión unificada
         </Button>

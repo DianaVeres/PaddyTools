@@ -11,6 +11,12 @@ const header = readFileSync(
   resolve(root, 'components/dashboard/dashboard-header.tsx'),
   'utf8',
 );
+const timerViews = [
+  'app/packing-list/page.tsx',
+  'app/kpis/page.tsx',
+  'app/hotline/page.tsx',
+  'app/incidencias/page.tsx',
+];
 const workLog = readFileSync(resolve(root, 'lib/kpi-work-log.ts'), 'utf8');
 const timerStyles = readFileSync(
   resolve(root, 'components/kpis/kpi-timer.module.css'),
@@ -61,4 +67,9 @@ for (const fragment of ['@/components/kpis/kpi-timer', '<KpiTimer />'])
     throw new Error(`El layout no conecta el contador: ${fragment}`);
 if (!header.includes('id="kpi-timer-slot"'))
   throw new Error('La cabecera ha perdido el hueco reservado al contador.');
+for (const view of timerViews) {
+  const source = readFileSync(resolve(root, view), 'utf8');
+  if (!source.includes('id="kpi-timer-slot"'))
+    throw new Error(`El contador no está integrado en la vista: ${view}`);
+}
 console.log('Contador automático de productividad verificado.');

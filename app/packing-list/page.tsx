@@ -773,6 +773,7 @@ export default function Home() {
             <small>Envíos a colegios</small>
           </span>
         </button>
+        <div id="kpi-timer-slot" className="kpi-timer-slot" />
         <div className="header-actions">
           <Button variant="outline" onClick={() => window.location.assign('/')}>
             <ArrowLeft /> PADDYTOOLS

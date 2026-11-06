@@ -19,6 +19,9 @@
   margin: auto;
   padding: 16px 24px;
 }
+.headerInner :global(.kpi-timer-slot) {
+  margin-inline: auto 0;
+}
 .back,
 .primary,
 .secondary {
@@ -435,6 +438,11 @@
   }
   .headerInner {
     flex-wrap: wrap;
+  }
+  .headerInner :global(.kpi-timer-slot) {
+    width: 100%;
+    flex-basis: 100%;
+    margin: 0;
   }
   .shared {
     margin-left: 0;
