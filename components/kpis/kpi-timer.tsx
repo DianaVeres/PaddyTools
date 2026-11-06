@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   KPI_ACTIVITIES,
   MAINTENANCE_KPI_ACTIVITY,
@@ -58,7 +59,9 @@ export function KpiTimer() {
     notes: '',
   });
   const [error, setError] = useState('');
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
+    setHeaderSlot(document.getElementById('kpi-timer-slot'));
     if (window.location.pathname === '/login') return;
     fetch('/api/auth/session', { cache: 'no-store' }).then(async (response) => {
       if (!response.ok) return;
@@ -199,8 +202,11 @@ export function KpiTimer() {
   }
   const name =
     KPI_ACTIVITIES.find(([value]) => value === active?.activity)?.[1] || '';
-  return (
-    <aside className={styles.timer} aria-label="Contador de productividad">
+  const timer = (
+    <aside
+      className={`${styles.timer} ${headerSlot ? styles.headerTimer : styles.floatingTimer}`}
+      aria-label="Contador de productividad"
+    >
       {!active ? (
         <div className={styles.closed}>
           <select
@@ -272,4 +278,5 @@ export function KpiTimer() {
       )}
     </aside>
   );
+  return headerSlot ? createPortal(timer, headerSlot) : timer;
 }

@@ -56,6 +56,7 @@ export function DashboardHeader({
           <small>Gestión Paddy</small>
         </span>
       </a>
+      <div id="kpi-timer-slot" className="kpi-timer-slot" />
       <div className="top-actions">
         <Button
           className="action-button registry"
