@@ -48,6 +48,17 @@ assert.ok(
   compatibility.includes('Imágenes de la incidencia'),
   'Falta el bloque de imágenes en el impreso.',
 );
+for (const expected of [
+  'const files = [...imageDrafts.order]',
+  'const files = [...imageDrafts.store]',
+  "document.getElementById('storeImage').value = ''",
+  'const files = [...imageDrafts.own]',
+  "uploadIncidentImages('store', row, files)",
+])
+  assert.ok(
+    compatibility.includes(expected),
+    `Las imágenes pendientes pueden perderse al guardar: ${expected}`,
+  );
 assert.ok(
   read('drizzle/0008_incident_images.sql').includes(
     'CREATE TABLE `incident_images`',

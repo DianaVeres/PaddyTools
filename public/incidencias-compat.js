@@ -361,8 +361,11 @@
     grid.querySelectorAll('[data-remove-image]').forEach((button) => button.onclick = () => { const index = Number(button.dataset.removeImage.split(':')[1]); imageDrafts[kind].splice(index, 1); renderIncidentImages(kind); });
   };
   const resetIncidentImages = (kind, row = null) => { imageDrafts[kind] = []; imageRecords[kind] = row; renderIncidentImages(kind); };
-  const uploadIncidentImages = async (kind, row) => {
-    const files = imageDrafts[kind];
+  const uploadIncidentImages = async (kind, row, pendingFiles = imageDrafts[kind]) => {
+    // El guardado base vuelve a cargar el formulario y limpia imageDrafts.
+    // Conservamos una copia estable antes de guardar para que las imágenes
+    // lleguen a R2 y el registro actualizado pueda imprimirse inmediatamente.
+    const files = [...pendingFiles];
     if (!files.length) return row;
     const incidentId = row?.record_id;
     if (!incidentId) throw new Error('No se pudo identificar la incidencia para guardar las imágenes.');
@@ -403,9 +406,9 @@
   const showOwnWithImages = showOwn; showOwn = function (row) { showOwnWithImages(row); resetIncidentImages('own', row); };
   const clearStoreWithImages = clearStore; clearStore = function () { clearStoreWithImages(); resetIncidentImages('store'); };
   const clearOwnWithImages = clearOwn; clearOwn = function () { clearOwnWithImages(); resetIncidentImages('own'); };
-  const saveWithImages = save; save = async function (force = false) { const row = await saveWithImages(force); return row ? await uploadIncidentImages('order', row) : row; };
-  const saveStoreWithImages = saveStore; saveStore = async function () { const row = await saveStoreWithImages(); return row ? await uploadIncidentImages('store', row) : row; };
-  const saveOwnWithImages = saveOwn; saveOwn = async function () { const row = await saveOwnWithImages(); return row ? await uploadIncidentImages('own', row) : row; };
+  const saveWithImages = save; save = async function (force = false) { const files = [...imageDrafts.order]; const row = await saveWithImages(force); return row ? await uploadIncidentImages('order', row, files) : row; };
+  const saveStoreWithImages = saveStore; saveStore = async function () { const files = [...imageDrafts.store]; document.getElementById('storeImage').value = ''; const row = await saveStoreWithImages(); return row ? await uploadIncidentImages('store', row, files) : row; };
+  const saveOwnWithImages = saveOwn; saveOwn = async function () { const files = [...imageDrafts.own]; const row = await saveOwnWithImages(); return row ? await uploadIncidentImages('own', row, files) : row; };
 
   document.getElementById('storeSaveBtn').onclick = saveStore;
   document.getElementById('storeNewBtn').onclick = clearStore;
