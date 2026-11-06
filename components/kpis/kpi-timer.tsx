@@ -204,7 +204,7 @@ export function KpiTimer() {
     KPI_ACTIVITIES.find(([value]) => value === active?.activity)?.[1] || '';
   const timer = (
     <aside
-      className={`${styles.timer} ${headerSlot ? styles.headerTimer : styles.floatingTimer}`}
+      className={`${styles.timer} ${headerSlot ? styles.headerTimer : styles.floatingTimer} ${completing ? styles.expanded : ''}`}
       aria-label="Contador de productividad"
     >
       {!active ? (

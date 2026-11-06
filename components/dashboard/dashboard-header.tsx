@@ -1,10 +1,17 @@
 import {
   BarChart3,
   CalendarDays,
+  ChevronDown,
   LogOut,
   Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { SessionUser } from '@/lib/dashboard-types';
 
 function userInitials(user: SessionUser | null) {
@@ -58,19 +65,23 @@ export function DashboardHeader({
         >
           <Mail /> Hotline
         </Button>
-        <Button
-          className="action-button reservation"
-          variant="outline"
-          onClick={onOpenReservations}
-        >
-          <CalendarDays /> Reservas
-        </Button>
-        <Button
-          className="action-button reservation"
-          onClick={onCreateReservation}
-        >
-          <CalendarDays /> Generar reserva
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button className="action-button reservation" variant="outline" />
+            }
+          >
+            <CalendarDays /> Reservas <ChevronDown />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="reservation-menu">
+            <DropdownMenuItem onClick={onOpenReservations}>
+              <CalendarDays /> Ver reservas
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onCreateReservation}>
+              <CalendarDays /> Generar reserva
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <span className="divider" />
         <button
           className="user-chip"

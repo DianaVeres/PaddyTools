@@ -1,4 +1,10 @@
 .timer { position:relative; z-index:80; box-sizing:border-box; width:min(330px,100%); padding:7px; border:1px solid #cbd9df; border-radius:12px; background:#fff; box-shadow:0 6px 18px rgba(16,45,76,.12); color:#102d4c; }
+.headerTimer:not(.expanded) { height:40px; padding:2px 4px; border-radius:10px; }
+.headerTimer:not(.expanded) .closed select { height:34px; }
+.headerTimer:not(.expanded) .closed button,
+.headerTimer:not(.expanded) .active button { min-height:34px; }
+.headerTimer:not(.expanded) .active { height:34px; }
+.headerTimer:not(.expanded) .active strong { font-size:17px; line-height:1; }
 .floatingTimer { position:fixed; right:18px; bottom:18px; width:min(390px,calc(100vw - 36px)); padding:14px; box-shadow:0 18px 50px rgba(16,45,76,.22); }
 .closed { display:flex; flex-wrap:wrap; align-items:center; min-width:0; gap:10px; }.closed select { flex:1 1 0; min-width:0; height:38px; padding:0 8px; border:1px solid #ccd8df; border-radius:8px; background:#fff; }.closed button { flex:0 0 auto; }.closed .error { flex:0 0 100%; }.closed button,.active button,.form button { min-height:38px; padding:0 14px; border:0; border-radius:9px; background:#0d766f; color:#fff; font-weight:800; cursor:pointer; }
 .active { display:flex; align-items:center; gap:12px; }.pulse { width:11px; height:11px; border-radius:50%; background:#e33c3c; box-shadow:0 0 0 6px rgba(227,60,60,.12); }.active div { flex:1; display:grid; }.active span { font-size:12px; color:#687a8b; }.active strong { font-size:22px; }.active button { background:#7f1d3a; }

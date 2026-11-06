@@ -174,6 +174,14 @@ a {
   border-color: #0b5f59;
   color: #ffffff;
 }
+.reservation-menu {
+  min-width: 190px;
+}
+.reservation-menu [data-slot='dropdown-menu-item'] {
+  min-height: 38px;
+  padding-inline: 10px;
+  cursor: pointer;
+}
 .divider {
   height: 30px;
   width: 1px;

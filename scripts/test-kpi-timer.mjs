@@ -29,6 +29,7 @@ for (const fragment of [
   'timerActivities.map(',
   "createPortal(timer, headerSlot)",
   "document.getElementById('kpi-timer-slot')",
+  'styles.expanded',
 ])
   if (!timer.includes(fragment))
     throw new Error(`El contador KPI ha perdido: ${fragment}`);
@@ -50,6 +51,7 @@ for (const fragment of [
   'box-sizing:border-box',
   '.closed select { flex:1 1 0; min-width:0',
   '.closed button { flex:0 0 auto;',
+  '.headerTimer:not(.expanded) { height:40px',
 ])
   if (!timerStyles.includes(fragment))
     throw new Error(`El contador puede desbordar la pantalla: ${fragment}`);

@@ -15,7 +15,9 @@ for (const fragment of [
   'KPIs',
   'Hotline',
   'Reservas',
+  'Ver reservas',
   'Generar reserva',
+  'DropdownMenuTrigger',
   'userInitials(sessionUser)',
   'onLogout',
 ]) {
