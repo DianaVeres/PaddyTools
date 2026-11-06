@@ -32,10 +32,23 @@ assert.ok(
   form.includes('image/jpeg,image/png,image/webp'),
   'El formulario no limita los formatos permitidos.',
 );
+for (const expected of [
+  'onPaste={(event)',
+  'event.clipboardData.items',
+  'pega una captura con Ctrl + V',
+])
+  assert.ok(form.includes(expected), `El formulario integrado no permite pegar imágenes: ${expected}`);
 assert.ok(
   compatibility.includes('uploadIncidentImages'),
   'El bloque integrado de incidencias no sube imágenes.',
 );
+for (const expected of [
+  'IncidentImageArea',
+  '.onpaste = (event)',
+  'event.clipboardData?.items',
+  'pega una captura con Ctrl + V',
+])
+  assert.ok(compatibility.includes(expected), `Incidencias no permite pegar imágenes: ${expected}`);
 assert.ok(
   legacyForm.includes("status('Incidencia del pedido #'+current.order_number+' guardada.','ok');return current"),
   'El formulario de pedidos no devuelve la incidencia guardada para poder subir sus imágenes.',

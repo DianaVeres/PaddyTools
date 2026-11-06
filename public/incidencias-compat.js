@@ -354,17 +354,28 @@
   const imageField = (anchorId, kind) => {
     const anchor = document.getElementById(anchorId);
     if (!anchor || document.getElementById(kind + 'IncidentImages')) return;
-    (anchor.closest('.actions') || anchor).insertAdjacentHTML('beforebegin', `<section class="incident-images"><label>IMÁGENES DE LA INCIDENCIA</label><small>Hasta 4 imágenes JPG, PNG o WebP · máximo 5 MB cada una</small><input id="${kind}IncidentImages" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="${kind}IncidentImageGrid" class="incident-image-grid"></div><p id="${kind}IncidentImageError" class="error"></p></section>`);
-    document.getElementById(kind + 'IncidentImages').onchange = (event) => {
-      const files = Array.from(event.target.files || []);
+    (anchor.closest('.actions') || anchor).insertAdjacentHTML('beforebegin', `<section class="incident-images" id="${kind}IncidentImageArea" tabindex="0"><label>IMÁGENES DE LA INCIDENCIA</label><small>Sube archivos o pega una captura con Ctrl + V · hasta 4 imágenes JPG, PNG o WebP · máximo 5 MB cada una</small><input id="${kind}IncidentImages" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="${kind}IncidentImageGrid" class="incident-image-grid"></div><p id="${kind}IncidentImageError" class="error"></p></section>`);
+    const addIncidentImageFiles = (files) => {
       const current = imageRecords[kind]?.images?.length || 0;
       const invalid = files.find((file) => !['image/jpeg','image/png','image/webp'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024);
       const error = document.getElementById(kind + 'IncidentImageError');
       if (invalid) error.textContent = 'Usa imágenes JPG, PNG o WebP de 5 MB como máximo.';
       else if (current + imageDrafts[kind].length + files.length > 4) error.textContent = 'Puedes adjuntar un máximo de 4 imágenes.';
       else { error.textContent = ''; imageDrafts[kind].push(...files); }
-      event.target.value = '';
       renderIncidentImages(kind);
+    };
+    document.getElementById(kind + 'IncidentImages').onchange = (event) => {
+      addIncidentImageFiles(Array.from(event.target.files || []));
+      event.target.value = '';
+    };
+    document.getElementById(kind + 'IncidentImageArea').onpaste = (event) => {
+      const files = Array.from(event.clipboardData?.items || [])
+        .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+        .map((item) => item.getAsFile())
+        .filter(Boolean);
+      if (!files.length) return;
+      event.preventDefault();
+      addIncidentImageFiles(files);
     };
   };
   const renderIncidentImages = (kind) => {

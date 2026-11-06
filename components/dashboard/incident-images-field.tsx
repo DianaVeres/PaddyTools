@@ -30,7 +30,7 @@ export function IncidentImagesField({
     [previews],
   );
 
-  function choose(files: FileList | null) {
+  function choose(files: FileList | File[] | null) {
     const selected = Array.from(files || []);
     setError('');
     if (
@@ -52,11 +52,26 @@ export function IncidentImagesField({
   }
 
   return (
-    <section className="incident-images-field">
+    <section
+      className="incident-images-field"
+      tabIndex={0}
+      onPaste={(event) => {
+        const pasted = Array.from(event.clipboardData.items)
+          .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+          .map((item) => item.getAsFile())
+          .filter((file): file is File => Boolean(file));
+        if (!pasted.length) return;
+        event.preventDefault();
+        choose(pasted);
+      }}
+    >
       <div className="incident-images-heading">
         <div>
           <b>Imágenes de la incidencia</b>
-          <small>Hasta 4 imágenes JPG, PNG o WebP · máximo 5 MB cada una</small>
+          <small>
+            Sube archivos o pega una captura con Ctrl + V · hasta 4 imágenes
+            JPG, PNG o WebP · máximo 5 MB cada una
+          </small>
         </div>
         <label className="incident-image-picker">
           <ImagePlus /> Añadir imágenes
