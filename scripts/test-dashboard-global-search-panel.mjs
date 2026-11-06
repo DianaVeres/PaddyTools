@@ -23,12 +23,19 @@ for (const fragment of [
   'match.solved',
   'onSelectOrder(match)',
   'onSelectIncident(match)',
-  'WooCommerce conectado',
-  'Monday Reservas conectado',
-  'DetalWPF sincronizado',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`La consulta global ha perdido: ${fragment}`);
+}
+for (const hiddenIndicator of [
+  'WooCommerce conectado',
+  'Incidencias conectado',
+  'Monday Reservas conectado',
+  'Monday Prendas conectado',
+  'DetalWPF sincronizado',
+]) {
+  if (component.includes(hiddenIndicator))
+    throw new Error(`La consulta global vuelve a mostrar: ${hiddenIndicator}`);
 }
 if (!page.includes("@/components/dashboard/global-search-panel"))
   throw new Error('La pantalla no usa la consulta global compartida.');

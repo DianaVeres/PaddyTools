@@ -2,10 +2,7 @@ import type { FormEvent } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  formatDashboardDate as fmt,
-  SourceBadge,
-} from '@/components/dashboard/common';
+import { formatDashboardDate as fmt } from '@/components/dashboard/common';
 import type { OrderSearchMatch } from '@/lib/dashboard-types';
 import type { IncidentRecord as Incident } from '@/lib/incident-record';
 
@@ -120,13 +117,6 @@ export function GlobalSearchPanel({
             ))}
           </div>
         )}
-        <div className="source-row">
-          <SourceBadge color="#7c3aed">WooCommerce conectado</SourceBadge>
-          <SourceBadge color="#ea580c">Incidencias conectado</SourceBadge>
-          <SourceBadge color="#16a34a">Monday Reservas conectado</SourceBadge>
-          <SourceBadge color="#db2777">Monday Prendas conectado</SourceBadge>
-          <SourceBadge color="#0284c7">DetalWPF sincronizado</SourceBadge>
-        </div>
       </div>
     </section>
   );
