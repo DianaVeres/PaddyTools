@@ -1,12 +1,8 @@
 import {
-  AlertTriangle,
   BarChart3,
   CalendarDays,
   LogOut,
   Mail,
-  PackageCheck,
-  Shirt,
-  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SessionUser } from '@/lib/dashboard-types';
@@ -24,26 +20,16 @@ function userInitials(user: SessionUser | null) {
 
 export function DashboardHeader({
   sessionUser,
-  shippingLoading,
-  onOpenPackingList,
   onOpenKpis,
   onOpenHotline,
   onOpenReservations,
-  onOpenPickups,
-  onOpenShipping,
-  onOpenIncidents,
   onCreateReservation,
   onLogout,
 }: {
   sessionUser: SessionUser | null;
-  shippingLoading: boolean;
-  onOpenPackingList: () => void;
   onOpenKpis: () => void;
   onOpenHotline: () => void;
   onOpenReservations: () => void;
-  onOpenPickups: () => void;
-  onOpenShipping: () => void;
-  onOpenIncidents: () => void;
   onCreateReservation: () => void;
   onLogout: () => void;
 }) {
@@ -58,13 +44,6 @@ export function DashboardHeader({
       </a>
       <div id="kpi-timer-slot" className="kpi-timer-slot" />
       <div className="top-actions">
-        <Button
-          className="action-button registry"
-          variant="outline"
-          onClick={onOpenPackingList}
-        >
-          <PackageCheck /> PackingList
-        </Button>
         <Button
           className="action-button kpis"
           variant="outline"
@@ -85,23 +64,6 @@ export function DashboardHeader({
           onClick={onOpenReservations}
         >
           <CalendarDays /> Reservas
-        </Button>
-        <Button
-          className="action-button pickups"
-          variant="outline"
-          onClick={onOpenPickups}
-        >
-          <Shirt /> Recogidas
-        </Button>
-        <Button
-          className="action-button shipping"
-          disabled={shippingLoading}
-          onClick={onOpenShipping}
-        >
-          <Truck /> ¿Envío?
-        </Button>
-        <Button className="action-button incident" onClick={onOpenIncidents}>
-          <AlertTriangle /> Incidencias
         </Button>
         <Button
           className="action-button reservation"

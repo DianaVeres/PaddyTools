@@ -23,6 +23,15 @@ for (const fragment of [
   'match.solved',
   'onSelectOrder(match)',
   'onSelectIncident(match)',
+  'search-quick-actions',
+  'onOpenPackingList',
+  'onOpenPickups',
+  'onOpenShipping',
+  'onOpenIncidents',
+  'PackingList',
+  'Recogidas',
+  '¿Envío?',
+  'Incidencias',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`La consulta global ha perdido: ${fragment}`);
@@ -46,6 +55,10 @@ for (const prop of [
   'onSubmit={search}',
   'void search(undefined, match.number)',
   'void search(undefined, match.orderNumber, match.id)',
+  "window.location.assign('/packing-list')",
+  "openRegistry('recogidas')",
+  'onOpenShipping={openShipping}',
+  "window.location.assign('/incidencias')",
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a la consulta global: ${prop}`);

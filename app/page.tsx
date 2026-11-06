@@ -1318,14 +1318,9 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       <DashboardHeader
         sessionUser={sessionUser}
-        shippingLoading={shippingLoading}
-        onOpenPackingList={() => window.location.assign('/packing-list')}
         onOpenKpis={() => window.location.assign('/kpis')}
         onOpenHotline={() => window.location.assign('/hotline')}
         onOpenReservations={() => void openReservations()}
-        onOpenPickups={() => void openRegistry('recogidas')}
-        onOpenShipping={openShipping}
-        onOpenIncidents={() => window.location.assign('/incidencias')}
         onCreateReservation={() => void openReservation()}
         onLogout={() => void logout()}
       />
@@ -1344,6 +1339,10 @@ export default function Home() {
           setQuery(match.orderNumber);
           void search(undefined, match.orderNumber, match.id);
         }}
+        onOpenPackingList={() => window.location.assign('/packing-list')}
+        onOpenPickups={() => void openRegistry('recogidas')}
+        onOpenShipping={openShipping}
+        onOpenIncidents={() => window.location.assign('/incidencias')}
       />
       <DashboardFeedback
         saved={saved}

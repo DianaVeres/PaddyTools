@@ -12,15 +12,10 @@ for (const fragment of [
   'DashboardHeader',
   '/paddy-logo-granate.png',
   'PaddyTools',
-  'PackingList',
   'KPIs',
   'Hotline',
   'Reservas',
-  'Recogidas',
-  '¿Envío?',
-  'Incidencias',
   'Generar reserva',
-  'shippingLoading',
   'userInitials(sessionUser)',
   'onLogout',
 ]) {
@@ -31,13 +26,8 @@ if (!page.includes("@/components/dashboard/dashboard-header"))
   throw new Error('La pantalla no usa la cabecera principal compartida.');
 for (const prop of [
   'sessionUser={sessionUser}',
-  'shippingLoading={shippingLoading}',
-  "window.location.assign('/packing-list')",
   "window.location.assign('/kpis')",
   "window.location.assign('/hotline')",
-  "openRegistry('recogidas')",
-  'onOpenShipping={openShipping}',
-  "window.location.assign('/incidencias')",
   'void openReservation()',
   'void logout()',
 ]) {

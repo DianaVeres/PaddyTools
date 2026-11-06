@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { Search, X } from 'lucide-react';
+import { AlertTriangle, PackageCheck, Search, Shirt, Truck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDashboardDate as fmt } from '@/components/dashboard/common';
@@ -15,6 +15,10 @@ export function GlobalSearchPanel({
   onSubmit,
   onSelectOrder,
   onSelectIncident,
+  onOpenPackingList,
+  onOpenPickups,
+  onOpenShipping,
+  onOpenIncidents,
 }: {
   query: string;
   loading: boolean;
@@ -24,6 +28,10 @@ export function GlobalSearchPanel({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSelectOrder: (match: OrderSearchMatch) => void;
   onSelectIncident: (match: Incident) => void;
+  onOpenPackingList: () => void;
+  onOpenPickups: () => void;
+  onOpenShipping: () => void;
+  onOpenIncidents: () => void;
 }) {
   return (
     <section className="search-band">
@@ -51,6 +59,20 @@ export function GlobalSearchPanel({
             {loading ? 'Buscando…' : 'Buscar'}
           </Button>
         </form>
+        <nav className="search-quick-actions" aria-label="Accesos de gestión">
+          <Button variant="outline" onClick={onOpenPackingList}>
+            <PackageCheck /> PackingList
+          </Button>
+          <Button variant="outline" onClick={onOpenPickups}>
+            <Shirt /> Recogidas
+          </Button>
+          <Button variant="outline" onClick={onOpenShipping}>
+            <Truck /> ¿Envío?
+          </Button>
+          <Button variant="outline" onClick={onOpenIncidents}>
+            <AlertTriangle /> Incidencias
+          </Button>
+        </nav>
         {orderMatches.length > 0 && (
           <div className="order-search-results" aria-live="polite">
             <p>
