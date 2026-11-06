@@ -28,7 +28,7 @@ assert.equal(filterIncidentRegistry(incidents, 'maria perez', false, true).lengt
 assert.equal(filterIncidentRegistry(incidents, '', true, false).length, 2);
 assert.equal(filterIncidentRegistry(incidents, '', true, true).length, 3);
 assert.equal(filterIncidentRegistry(incidents, '', false, true).length, 2);
-assert.equal(filterIncidentRegistry(incidents, 'incidencia cerrada', false, true).length, 0);
+assert.equal(filterIncidentRegistry(incidents, 'incidencia cerrada', false, true).length, 1);
 const reservations = [{ reference: 'R100', customer: 'José López', school: 'Shackleton Web', status: 'ANULADA' }];
 assert.equal(filterReservationRegistry(reservations, 'jose lopez').length, 1);
 assert.equal(filterReservationRegistry(reservations, 'shackleton').length, 1);

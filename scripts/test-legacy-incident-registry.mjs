@@ -7,10 +7,10 @@ const registry = readFileSync(
   'utf8',
 );
 
-const pendingFilters = registry.match(/rows\.filter\(r=>!r\.solved\)\.map/g) || [];
+const pendingFilters = registry.match(/rows\.filter\(r=>!r\.solved\|\|\$\('filter'\)\.value\.trim\(\)\)\.map/g) || [];
 if (pendingFilters.length < 2) {
   throw new Error(
-    'La hoja de registro vuelve a mostrar incidencias solucionadas.',
+    'La hoja de registro no distingue entre listado general y búsqueda directa.',
   );
 }
 
