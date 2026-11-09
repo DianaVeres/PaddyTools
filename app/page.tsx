@@ -160,14 +160,20 @@ export default function Home() {
     void fetchSessionUser()
       .then(async (user) => {
         setSessionUser(user);
-        const initialView = new URLSearchParams(window.location.search).get(
+        const initialParams = new URLSearchParams(window.location.search);
+        const initialView = initialParams.get(
           'view',
         );
         if (initialView === 'incidencias') {
           window.history.replaceState({}, '', window.location.pathname);
           await openRegistry('registro');
         }
-        const pendingDelete = new URLSearchParams(window.location.search).get(
+        const initialOrder = initialParams.get('order');
+        if (initialOrder) {
+          setQuery(initialOrder);
+          await search(undefined, initialOrder);
+        }
+        const pendingDelete = initialParams.get(
           'deleteIncident',
         );
         if (pendingDelete) {

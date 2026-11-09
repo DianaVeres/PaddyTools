@@ -7,6 +7,7 @@ import {
   BookOpenText,
   Check,
   Clipboard,
+  FileSearch,
   Inbox,
   Loader2,
   Mail,
@@ -14,6 +15,7 @@ import {
   Save,
   Search,
   Timer,
+  X,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -75,6 +77,14 @@ const STATUSES = [
 ];
 const HOTLINE_TIMER_KEY = 'hotline-reply';
 
+function hotlineOrderReference(text: string) {
+  const explicit = text.match(
+    /(?:pedido|order|reserva)\s*(?:n[ºo°.]*)?\s*#?\s*((?:RPA|IPA|PA|R)?\d{4,})/i,
+  )?.[1];
+  const standalone = text.match(/\b(?:RPA|IPA|PA|R)\d{4,}\b/i)?.[0];
+  return (explicit || standalone || '').toUpperCase();
+}
+
 async function readJson<T>(response: Response): Promise<T> {
   const raw = await response.text();
   try {
@@ -106,6 +116,8 @@ export default function HotlinePage() {
   const [filter, setFilter] = useState('Todos');
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [timerStartedIso, setTimerStartedIso] = useState('');
+  const [orderReference, setOrderReference] = useState('');
+  const [viewingOrder, setViewingOrder] = useState('');
   const [templateDraft, setTemplateDraft] = useState({
     titulo: '',
     categoria: 'General',
@@ -144,6 +156,10 @@ export default function HotlinePage() {
     setIncoming(value);
     setTranslatedIncoming('');
     setEnglishReply('');
+    if (!orderReference) {
+      const detected = hotlineOrderReference(`${subject} ${value}`);
+      if (detected) setOrderReference(detected);
+    }
     if (!value.trim()) return;
     const timer = beginAutomaticWork(
       HOTLINE_TIMER_KEY,
@@ -285,6 +301,7 @@ export default function HotlinePage() {
     setProcedure('');
     setCategory('General');
     setKind('Consulta');
+    setOrderReference('');
     setNotice('');
   }
 
@@ -353,6 +370,21 @@ export default function HotlinePage() {
                   <Field label="Email"><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="clienta@email.com" /></Field>
                   <Field label="Asunto / caso"><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Se detectará si lo dejas vacío" /></Field>
                 </div>
+                <div className={styles.orderLookup}>
+                  <Field label="Pedido o reserva">
+                    <input value={orderReference} onChange={(e) => setOrderReference(e.target.value.toUpperCase())} placeholder="Ej. PA49547 o R10692" />
+                  </Field>
+                  <button
+                    className={styles.secondary}
+                    onClick={() => {
+                      const reference = orderReference.trim();
+                      if (!reference) return setNotice('Indica el número de pedido o reserva.');
+                      setViewingOrder(reference);
+                    }}
+                  >
+                    <FileSearch /> Ver ficha del pedido
+                  </button>
+                </div>
                 <Field label="Email recibido"><textarea className={styles.largeText} value={incoming} onChange={(e) => updateIncoming(e.target.value)} placeholder="Pega aquí el mensaje recibido…" /></Field>
                 {translatedIncoming && <Field label="Traducción al castellano"><textarea className={styles.translatedText} value={translatedIncoming} readOnly /></Field>}
                 {timerStartedIso && <p className={styles.timerNotice}><Timer /> Medición activa desde {new Date(timerStartedIso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>}
@@ -382,7 +414,7 @@ export default function HotlinePage() {
                 <SearchBox value={query} onChange={setQuery} />
                 <select className={styles.compact} value={filter} onChange={(e) => setFilter(e.target.value)}><option>Todos</option>{STATUSES.map((item) => <option key={item}>{item}</option>)}</select>
               </SectionHead>
-              <div className={styles.tableWrap}><table><thead><tr><th>Fecha</th><th>Email</th><th>Asunto</th><th>Estado</th><th>Plantilla</th></tr></thead><tbody>{filteredCases.map((item, index) => <tr key={item.id || `${item.fecha}-${index}`}><td>{formatDate(item.fecha)}</td><td>{item.email || '—'}</td><td><strong>{item.asunto || 'Sin asunto'}</strong><small>{item.consulta}</small></td><td><span className={styles.status}>{item.estado}</span></td><td>{item.procedimiento || '—'}</td></tr>)}</tbody></table></div>
+              <div className={styles.tableWrap}><table><thead><tr><th>Fecha</th><th>Email</th><th>Asunto</th><th>Estado</th><th>Plantilla</th><th>Pedido</th></tr></thead><tbody>{filteredCases.map((item, index) => { const reference = hotlineOrderReference(`${item.asunto} ${item.consulta}`); return <tr key={item.id || `${item.fecha}-${index}`}><td>{formatDate(item.fecha)}</td><td>{item.email || '—'}</td><td><strong>{item.asunto || 'Sin asunto'}</strong><small>{item.consulta}</small></td><td><span className={styles.status}>{item.estado}</span></td><td>{item.procedimiento || '—'}</td><td>{reference ? <button className={styles.tableAction} onClick={() => setViewingOrder(reference)}><FileSearch /> Ver ficha</button> : '—'}</td></tr>; })}</tbody></table></div>
               <p className={styles.count}>{filteredCases.length} contactos</p>
             </section>
           </TabsContent>
@@ -408,6 +440,17 @@ export default function HotlinePage() {
           </TabsContent>
         </Tabs>
       </div>
+      {viewingOrder && (
+        <div className={styles.orderOverlay} role="dialog" aria-modal="true" aria-label={`Ficha del pedido ${viewingOrder}`}>
+          <div className={styles.orderDialog}>
+            <header>
+              <div><span>Ficha conectada</span><strong>Pedido {viewingOrder}</strong></div>
+              <button className={styles.closeOrder} onClick={() => setViewingOrder('')} aria-label="Cerrar ficha"><X /></button>
+            </header>
+            <iframe src={`/?order=${encodeURIComponent(viewingOrder)}&embedded=1`} title={`Ficha del pedido ${viewingOrder}`} />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

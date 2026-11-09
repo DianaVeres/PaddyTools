@@ -32,10 +32,18 @@ for (const fragment of [
   'Copiar respuesta en inglés',
   'withSpanishHotlineInstruction(guidance)',
   'storedHotlineIncoming(incoming, translatedIncoming)',
+  'Ver ficha del pedido',
+  'hotlineOrderReference',
+  'setViewingOrder(reference)',
+  'iframe src={`/?order=${encodeURIComponent(viewingOrder)}&embedded=1`}',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`El módulo Hotline ha perdido: ${fragment}`);
 }
+const dashboard = read('app/page.tsx');
+for (const fragment of ["initialParams.get('order')", 'await search(undefined, initialOrder)'])
+  if (!dashboard.includes(fragment))
+    throw new Error(`La ficha de Hotline no abre el pedido automáticamente: ${fragment}`);
 
 const saved = page.indexOf(
   "if (!response.ok) throw new Error(data.error || 'No se pudo guardar el contacto.')",
