@@ -7,6 +7,7 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const hotline = readFileSync(resolve(root, 'lib/hotline-order-history.ts'), 'utf8');
 
 for (const fragment of [
   'OrderLinkedRecords',
@@ -17,6 +18,8 @@ for (const fragment of [
   'records={mondayRecords}',
   'onPrintReservation={onPrintReservation}',
   'onEmailReservation={onEmailReservation}',
+  'HotlineContactsCard',
+  'hotlineContacts',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los registros conectados han perdido: ${fragment}`);
@@ -29,9 +32,18 @@ for (const prop of [
   'onPrintIncident={printIncidentDocument}',
   'onPrintReservation={requestReservationPrint}',
   'onEmailReservation={openReservationEmail}',
+  'hotlineContacts={hotlineContacts}',
+  'hotlineLoading={hotlineLoading}',
+  'hotlineError={hotlineError}',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a los registros conectados: ${prop}`);
 }
+for (const fragment of ['fetchHotlineContacts(order.number)', "'/api/hotline/cases'"])
+  if (!page.includes(fragment) && !readFileSync(resolve(root, 'lib/dashboard-api.ts'), 'utf8').includes(fragment))
+    throw new Error(`La ficha no consulta Hotline: ${fragment}`);
+for (const fragment of ['hotlineContactMatchesOrder', 'RPA', 'IPA', 'PA'])
+  if (!hotline.includes(fragment))
+    throw new Error(`El enlace de Hotline ha perdido: ${fragment}`);
 
 console.log('Registros conectados del pedido verificados.');

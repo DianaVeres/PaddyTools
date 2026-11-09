@@ -33,6 +33,7 @@ import {
 } from '@/lib/dashboard-search-results';
 import {
   fetchIncidentRegistry,
+  fetchHotlineContacts,
   fetchSchools,
   fetchSessionUser,
   fetchMondayUpdates,
@@ -91,6 +92,7 @@ import {
   type OrderNoteRecord as OrderNote,
 } from '@/lib/order-note';
 import type { StoreTicketRecord as StoreTicket } from '@/lib/store-ticket';
+import type { HotlineOrderContact } from '@/lib/hotline-order-history';
 import type {
   DashboardModal as Modal,
   DashboardMondayRecord as MondayRecord,
@@ -155,6 +157,39 @@ export default function Home() {
   >(null);
   const reservationDialog = useDraggableDialog();
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
+  const [hotlineContacts, setHotlineContacts] = useState<HotlineOrderContact[]>([]);
+  const [hotlineLoading, setHotlineLoading] = useState(false);
+  const [hotlineError, setHotlineError] = useState('');
+
+  useEffect(() => {
+    if (!order?.number) {
+      setHotlineContacts([]);
+      setHotlineError('');
+      setHotlineLoading(false);
+      return;
+    }
+    let current = true;
+    setHotlineLoading(true);
+    setHotlineError('');
+    void fetchHotlineContacts(order.number)
+      .then((contacts) => {
+        if (current) setHotlineContacts(contacts);
+      })
+      .catch((loadError) => {
+        if (current)
+          setHotlineError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'No se pudo consultar Hotline.',
+          );
+      })
+      .finally(() => {
+        if (current) setHotlineLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [order?.number]);
 
   useEffect(() => {
     void fetchSessionUser()
@@ -1408,6 +1443,9 @@ export default function Home() {
                     onPrintIncident={printIncidentDocument}
                     onPrintReservation={requestReservationPrint}
                     onEmailReservation={openReservationEmail}
+                    hotlineContacts={hotlineContacts}
+                    hotlineLoading={hotlineLoading}
+                    hotlineError={hotlineError}
                   />
                 </TabsContent>
                 <TabsContent value="articulos" className="tab-body">

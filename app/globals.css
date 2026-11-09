@@ -772,6 +772,22 @@ a {
   color: #6a5548;
   margin: 11px 0;
 }
+.hotline-linked {
+  border-color: #b9d9cd;
+  background: #f5fbf8;
+}
+.hotline-linked .linked-accent {
+  background: #e3f3ed;
+  color: #1f6b54;
+}
+.hotline-linked .linked-type { color: #1f6b54; }
+.hotline-contact-list { display: grid; gap: 8px; margin-top: 12px; }
+.hotline-contact-list details { overflow: hidden; border: 1px solid #d5e6df; border-radius: 10px; background: #fff; }
+.hotline-contact-list summary { padding: 10px 12px; display: grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; cursor:pointer; }
+.hotline-contact-list summary span,.hotline-contact-list summary small { color:#60756e; font-size:11px; }
+.hotline-contact-list details > div { padding: 0 12px 12px; border-top: 1px solid #e6efeb; }
+.hotline-contact-list details > div > b { display:block; margin-top:12px; color:#1f6b54; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+.hotline-contact-list details p { margin:5px 0 0; white-space:pre-wrap; color:#394f48; font-size:12px; line-height:1.5; }
 .meta-line {
   display: flex;
   flex-wrap: wrap;

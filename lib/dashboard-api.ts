@@ -13,6 +13,10 @@ import type {
 } from '@/lib/dashboard-types';
 import type { StoreTicketRecord } from '@/lib/store-ticket';
 import { incidentsMatchingCustomerQuery } from '@/lib/dashboard-search-results';
+import {
+  hotlineContactsForOrder,
+  type HotlineOrderContact,
+} from '@/lib/hotline-order-history';
 
 async function requestJson<T>(
   url: string,
@@ -42,6 +46,15 @@ export async function fetchOrderNotes(orderNumber: string) {
     `/api/order-notes?number=${encodeURIComponent(orderNumber)}`,
   );
   return data.notes || [];
+}
+
+export async function fetchHotlineContacts(orderNumber: string) {
+  const data = await requestJson<{ cases?: HotlineOrderContact[] }>(
+    '/api/hotline/cases',
+    { cache: 'no-store' },
+    'Hotline',
+  );
+  return hotlineContactsForOrder(data.cases || [], orderNumber);
 }
 
 export async function postOrderNote(body: unknown) {
