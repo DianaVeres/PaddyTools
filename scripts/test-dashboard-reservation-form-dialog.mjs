@@ -31,7 +31,7 @@ for (const fragment of [
   "open={modal === 'reserva'}",
   'editing={Boolean(editingReservationId)}',
   'articles={reservationArticles}',
-  "onSave={() => void save('reserva')}",
+  'onSave={() => void saveReservation()}',
   'onDragStart={reservationDialog.start}',
   'onDragStop={reservationDialog.stop}',
 ]) {
