@@ -3,8 +3,6 @@ import { IncidentCard } from '@/components/dashboard/incident-card';
 import { MondayCards } from '@/components/dashboard/monday-cards';
 import type { DashboardMondayRecord as MondayRecord } from '@/lib/dashboard-types';
 import type { IncidentRecord as Incident } from '@/lib/incident-record';
-import type { HotlineOrderContact } from '@/lib/hotline-order-history';
-import { HotlineContactsCard } from '@/components/dashboard/hotline-contacts-card';
 
 export function OrderLinkedRecords({
   incident,
@@ -12,9 +10,6 @@ export function OrderLinkedRecords({
   onPrintIncident,
   onPrintReservation,
   onEmailReservation,
-  hotlineContacts,
-  hotlineLoading,
-  hotlineError,
 }: {
   incident: Incident | null;
   mondayRecords: MondayRecord[];
@@ -24,9 +19,6 @@ export function OrderLinkedRecords({
     mode?: 'label' | 'card',
   ) => void;
   onEmailReservation: (record: MondayRecord) => void;
-  hotlineContacts: HotlineOrderContact[];
-  hotlineLoading: boolean;
-  hotlineError: string;
 }) {
   return (
     <>
@@ -53,11 +45,6 @@ export function OrderLinkedRecords({
         records={mondayRecords}
         onPrintReservation={onPrintReservation}
         onEmailReservation={onEmailReservation}
-      />
-      <HotlineContactsCard
-        contacts={hotlineContacts}
-        loading={hotlineLoading}
-        error={hotlineError}
       />
     </>
   );

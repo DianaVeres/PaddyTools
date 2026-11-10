@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const hotlineCard = readFileSync(
+  resolve(root, 'components/dashboard/hotline-contacts-card.tsx'),
+  'utf8',
+);
 
 for (const fragment of [
   'OrderNotesCard',
@@ -32,9 +36,18 @@ for (const prop of [
   'loading={notesLoading}',
   'onSave={() => void saveOrderNote()}',
   'onDelete={(note) => void deleteOrderNote(note)}',
+  '<HotlineContactsCard',
+  'contacts={hotlineContacts}',
+  'loading={hotlineLoading}',
+  'error={hotlineError}',
+  'orderNotes.length + hotlineContacts.length',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a las notas: ${prop}`);
+}
+for (const fragment of ['Mensaje recibido', 'Respuesta enviada', 'contact.consulta', 'contact.respuesta']) {
+  if (!hotlineCard.includes(fragment))
+    throw new Error(`Los emails de Hotline han perdido: ${fragment}`);
 }
 
 console.log('Notas del pedido verificadas.');

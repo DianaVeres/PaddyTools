@@ -106,6 +106,7 @@ import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
 import { OrderDocuments } from '@/components/dashboard/order-documents';
 import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
+import { HotlineContactsCard } from '@/components/dashboard/hotline-contacts-card';
 import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 import { OrderSummary } from '@/components/dashboard/order-summary';
 import { OrderHeading } from '@/components/dashboard/order-heading';
@@ -1196,7 +1197,10 @@ export default function Home() {
                   </TabsTrigger>
                   <TabsTrigger value="seguimiento">Envío</TabsTrigger>
                   <TabsTrigger value="notas">
-                    Notas <span className="count">{orderNotes.length}</span>
+                    Notas{' '}
+                    <span className="count">
+                      {orderNotes.length + hotlineContacts.length}
+                    </span>
                   </TabsTrigger>
                   <TabsTrigger value="movimientos">
                     Movimientos{' '}
@@ -1221,9 +1225,6 @@ export default function Home() {
                     onPrintIncident={printIncidentDocument}
                     onPrintReservation={requestReservationPrint}
                     onEmailReservation={openReservationEmail}
-                    hotlineContacts={hotlineContacts}
-                    hotlineLoading={hotlineLoading}
-                    hotlineError={hotlineError}
                   />
                 </TabsContent>
                 <TabsContent value="articulos" className="tab-body">
@@ -1246,6 +1247,11 @@ export default function Home() {
                     onDraftChange={setNoteDraft}
                     onSave={() => void saveOrderNote()}
                     onDelete={(note) => void deleteOrderNote(note)}
+                  />
+                  <HotlineContactsCard
+                    contacts={hotlineContacts}
+                    loading={hotlineLoading}
+                    error={hotlineError}
                   />
                 </TabsContent>
                 <TabsContent value="movimientos" className="tab-body">

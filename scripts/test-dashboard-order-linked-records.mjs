@@ -18,8 +18,6 @@ for (const fragment of [
   'records={mondayRecords}',
   'onPrintReservation={onPrintReservation}',
   'onEmailReservation={onEmailReservation}',
-  'HotlineContactsCard',
-  'hotlineContacts',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los registros conectados han perdido: ${fragment}`);
@@ -32,9 +30,6 @@ for (const prop of [
   'onPrintIncident={printIncidentDocument}',
   'onPrintReservation={requestReservationPrint}',
   'onEmailReservation={openReservationEmail}',
-  'hotlineContacts={hotlineContacts}',
-  'hotlineLoading={hotlineLoading}',
-  'hotlineError={hotlineError}',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a los registros conectados: ${prop}`);
