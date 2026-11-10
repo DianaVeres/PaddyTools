@@ -38,6 +38,9 @@ for (const fragment of ['window.location.search', 'src={frameSource}'])
     throw new Error(`La vista de incidencias no recibe el enlace directo: ${fragment}`);
 for (const fragment of [
   "get('openIncident')",
+  "get('createIncident')",
+  "document.getElementById('orderInput').value = requestedCreationReference",
+  'search();',
   "row.source_type === 'tienda'",
   "row.source_type === 'manual'",
   "show(row);",

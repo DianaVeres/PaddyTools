@@ -462,6 +462,17 @@
       .catch((error) => status(error.message, 'error'));
   }
 
+  // "Crear incidencia" desde la consulta global abre este módulo completo,
+  // rellena la referencia visible y ejecuta la misma búsqueda que el usuario.
+  const requestedCreationReference = new URLSearchParams(location.search)
+    .get('createIncident')
+    ?.trim();
+  if (requestedCreationReference) {
+    showView('main');
+    document.getElementById('orderInput').value = requestedCreationReference;
+    search();
+  }
+
   document.getElementById('storeSaveBtn').onclick = saveStore;
   document.getElementById('storeNewBtn').onclick = clearStore;
   document.getElementById('ownSaveBtn').onclick = saveOwn;

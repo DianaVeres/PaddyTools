@@ -36,7 +36,7 @@ for (const prop of [
   'onEmailReservation={openReservationEmail}',
   'onSaveNote={() => void saveOrderNote()}',
   'onDeleteNote={(note) => void deleteOrderNote(note)}',
-  'onCreateIncident={openIncident}',
+  'onCreateIncident={openIncidentWorkspace}',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a los resultados: ${prop}`);

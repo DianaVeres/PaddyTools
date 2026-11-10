@@ -731,6 +731,13 @@ export default function Home() {
         (data) => Array.isArray(data) && setSchoolOptions(data),
       );
   }
+  function openIncidentWorkspace() {
+    const reference =
+      order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '';
+    if (!reference) return;
+    const params = new URLSearchParams({ createIncident: reference });
+    window.location.assign(`/incidencias?${params}`);
+  }
   async function openReservation(existing?: MondayRecord) {
     if (!existing)
       beginAutomaticWork(
@@ -1397,7 +1404,7 @@ export default function Home() {
       />
       {order && (
         <div className="workspace">
-          <CreateIncidentButton onClick={openIncident} />
+          <CreateIncidentButton onClick={openIncidentWorkspace} />
           <OrderHeading
             order={order}
             documentLoading={documentLoading}
@@ -1506,7 +1513,7 @@ export default function Home() {
           onNoteDraftChange={setNoteDraft}
           onSaveNote={() => void saveOrderNote()}
           onDeleteNote={(note) => void deleteOrderNote(note)}
-          onCreateIncident={openIncident}
+          onCreateIncident={openIncidentWorkspace}
         />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}

@@ -32,7 +32,9 @@ for (const prop of [
   'void downloadOrderDocument(type)',
   'onRefresh={() => void search()}',
   "window.open(order.wooUrl, '_blank')",
-  '<CreateIncidentButton onClick={openIncident} />',
+  '<CreateIncidentButton onClick={openIncidentWorkspace} />',
+  'createIncident: reference',
+  'window.location.assign(`/incidencias?${params}`)',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a la cabecera: ${prop}`);
