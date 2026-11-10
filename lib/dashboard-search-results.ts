@@ -1,5 +1,9 @@
 import type { IncidentRecord } from '@/lib/incident-record';
-import { foldSearchText } from '@/lib/global-search';
+import {
+  foldSearchText,
+  incidentReferenceCandidates,
+  normalizeReferenceInput,
+} from '@/lib/global-search';
 
 export function incidentsMatchingCustomerQuery(
   rows: IncidentRecord[],
@@ -7,8 +11,17 @@ export function incidentsMatchingCustomerQuery(
 ): IncidentRecord[] {
   const normalizedQuery = foldSearchText(query);
   const queryDigits = query.replace(/\D/g, '');
+  const referenceCandidates = incidentReferenceCandidates(query).map(
+    normalizeReferenceInput,
+  );
 
   return rows.filter((row) => {
+    const storedReferences = [row.orderNumber, row.ticketNumber]
+      .filter(Boolean)
+      .map((value) => normalizeReferenceInput(String(value)));
+    const referenceMatches = storedReferences.some((reference) =>
+      referenceCandidates.includes(reference),
+    );
     const nameMatches = foldSearchText(row.customerName).includes(
       normalizedQuery,
     );
@@ -17,7 +30,7 @@ export function incidentsMatchingCustomerQuery(
       queryDigits.length >= 5 &&
       Boolean(phone) &&
       (phone.includes(queryDigits) || queryDigits.includes(phone));
-    return nameMatches || phoneMatches;
+    return referenceMatches || nameMatches || phoneMatches;
   });
 }
 
