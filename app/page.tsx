@@ -702,27 +702,25 @@ export default function Home() {
       mondayRecords[0]?.school ||
       '';
     const pickupSchool = incident?.pickupSchoolName || school;
-    if (!incident?.id)
-      beginAutomaticWork(
-        'incident-create',
-        'incidencias',
-        order?.number || mondayRecords[0]?.reference || '',
-      );
-    else cancelAutomaticWork('incident-create');
+    beginAutomaticWork(
+      'incident-create',
+      'incidencias',
+      order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '',
+    );
     setIncidentDraft({
-      date: incident?.incidentDate?.slice(0, 10) || today,
+      date: today,
       school,
-      text: incident?.incidentText || '',
+      text: '',
       customerEmail: order?.customer.email || incident?.customerEmail || '',
-      observations: incident?.observations || '',
-      pickup: incident?.pickupSchool || false,
+      observations: '',
+      pickup: false,
       pickupSchool,
-      pickupNotes: incident?.pickupDetails || '',
-      recurrence: false,
-      solved: incident?.solved || false,
-      shippingRequired: incident?.shippingRequired || false,
-      sent: incident?.sent || false,
-      images: incident?.images || [],
+      pickupNotes: '',
+      recurrence: Boolean(incident?.id),
+      solved: false,
+      shippingRequired: false,
+      sent: false,
+      images: [],
       newImages: [],
       pickupItems: {},
     });
@@ -731,8 +729,6 @@ export default function Home() {
       void fetchSchools().then(
         (data) => Array.isArray(data) && setSchoolOptions(data),
       );
-    if (incident?.pickupSchool && pickupSchool)
-      void loadPickupProducts(pickupSchool);
   }
   async function openReservation(existing?: MondayRecord) {
     if (!existing)
@@ -1406,6 +1402,7 @@ export default function Home() {
             onDownloadDocument={(type) => void downloadOrderDocument(type)}
             onRefresh={() => void search()}
             onOpenWooCommerce={() => window.open(order.wooUrl, '_blank')}
+            onCreateIncident={openIncident}
           />
           <div className="content-grid">
             <section className="main-column">
@@ -1508,12 +1505,13 @@ export default function Home() {
           onNoteDraftChange={setNoteDraft}
           onSaveNote={() => void saveOrderNote()}
           onDeleteNote={(note) => void deleteOrderNote(note)}
+          onCreateIncident={openIncident}
         />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}
       <IncidentFormDialog
         open={modal === 'incidencia'}
-        incidentId={incident?.id || ''}
+        incidentId={incidentDraft.recurrence ? '' : incident?.id || ''}
         reference={
           order?.number ||
           incident?.orderNumber ||

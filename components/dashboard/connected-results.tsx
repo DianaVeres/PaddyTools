@@ -1,4 +1,6 @@
 import { IncidentCard } from '@/components/dashboard/incident-card';
+import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { MondayCards } from '@/components/dashboard/monday-cards';
 import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-card';
 import type {
@@ -25,6 +27,7 @@ export function ConnectedResults({
   onNoteDraftChange,
   onSaveNote,
   onDeleteNote,
+  onCreateIncident,
 }: {
   incident: Incident | null;
   mondayRecords: MondayRecord[];
@@ -45,6 +48,7 @@ export function ConnectedResults({
   onNoteDraftChange: (draft: string) => void;
   onSaveNote: () => void;
   onDeleteNote: (note: OrderNote) => void;
+  onCreateIncident: () => void;
 }) {
   return (
     <div className="workspace">
@@ -57,6 +61,11 @@ export function ConnectedResults({
             </h2>
           </div>
           <p>Registros conectados</p>
+        </div>
+        <div className="result-actions">
+          <Button variant="outline" onClick={onCreateIncident}>
+            <AlertTriangle /> Crear incidencia
+          </Button>
         </div>
       </div>
       {incident && (

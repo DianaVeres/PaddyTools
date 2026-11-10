@@ -20,6 +20,8 @@ for (const fragment of [
   "documentLoading === 'packing-slip'",
   'onRefresh',
   'onOpenWooCommerce',
+  'onCreateIncident',
+  'Crear incidencia',
   'Albarán devolución',
 ]) {
   if (!component.includes(fragment))

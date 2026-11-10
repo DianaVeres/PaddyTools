@@ -1,4 +1,4 @@
-import { Download, ExternalLink, FileText, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Download, ExternalLink, FileText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDashboardDate as fmt } from '@/components/dashboard/common';
 import type { DashboardOrder as Order } from '@/lib/dashboard-types';
@@ -11,12 +11,14 @@ export function OrderHeading({
   onDownloadDocument,
   onRefresh,
   onOpenWooCommerce,
+  onCreateIncident,
 }: {
   order: Order;
   documentLoading: OrderDocumentType | null;
   onDownloadDocument: (type: OrderDocumentType) => void;
   onRefresh: () => void;
   onOpenWooCommerce: () => void;
+  onCreateIncident: () => void;
 }) {
   return (
     <div className="result-heading">
@@ -33,6 +35,9 @@ export function OrderHeading({
         <p>Actualizado {fmt(order.dateModified)}</p>
       </div>
       <div className="result-actions">
+        <Button variant="outline" onClick={onCreateIncident}>
+          <AlertTriangle /> Crear incidencia
+        </Button>
         <Button
           variant="outline"
           disabled={Boolean(documentLoading)}

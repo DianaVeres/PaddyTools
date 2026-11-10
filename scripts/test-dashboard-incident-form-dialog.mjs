@@ -31,6 +31,11 @@ for (const fragment of [
   'onPrint={printIncidentDraft}',
   "onSave={(solved) => void save('incidencia', solved)}",
   'void loadPickupProducts(school)',
+  "beginAutomaticWork(\n      'incident-create'",
+  'recurrence: Boolean(incident?.id)',
+  "text: ''",
+  "observations: ''",
+  "incidentId={incidentDraft.recurrence ? '' : incident?.id || ''}",
 ]) {
   if (!page.includes(fragment))
     throw new Error(`La pantalla no conecta el formulario: ${fragment}`);

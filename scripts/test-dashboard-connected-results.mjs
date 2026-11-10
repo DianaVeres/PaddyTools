@@ -19,6 +19,8 @@ for (const fragment of [
   'mondayUpdates={mondayUpdates}',
   'onSave={onSaveNote}',
   'onDelete={onDeleteNote}',
+  'onCreateIncident',
+  'Crear incidencia',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los resultados conectados han perdido: ${fragment}`);
@@ -34,6 +36,7 @@ for (const prop of [
   'onEmailReservation={openReservationEmail}',
   'onSaveNote={() => void saveOrderNote()}',
   'onDeleteNote={(note) => void deleteOrderNote(note)}',
+  'onCreateIncident={openIncident}',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a los resultados: ${prop}`);
