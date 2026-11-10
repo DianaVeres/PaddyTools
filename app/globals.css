@@ -411,6 +411,24 @@ a {
   max-width: 1240px;
   margin: 0 auto;
   padding: 30px 28px 70px;
+  position: relative;
+}
+.record-create-incident {
+  position: absolute;
+  top: 155px;
+  left: -200px;
+  width: 184px;
+  min-height: 42px;
+  border-color: #f3a477;
+  background: #fff7f2;
+  color: #b94711;
+  font-weight: 750;
+}
+.record-create-incident:hover {
+  background: #ffeadc;
+}
+.record-create-incident svg {
+  width: 17px;
 }
 .result-heading {
   display: flex;
@@ -2149,6 +2167,13 @@ a {
   }
   .registry-actions {
     flex-wrap: wrap;
+  }
+}
+@media (max-width: 1499px) {
+  .record-create-incident {
+    position: static;
+    width: auto;
+    margin-bottom: 16px;
   }
 }
 @media (max-width: 680px) {

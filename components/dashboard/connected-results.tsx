@@ -1,6 +1,5 @@
 import { IncidentCard } from '@/components/dashboard/incident-card';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CreateIncidentButton } from '@/components/dashboard/create-incident-button';
 import { MondayCards } from '@/components/dashboard/monday-cards';
 import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-card';
 import type {
@@ -52,6 +51,7 @@ export function ConnectedResults({
 }) {
   return (
     <div className="workspace">
+      <CreateIncidentButton onClick={onCreateIncident} />
       <div className="result-heading">
         <div>
           <span className="result-label">Resultado encontrado</span>
@@ -61,11 +61,6 @@ export function ConnectedResults({
             </h2>
           </div>
           <p>Registros conectados</p>
-        </div>
-        <div className="result-actions">
-          <Button variant="outline" onClick={onCreateIncident}>
-            <AlertTriangle /> Crear incidencia
-          </Button>
         </div>
       </div>
       {incident && (

@@ -20,7 +20,7 @@ for (const fragment of [
   'onSave={onSaveNote}',
   'onDelete={onDeleteNote}',
   'onCreateIncident',
-  'Crear incidencia',
+  '<CreateIncidentButton onClick={onCreateIncident} />',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los resultados conectados han perdido: ${fragment}`);

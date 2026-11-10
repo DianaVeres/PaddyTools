@@ -20,8 +20,6 @@ for (const fragment of [
   "documentLoading === 'packing-slip'",
   'onRefresh',
   'onOpenWooCommerce',
-  'onCreateIncident',
-  'Crear incidencia',
   'Albarán devolución',
 ]) {
   if (!component.includes(fragment))
@@ -34,6 +32,7 @@ for (const prop of [
   'void downloadOrderDocument(type)',
   'onRefresh={() => void search()}',
   "window.open(order.wooUrl, '_blank')",
+  '<CreateIncidentButton onClick={openIncident} />',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a la cabecera: ${prop}`);

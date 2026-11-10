@@ -127,6 +127,7 @@ import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
 import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
+import { CreateIncidentButton } from '@/components/dashboard/create-incident-button';
 import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
 import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
 import { ShippingHistoryDialog } from '@/components/dashboard/shipping-history-dialog';
@@ -1396,13 +1397,13 @@ export default function Home() {
       />
       {order && (
         <div className="workspace">
+          <CreateIncidentButton onClick={openIncident} />
           <OrderHeading
             order={order}
             documentLoading={documentLoading}
             onDownloadDocument={(type) => void downloadOrderDocument(type)}
             onRefresh={() => void search()}
             onOpenWooCommerce={() => window.open(order.wooUrl, '_blank')}
-            onCreateIncident={openIncident}
           />
           <div className="content-grid">
             <section className="main-column">
