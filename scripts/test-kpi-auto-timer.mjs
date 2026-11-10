@@ -48,16 +48,13 @@ if (completed < saved)
     'El contador termina antes de confirmar el guardado del PackingList.',
   );
 for (const fragment of [
-  "beginAutomaticWork(\n      'incident-create'",
   "beginAutomaticWork(\n        'reservation-create'",
-  "completeAutomaticWork('incident-create'",
   "completeAutomaticWork('reservation-create'",
-  "'incidencias'",
   "'reservas'",
 ])
   if (!dashboard.includes(fragment))
     throw new Error(
-      `Reservas o incidencias han perdido la medición automática: ${fragment}`,
+      `Las reservas han perdido la medición automática: ${fragment}`,
     );
 for (const fragment of [
   'paddytools:kpi-automatic-work',

@@ -8,7 +8,6 @@ import type {
   MondayUpdate,
   OrderSearchMatch,
   ReservationOptions,
-  SchoolProduct,
   SessionUser,
 } from '@/lib/dashboard-types';
 import type { StoreTicketRecord } from '@/lib/store-ticket';
@@ -122,33 +121,6 @@ export async function fetchReservations() {
   return data.records || [];
 }
 
-export async function fetchSchoolProducts(school: string) {
-  const data = await requestJson<SchoolProduct[]>(
-    `/api/school-products?school=${encodeURIComponent(school)}`,
-    { cache: 'no-store' },
-    'WooCommerce',
-  );
-  return Array.isArray(data) ? data : [];
-}
-
-export function postIncident(body: unknown) {
-  return requestJson<{ id?: string; incident?: IncidentRecord }>(
-    '/api/incidents',
-    jsonMutation('POST', body),
-  );
-}
-
-export async function uploadIncidentImages(incidentId: string, images: File[]) {
-  if (!images.length) return null;
-  const form = new FormData();
-  form.set('incidentId', incidentId);
-  images.forEach((image) => form.append('images', image));
-  return requestJson<{ incident?: IncidentRecord }>('/api/incidents/images', {
-    method: 'POST',
-    body: form,
-  });
-}
-
 export function saveMondayReservation(body: unknown, editing: boolean) {
   return requestJson<{ id?: string; formula?: string }>(
     '/api/monday',
@@ -201,10 +173,6 @@ export function runMondayMaintenance(token: string) {
   return requestJson<{ removed?: boolean; message?: string }>(
     `/api/monday?maintenance=${encodeURIComponent(token)}`,
   );
-}
-
-export function fetchSchools() {
-  return requestJson<string[]>('/api/schools');
 }
 
 async function safeJson<T>(

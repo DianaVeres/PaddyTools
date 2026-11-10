@@ -10,7 +10,6 @@ for (const fragment of [
   'DashboardOrder',
   'DashboardShipment',
   'DashboardMondayRecord',
-  'IncidentDraft',
   'ReservationDraft',
   'ReservationOptions',
   'MondayUpdate',

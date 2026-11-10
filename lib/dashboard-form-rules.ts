@@ -1,37 +1,5 @@
 import { isValidEmail } from '@/lib/contact-links';
-import type {
-  IncidentDraft,
-  ReservationDraft,
-  SchoolProduct,
-} from '@/lib/dashboard-types';
-
-export function selectedPickupLines(
-  products: SchoolProduct[],
-  draft: IncidentDraft,
-  showMissingSize = false,
-): string[] {
-  return products
-    .filter((item) => draft.pickupItems[item.id]?.selected)
-    .map((item) => {
-      const pick = draft.pickupItems[item.id];
-      const size = pick.size || (showMissingSize ? 'Sin indicar' : '');
-      return `- ${item.name} | Talla: ${size} | Unidades: ${pick.units || 1}`;
-    });
-}
-
-export function validateIncidentDraft(
-  draft: IncidentDraft,
-  selectedProducts: number,
-): string {
-  if (!draft.date) return 'Indica la fecha de recepción.';
-  if (!draft.school.trim()) return 'Selecciona el colegio de la incidencia.';
-  if (!draft.text.trim()) return 'Describe la incidencia antes de guardar.';
-  if (draft.pickup && !draft.pickupSchool.trim())
-    return 'Selecciona el colegio al que pertenece el producto.';
-  if (draft.pickup && selectedProducts < 1)
-    return 'Selecciona al menos un producto para recoger.';
-  return '';
-}
+import type { ReservationDraft } from '@/lib/dashboard-types';
 
 export function validateReservationDraft(
   draft: ReservationDraft,

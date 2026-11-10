@@ -1,6 +1,7 @@
 import { AlertTriangle, ExternalLink, Printer, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { IncidentRecord as Incident } from '@/lib/incident-record';
+import { openIncidentHref } from '@/lib/incident-navigation';
 
 export function IncidentCard({
   incident,
@@ -92,13 +93,14 @@ export function IncidentCard({
           </Button>
           <Button
             variant="outline"
-            onClick={() => {
-              const params = new URLSearchParams({
-                openIncident: incident.orderNumber,
-                source: incident.sourceType || 'order',
-              });
-              window.location.assign(`/incidencias?${params}`);
-            }}
+            onClick={() =>
+              window.location.assign(
+                openIncidentHref(
+                  incident.orderNumber,
+                  incident.sourceType || 'order',
+                ),
+              )
+            }
           >
             <ExternalLink /> Abrir incidencia
           </Button>

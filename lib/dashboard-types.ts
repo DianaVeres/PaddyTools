@@ -78,29 +78,6 @@ export type DashboardMondayRecord = {
   updatedAt: string;
 };
 
-export type IncidentDraft = {
-  date: string;
-  school: string;
-  text: string;
-  customerEmail: string;
-  observations: string;
-  pickup: boolean;
-  pickupSchool: string;
-  pickupNotes: string;
-  recurrence: boolean;
-  solved: boolean;
-  shippingRequired: boolean;
-  sent: boolean;
-  images: import('@/lib/incident-record').IncidentImage[];
-  newImages: File[];
-  pickupItems: Record<
-    number,
-    { selected: boolean; size: string; units: number }
-  >;
-};
-
-export type SchoolProduct = { id: number; name: string; sku: string };
-
 export type ReservationDraft = {
   reference: string;
   customerId: string;

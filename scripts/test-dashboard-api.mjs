@@ -15,8 +15,6 @@ for (const endpoint of [
   '/api/order-notes',
   '/api/order-documents',
   '/api/return-attended',
-  '/api/school-products',
-  '/api/schools',
   '/api/shipping',
   '/api/tickets',
 ]) assert.ok(api.includes(endpoint), `Falta centralizar ${endpoint}`);

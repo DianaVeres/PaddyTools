@@ -34,18 +34,14 @@ import {
 import {
   fetchIncidentRegistry,
   fetchHotlineContacts,
-  fetchSchools,
   fetchSessionUser,
   fetchMondayUpdates,
   fetchOrderDocument,
   fetchOrderNotes,
   fetchReservationOptions,
   fetchReservations,
-  fetchSchoolProducts,
   fetchShippingMatches,
   patchIncident,
-  postIncident,
-  uploadIncidentImages,
   postOrderNote,
   removeIncident,
   removeOrderNote,
@@ -59,7 +55,6 @@ import {
 import {
   foldSearchText as folded,
   isExactRecordReference,
-  incidentStorageReference,
   isWooOrderReference,
   linkedWooOrderReference,
   normalizeReferenceInput,
@@ -67,6 +62,7 @@ import {
   shippingReferences,
 } from '@/lib/global-search';
 import { printStandaloneLabel } from '@/lib/label-print';
+import { createIncidentHref } from '@/lib/incident-navigation';
 import {
   createDeliveryEmailDraft,
   deliveryKindFromText,
@@ -79,11 +75,7 @@ import {
   cancelAutomaticWork,
   completeAutomaticWork,
 } from '@/lib/kpi-auto-timer';
-import {
-  selectedPickupLines,
-  validateIncidentDraft,
-  validateReservationDraft,
-} from '@/lib/dashboard-form-rules';
+import { validateReservationDraft } from '@/lib/dashboard-form-rules';
 import { useDraggableDialog } from '@/lib/use-draggable-dialog';
 import {
   normalizeOrderNoteContent,
@@ -98,12 +90,10 @@ import type {
   DashboardMondayRecord as MondayRecord,
   DashboardOrder as Order,
   DashboardShipment as Shipment,
-  IncidentDraft,
   MondayUpdate,
   OrderSearchMatch,
   ReservationDraft,
   ReservationOptions,
-  SchoolProduct,
   SessionUser,
 } from '@/lib/dashboard-types';
 import {
@@ -126,7 +116,6 @@ import { DashboardFeedback } from '@/components/dashboard/dashboard-feedback';
 import { ConnectedResults } from '@/components/dashboard/connected-results';
 import { PrintSheets } from '@/components/dashboard/print-sheets';
 import { IncidentDocumentDialog } from '@/components/dashboard/incident-document-dialog';
-import { IncidentFormDialog } from '@/components/dashboard/incident-form-dialog';
 import { CreateIncidentButton } from '@/components/dashboard/create-incident-button';
 import { ReservationFormDialog } from '@/components/dashboard/reservation-form-dialog';
 import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
@@ -264,27 +253,6 @@ export default function Home() {
   const [shippingLoading, setShippingLoading] = useState(false);
   const [shippingOpen, setShippingOpen] = useState(false);
   const [shippingReference, setShippingReference] = useState('');
-  const [incidentDraft, setIncidentDraft] = useState<IncidentDraft>({
-    date: today,
-    school: '',
-    text: '',
-    customerEmail: '',
-    observations: '',
-    pickup: false,
-    pickupSchool: '',
-    pickupNotes: '',
-    recurrence: false,
-    solved: false,
-    shippingRequired: false,
-    sent: false,
-    images: [],
-    newImages: [],
-    pickupItems: {},
-  });
-  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
-  const [pickupProducts, setPickupProducts] = useState<SchoolProduct[]>([]);
-  const [productsLoading, setProductsLoading] = useState(false);
-  const [productsError, setProductsError] = useState('');
   const [reservationDraft, setReservationDraft] = useState<ReservationDraft>({
     reference: '',
     customerId: '',
@@ -696,47 +664,11 @@ export default function Home() {
       cancelled = true;
     };
   }, [mondayUpdateItemIds]);
-  function openIncident() {
-    const school =
-      incident?.school ||
-      incident?.pickupSchoolName ||
-      mondayRecords[0]?.school ||
-      '';
-    const pickupSchool = incident?.pickupSchoolName || school;
-    beginAutomaticWork(
-      'incident-create',
-      'incidencias',
-      order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '',
-    );
-    setIncidentDraft({
-      date: today,
-      school,
-      text: '',
-      customerEmail: order?.customer.email || incident?.customerEmail || '',
-      observations: '',
-      pickup: false,
-      pickupSchool,
-      pickupNotes: '',
-      recurrence: Boolean(incident?.id),
-      solved: false,
-      shippingRequired: false,
-      sent: false,
-      images: [],
-      newImages: [],
-      pickupItems: {},
-    });
-    setModal('incidencia');
-    if (!schoolOptions.length)
-      void fetchSchools().then(
-        (data) => Array.isArray(data) && setSchoolOptions(data),
-      );
-  }
   function openIncidentWorkspace() {
     const reference =
       order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '';
     if (!reference) return;
-    const params = new URLSearchParams({ createIncident: reference });
-    window.location.assign(`/incidencias?${params}`);
+    window.location.assign(createIncidentHref(reference));
   }
   async function openReservation(existing?: MondayRecord) {
     if (!existing)
@@ -874,136 +806,41 @@ export default function Home() {
       setReservationsLoading(false);
     }
   }
-  async function loadPickupProducts(school: string) {
-    setPickupProducts([]);
-    setProductsError('');
-    if (!school) return;
-    setProductsLoading(true);
-    try {
-      setPickupProducts(await fetchSchoolProducts(school));
-    } catch (error) {
-      setProductsError(
-        error instanceof Error
-          ? error.message
-          : 'No se pudieron cargar los productos.',
-      );
-    } finally {
-      setProductsLoading(false);
-    }
-  }
-  async function save(kind: 'incidencia' | 'reserva', forceSolved = false) {
-    const rawReference =
-      kind === 'reserva'
-        ? reservationDraft.reference
-        : order?.number || incident?.orderNumber || mondayRecords[0]?.reference;
+  async function saveReservation() {
+    const rawReference = reservationDraft.reference;
     const reference = rawReference ? linkedWooOrderReference(rawReference) : '';
     if (!reference) return;
-    if (kind === 'reserva' && reservationSaving) return;
+    if (reservationSaving) return;
     try {
-      const customerName =
+      const linkedCustomerFromSearch = Boolean(
         order?.customer.name ||
         incident?.customerName ||
-        mondayRecords[0]?.customer ||
-        '';
-      const phone =
-        order?.customer.phone ||
-        incident?.customerPhone ||
-        mondayRecords[0]?.phone ||
-        '';
-      let record: { id?: string; formula?: string } = {};
-      if (kind === 'incidencia') {
-        const selected = selectedPickupLines(pickupProducts, incidentDraft);
-        const validationError = validateIncidentDraft(
-          incidentDraft,
-          selected.length,
-        );
-        if (validationError) {
-          setSaved(validationError);
-          return;
-        }
-        const pickupDetails = [
-          ...selected,
-          incidentDraft.pickupNotes &&
-            `Observaciones: ${incidentDraft.pickupNotes}`,
-        ]
-          .filter(Boolean)
-          .join('\n');
-        record = await postIncident({
-          order_number: incidentStorageReference(reference),
-          order_id: order?.id || '',
-          customer_name: customerName,
-          customer_email: incidentDraft.customerEmail,
-          customer_phone: phone,
-          order_date: order?.dateCreated || '',
-          order_status: order?.status || '',
-          order_total: order?.total || '',
-          shipping_address: order?.customer.address || '',
-          billing_address: order?.customer.address || '',
-          products_json: JSON.stringify(
-            order?.items || incident?.products || [],
-          ),
-          incident_text: `${incidentDraft.text}${incidentDraft.observations.trim() ? `\n\nOBSERVACIONES: ${incidentDraft.observations.trim()}` : ''}`,
-          incident_date: incidentDraft.date,
-          pickup_school: incidentDraft.pickup ? 1 : 0,
-          pickup_school_name: incidentDraft.pickup
-            ? incidentDraft.pickupSchool
-            : '',
-          pickup_details: incidentDraft.pickup ? pickupDetails : '',
-          pickup_received: incident?.pickupReceived ? 1 : 0,
-          solved: forceSolved || incidentDraft.solved ? 1 : 0,
-          shipping_required: incidentDraft.shippingRequired ? 1 : 0,
-          sent: incidentDraft.sent ? 1 : 0,
-          incident_school_name: incidentDraft.school,
-          is_recurrence: incidentDraft.recurrence ? 1 : 0,
-          source_type: 'pedido',
-          record_id: incidentDraft.recurrence ? '' : incident?.id || '',
-        });
-        if (record.id && incidentDraft.newImages.length) {
-          await uploadIncidentImages(record.id, incidentDraft.newImages);
-        }
-      } else {
-        const linkedCustomerFromSearch = Boolean(
-          order?.customer.name ||
-          incident?.customerName ||
-          mondayRecords[0]?.customer,
-        );
-        const validationError = validateReservationDraft(reservationDraft, {
-          newCustomer: newReservationCustomer,
-          linkedCustomer: linkedCustomerFromSearch,
-        });
-        if (validationError) {
-          setSaved(validationError);
-          return;
-        }
-        setReservationSaving(true);
-        const reservationReference = reservationStorageReference(reference);
-        record = await saveMondayReservation(
-          {
-            id: editingReservationId || undefined,
-            ...reservationDraft,
-            createCustomer:
-              newReservationCustomer ||
-              (!reservationDraft.customerId && linkedCustomerFromSearch),
-            reference: reservationReference,
-          },
-          Boolean(editingReservationId),
-        );
+        mondayRecords[0]?.customer,
+      );
+      const validationError = validateReservationDraft(reservationDraft, {
+        newCustomer: newReservationCustomer,
+        linkedCustomer: linkedCustomerFromSearch,
+      });
+      if (validationError) {
+        setSaved(validationError);
+        return;
       }
+      setReservationSaving(true);
+      const reservationReference = reservationStorageReference(reference);
+      const record = await saveMondayReservation(
+        {
+          id: editingReservationId || undefined,
+          ...reservationDraft,
+          createCustomer:
+            newReservationCustomer ||
+            (!reservationDraft.customerId && linkedCustomerFromSearch),
+          reference: reservationReference,
+        },
+        Boolean(editingReservationId),
+      );
       let automaticKpiWarning = '';
       try {
-        if (kind === 'incidencia') {
-          await completeAutomaticWork('incident-create', {
-            orders: 1,
-            products: order?.items
-              ? order.items.reduce(
-                  (total, item) =>
-                    total + Math.max(1, Number(item.quantity) || 1),
-                  0,
-                )
-              : incident?.products.length || 0,
-            notes: `Incidencia ${reference}`,
-          });
-        } else if (!editingReservationId) {
+        if (!editingReservationId) {
           await completeAutomaticWork('reservation-create', {
             orders: 1,
             products: Math.max(1, reservationDraft.units || 1),
@@ -1014,19 +851,14 @@ export default function Home() {
         automaticKpiWarning =
           ' La gestión se guardó, pero no se pudo registrar automáticamente su tiempo.';
       }
-      const savedMessage =
-        kind === 'reserva'
-          ? editingReservationId
-            ? `Reserva actualizada correctamente en Monday (${record.id}).`
-            : `Reserva creada correctamente en Monday (${record.id}).`
-          : `Incidencia del pedido #${reference} guardada en el registro compartido.`;
+      const savedMessage = editingReservationId
+        ? `Reserva actualizada correctamente en Monday (${record.id}).`
+        : `Reserva creada correctamente en Monday (${record.id}).`;
       setSaved(`${savedMessage}${automaticKpiWarning}`);
-      if (kind === 'reserva') {
-        const article = reservationOptions?.articles.find(
-          (item) => item.id === reservationDraft.articleId,
-        );
-        const reservationReference = reservationStorageReference(reference);
-        const savedReservation: MondayRecord = {
+      const article = reservationOptions?.articles.find(
+        (item) => item.id === reservationDraft.articleId,
+      );
+      const savedReservation: MondayRecord = {
           id: record.id || '',
           kind: 'reserva',
           board: 'Registro Reservas',
@@ -1058,22 +890,19 @@ export default function Home() {
           formula: record.formula || reservationDraft.formula,
           customerEmail: reservationDraft.customerEmail,
           updatedAt: new Date().toISOString(),
-        };
-        setCreatedReservation(savedReservation);
-        if (editingReservationId) {
-          setReservationRows((rows) =>
-            rows.map((item) =>
-              item.id === editingReservationId ? savedReservation : item,
-            ),
-          );
-          setEditingReservationId('');
-          setModal('reservas');
-        } else {
-          setModal('reserva-creada');
-        }
+      };
+      setCreatedReservation(savedReservation);
+      if (editingReservationId) {
+        setReservationRows((rows) =>
+          rows.map((item) =>
+            item.id === editingReservationId ? savedReservation : item,
+          ),
+        );
+        setEditingReservationId('');
+        setModal('reservas');
+      } else {
+        setModal('reserva-creada');
       }
-      if (kind === 'incidencia') void search();
-      if (kind === 'incidencia') setModal(null);
     } catch (error) {
       setSaved(
         error instanceof Error && error.message
@@ -1081,7 +910,7 @@ export default function Home() {
           : 'No se pudo guardar. Revisa la conexión e inténtalo de nuevo.',
       );
     } finally {
-      if (kind === 'reserva') setReservationSaving(false);
+      setReservationSaving(false);
     }
   }
   async function checkShipping() {
@@ -1165,52 +994,6 @@ export default function Home() {
       window.print();
       setPrintReservation(null);
     }, 100);
-  }
-  function printIncidentDraft(mode: 'document' | 'label') {
-    const pickupDetails = selectedPickupLines(
-      pickupProducts,
-      incidentDraft,
-      true,
-    );
-    if (incidentDraft.pickupNotes.trim())
-      pickupDetails.push(`Observaciones: ${incidentDraft.pickupNotes.trim()}`);
-    const row: Incident = {
-      id: incident?.id || '',
-      orderNumber:
-        order?.number ||
-        incident?.orderNumber ||
-        mondayRecords[0]?.reference ||
-        '',
-      customerName:
-        order?.customer.name ||
-        incident?.customerName ||
-        mondayRecords[0]?.customer ||
-        '',
-      customerEmail: order?.customer.email || incident?.customerEmail || '',
-      customerPhone:
-        order?.customer.phone ||
-        incident?.customerPhone ||
-        mondayRecords[0]?.phone ||
-        '',
-      incidentText: incidentDraft.text,
-      observations: incidentDraft.observations,
-      incidentDate: incidentDraft.date,
-      solved: incidentDraft.solved,
-      shippingRequired: incidentDraft.shippingRequired,
-      sent: incidentDraft.sent,
-      solvedAt: '',
-      updatedAt: '',
-      pickupSchool: incidentDraft.pickup,
-      pickupSchoolName: incidentDraft.pickupSchool,
-      pickupDetails: pickupDetails.join('\n'),
-      pickupReceived: incident?.pickupReceived || false,
-      pickupReceivedAt: incident?.pickupReceivedAt || '',
-      school: incidentDraft.school,
-      recurrenceCount: incident?.recurrenceCount || 0,
-      products: order?.items || incident?.products || [],
-      images: incidentDraft.images,
-    };
-    printIncidentDocument(row, mode);
   }
   async function setPickupReceived(row: Incident, received: boolean) {
     try {
@@ -1338,16 +1121,6 @@ export default function Home() {
     return () => lifecycle.abort();
   }, []);
   const units = order?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
-  const schools = [
-    ...new Set(
-      [
-        ...schoolOptions,
-        incident?.school,
-        incident?.pickupSchoolName,
-        ...mondayRecords.map((record) => record.school),
-      ].filter(Boolean) as string[],
-    ),
-  ].sort((a, b) => a.localeCompare(b, 'es'));
   const visibleRegistryRows = filterIncidentRegistry(
     registryRows,
     registryFilter,
@@ -1517,46 +1290,6 @@ export default function Home() {
         />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}
-      <IncidentFormDialog
-        open={modal === 'incidencia'}
-        incidentId={incidentDraft.recurrence ? '' : incident?.id || ''}
-        reference={
-          order?.number ||
-          incident?.orderNumber ||
-          mondayRecords[0]?.reference ||
-          ''
-        }
-        customerName={
-          order?.customer.name ||
-          incident?.customerName ||
-          mondayRecords[0]?.customer ||
-          ''
-        }
-        customerEmail={order?.customer.email || incident?.customerEmail || ''}
-        customerPhone={
-          order?.customer.phone ||
-          incident?.customerPhone ||
-          mondayRecords[0]?.phone ||
-          ''
-        }
-        draft={incidentDraft}
-        schools={schools}
-        products={pickupProducts}
-        productsLoading={productsLoading}
-        productsError={productsError}
-        onClose={() => setModal(null)}
-        onDraftChange={setIncidentDraft}
-        onPickupSchoolChange={(school) => {
-          setIncidentDraft({
-            ...incidentDraft,
-            pickupSchool: school,
-            pickupItems: {},
-          });
-          void loadPickupProducts(school);
-        }}
-        onPrint={printIncidentDraft}
-        onSave={(solved) => void save('incidencia', solved)}
-      />
       <ReservationFormDialog
         open={modal === 'reserva'}
         editing={Boolean(editingReservationId)}
@@ -1570,7 +1303,7 @@ export default function Home() {
         onClose={() => setModal(null)}
         onDraftChange={setReservationDraft}
         onNewCustomerChange={setNewReservationCustomer}
-        onSave={() => void save('reserva')}
+        onSave={() => void saveReservation()}
         onDragStart={reservationDialog.start}
         onDragMove={reservationDialog.move}
         onDragStop={reservationDialog.stop}

@@ -439,9 +439,8 @@
 
   // Permite abrir desde la ficha del pedido el formulario exacto de la
   // incidencia, incluida una incidencia de tienda o una incidencia nuestra.
-  const requestedReference = new URLSearchParams(location.search)
-    .get('openIncident')
-    ?.trim();
+  const incidentNavigationParams = new URLSearchParams(location.search);
+  const requestedReference = incidentNavigationParams.get('openIncident')?.trim();
   if (requestedReference) {
     request('/api/incidents?number=' + encodeURIComponent(requestedReference))
       .then((data) => {
@@ -464,7 +463,7 @@
 
   // "Crear incidencia" desde la consulta global abre este módulo completo,
   // rellena la referencia visible y ejecuta la misma búsqueda que el usuario.
-  const requestedCreationReference = new URLSearchParams(location.search)
+  const requestedCreationReference = incidentNavigationParams
     .get('createIncident')
     ?.trim();
   if (requestedCreationReference) {

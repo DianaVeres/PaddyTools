@@ -25,8 +25,8 @@ for (const fragment of [
   "onPrintIncident(incident, 'label')",
   "onPrintIncident(incident, 'document')",
   'Abrir incidencia',
-  'openIncident: incident.orderNumber',
-  "source: incident.sourceType || 'order'",
+  'openIncidentHref(',
+  "incident.sourceType || 'order'",
 ]) {
   if (!component.includes(fragment))
     throw new Error(`La tarjeta de incidencia ha perdido: ${fragment}`);

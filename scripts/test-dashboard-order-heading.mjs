@@ -33,8 +33,7 @@ for (const prop of [
   'onRefresh={() => void search()}',
   "window.open(order.wooUrl, '_blank')",
   '<CreateIncidentButton onClick={openIncidentWorkspace} />',
-  'createIncident: reference',
-  'window.location.assign(`/incidencias?${params}`)',
+  'createIncidentHref(reference)',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a la cabecera: ${prop}`);

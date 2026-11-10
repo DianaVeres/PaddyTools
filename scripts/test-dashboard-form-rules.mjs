@@ -18,24 +18,8 @@ const contactJs = ts.transpileModule(contactSource, {
 const folder = mkdtempSync(join(tmpdir(), 'paddytools-form-rules-'));
 writeFileSync(resolve(folder, 'contact-links.js'), contactJs);
 writeFileSync(resolve(folder, 'dashboard-form-rules.js'), js);
-const { selectedPickupLines, validateIncidentDraft, validateReservationDraft } =
+const { validateReservationDraft } =
   await import(`file:///${resolve(folder, 'dashboard-form-rules.js').replaceAll('\\', '/')}?v=${Date.now()}`);
-
-const incident = {
-  date: '2026-11-03', school: 'Teatinas', text: 'Cambio de talla', customerEmail: '',
-  observations: '', pickup: true, pickupSchool: 'Teatinas', pickupNotes: '', recurrence: false,
-  solved: false, sent: false, pickupItems: { 7: { selected: true, size: '8', units: 2 } },
-};
-assert.equal(validateIncidentDraft(incident, 1), '');
-assert.deepEqual(selectedPickupLines([{ id: 7, name: 'Polo', sku: 'P7' }], incident), [
-  '- Polo | Talla: 8 | Unidades: 2',
-]);
-assert.equal(validateIncidentDraft({ ...incident, school: '' }, 1), 'Selecciona el colegio de la incidencia.');
-assert.equal(validateIncidentDraft(incident, 0), 'Selecciona al menos un producto para recoger.');
-assert.equal(
-  validateIncidentDraft({ ...incident, pickupSchool: '' }, 1),
-  'Selecciona el colegio al que pertenece el producto.',
-);
 
 const reservation = {
   reference: 'R100', customerId: '', customerName: 'Ana', phone: '612345678',

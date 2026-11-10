@@ -5,7 +5,6 @@ const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const service = read('lib/incident-images.ts');
 const route = read('app/api/incidents/images/route.ts');
-const form = read('components/dashboard/incident-images-field.tsx');
 const compatibility = read('public/incidencias-compat.js');
 const legacyForm = read('public/incidencias-app.html');
 
@@ -28,16 +27,6 @@ assert.ok(
   route.includes("'X-Content-Type-Options': 'nosniff'"),
   'Falta la protección del tipo de archivo.',
 );
-assert.ok(
-  form.includes('image/jpeg,image/png,image/webp'),
-  'El formulario no limita los formatos permitidos.',
-);
-for (const expected of [
-  'onPaste={(event)',
-  'event.clipboardData.items',
-  'pega una captura con Ctrl + V',
-])
-  assert.ok(form.includes(expected), `El formulario integrado no permite pegar imágenes: ${expected}`);
 assert.ok(
   compatibility.includes('uploadIncidentImages'),
   'El bloque integrado de incidencias no sube imágenes.',

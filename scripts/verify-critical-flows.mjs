@@ -73,22 +73,13 @@ forbid(
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/lib/incident-record',
-    'incidentLabelLines',
-    'sent: incidentDraft.sent ? 1 : 0',
-  ],
+  ['@/lib/incident-record', 'incidentLabelLines'],
   'Los datos e impresión de incidencias',
 );
 requireAll(
   'components/dashboard/incident-registry-dialog.tsx',
   ['@/lib/incident-record', 'incidentStatusLabel'],
   'Los estados del registro de incidencias',
-);
-requireAll(
-  'components/dashboard/incident-details-section.tsx',
-  ["['sent', 'Enviado']", 'event.target.checked'],
-  'El estado enviado de las incidencias',
 );
 for (const path of ['app/page.tsx', 'app/api/order-notes/route.ts']) {
   requireAll(
@@ -106,7 +97,6 @@ requireAll(
     'linkedWooOrderReference',
     'isWooOrderReference',
     'isExactRecordReference',
-    'incidentStorageReference',
     'reservationStorageReference',
   ],
   'La interpretación compartida de referencias',
@@ -476,21 +466,6 @@ requireAll(
   'El diálogo de documento de incidencia',
 );
 requireAll(
-  'components/dashboard/incident-form-dialog.tsx',
-  ['@/components/dashboard/incident-pickup-section', 'IncidentPickupSection'],
-  'La recogida del formulario de incidencias',
-);
-requireAll(
-  'components/dashboard/incident-form-dialog.tsx',
-  ['@/components/dashboard/incident-details-section', 'IncidentDetailsSection'],
-  'Los datos del formulario de incidencias',
-);
-requireAll(
-  'app/page.tsx',
-  ['@/components/dashboard/incident-form-dialog', 'IncidentFormDialog'],
-  'El formulario completo de incidencias',
-);
-requireAll(
   'components/dashboard/reservation-form-dialog.tsx',
   [
     '@/components/dashboard/reservation-customer-section',
@@ -586,12 +561,7 @@ requireAll(
 );
 requireAll(
   'app/page.tsx',
-  [
-    '@/lib/dashboard-form-rules',
-    'selectedPickupLines',
-    'validateIncidentDraft',
-    'validateReservationDraft',
-  ],
+  ['@/lib/dashboard-form-rules', 'validateReservationDraft'],
   'Las reglas compartidas de formularios',
 );
 requireAll(
