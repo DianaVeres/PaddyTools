@@ -1,6 +1,8 @@
 export type IncidentRecord = {
   id: string;
   orderNumber: string;
+  sourceType?: 'order' | 'tienda' | 'manual' | string;
+  ticketNumber?: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;

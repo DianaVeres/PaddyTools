@@ -437,6 +437,31 @@
   const saveStoreWithImages = saveStore; saveStore = async function () { const files = [...imageDrafts.store]; document.getElementById('storeImage').value = ''; const row = await saveStoreWithImages(); return row ? await uploadIncidentImages('store', row, files) : row; };
   const saveOwnWithImages = saveOwn; saveOwn = async function () { const files = [...imageDrafts.own]; const row = await saveOwnWithImages(); return row ? await uploadIncidentImages('own', row, files) : row; };
 
+  // Permite abrir desde la ficha del pedido el formulario exacto de la
+  // incidencia, incluida una incidencia de tienda o una incidencia nuestra.
+  const requestedReference = new URLSearchParams(location.search)
+    .get('openIncident')
+    ?.trim();
+  if (requestedReference) {
+    request('/api/incidents?number=' + encodeURIComponent(requestedReference))
+      .then((data) => {
+        if (!data.found || !data.incident)
+          throw new Error('No se encontró la incidencia ' + requestedReference + '.');
+        const row = asLegacy(data.incident);
+        if (row.source_type === 'tienda') {
+          showView('store');
+          showStore(row);
+        } else if (row.source_type === 'manual') {
+          showView('own');
+          showOwn(row);
+        } else {
+          show(row);
+          showView('main');
+        }
+      })
+      .catch((error) => status(error.message, 'error'));
+  }
+
   document.getElementById('storeSaveBtn').onclick = saveStore;
   document.getElementById('storeNewBtn').onclick = clearStore;
   document.getElementById('ownSaveBtn').onclick = saveOwn;

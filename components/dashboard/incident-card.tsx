@@ -1,4 +1,4 @@
-import { AlertTriangle, Printer, Tag } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Printer, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { IncidentRecord as Incident } from '@/lib/incident-record';
 
@@ -89,6 +89,18 @@ export function IncidentCard({
           </Button>
           <Button onClick={() => onPrintIncident(incident, 'document')}>
             <Printer /> Imprimir
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const params = new URLSearchParams({
+                openIncident: incident.orderNumber,
+                source: incident.sourceType || 'order',
+              });
+              window.location.assign(`/incidencias?${params}`);
+            }}
+          >
+            <ExternalLink /> Abrir incidencia
           </Button>
         </div>
       </div>
