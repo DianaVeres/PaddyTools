@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const wooAdminRoute = readFileSync(
+  resolve(root, 'app/api/woocommerce-admin/route.ts'),
+  'utf8',
+);
 
 for (const fragment of [
   'DashboardHeader',
@@ -38,5 +42,7 @@ for (const prop of [
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a la cabecera: ${prop}`);
 }
+if (!wooAdminRoute.includes("'https://paddy.es/wp-admin/'"))
+  throw new Error('El acceso de WooCommerce no abre el escritorio de Paddy.');
 
 console.log('Cabecera principal verificada.');
