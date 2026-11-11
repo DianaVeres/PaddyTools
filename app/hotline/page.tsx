@@ -216,12 +216,18 @@ export default function HotlinePage() {
     }
     setBusy(true);
     try {
+      const reference = orderReference.trim().toUpperCase();
+      const savedSubject =
+        reference &&
+        !hotlineOrderReference(`${subject} ${incoming} ${reply}`)
+          ? `[${reference}] ${subject.trim() || 'Contacto Hotline'}`
+          : subject;
       const response = await fetch('/api/hotline/cases', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           email,
-          asunto: subject,
+          asunto: savedSubject,
           consulta: storedHotlineIncoming(incoming, translatedIncoming),
           respuesta: storedHotlineReply(reply, englishReply),
           estado: status,
@@ -253,6 +259,7 @@ export default function HotlinePage() {
       setProcedure('');
       setCategory('General');
       setKind('Consulta');
+      setSubject(savedSubject);
       setNotice(`Contacto guardado. Puedes continuar el mismo caso.${timingWarning}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No se pudo guardar.');
