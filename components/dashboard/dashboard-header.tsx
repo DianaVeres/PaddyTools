@@ -4,6 +4,7 @@ import {
   ChevronDown,
   LogOut,
   Mail,
+  Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ function userInitials(user: SessionUser | null) {
 export function DashboardHeader({
   sessionUser,
   onOpenKpis,
+  onOpenWooCommerce,
   onOpenHotline,
   onOpenReservations,
   onCreateReservation,
@@ -35,6 +37,7 @@ export function DashboardHeader({
 }: {
   sessionUser: SessionUser | null;
   onOpenKpis: () => void;
+  onOpenWooCommerce: () => void;
   onOpenHotline: () => void;
   onOpenReservations: () => void;
   onCreateReservation: () => void;
@@ -57,6 +60,13 @@ export function DashboardHeader({
           onClick={onOpenKpis}
         >
           <BarChart3 /> KPIs
+        </Button>
+        <Button
+          className="action-button woocommerce"
+          variant="outline"
+          onClick={onOpenWooCommerce}
+        >
+          <Store /> WooCommerce
         </Button>
         <Button
           className="action-button hotline"

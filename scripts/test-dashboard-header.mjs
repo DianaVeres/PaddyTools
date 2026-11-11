@@ -13,6 +13,7 @@ for (const fragment of [
   '/paddy-logo-granate.png',
   'PaddyTools',
   'KPIs',
+  'WooCommerce',
   'Hotline',
   'Reservas',
   'Ver reservas',
@@ -29,6 +30,7 @@ if (!page.includes("@/components/dashboard/dashboard-header"))
 for (const prop of [
   'sessionUser={sessionUser}',
   "window.location.assign('/kpis')",
+  "window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')",
   "window.location.assign('/hotline')",
   'void openReservation()',
   'void logout()',

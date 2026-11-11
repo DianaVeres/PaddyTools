@@ -1138,6 +1138,9 @@ export default function Home() {
       <DashboardHeader
         sessionUser={sessionUser}
         onOpenKpis={() => window.location.assign('/kpis')}
+        onOpenWooCommerce={() =>
+          window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')
+        }
         onOpenHotline={() => window.location.assign('/hotline')}
         onOpenReservations={() => void openReservations()}
         onCreateReservation={() => void openReservation()}
