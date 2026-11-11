@@ -31,7 +31,8 @@ for (const fragment of [
   'Respuesta en inglés',
   'Copiar respuesta en inglés',
   'withSpanishHotlineInstruction(guidance)',
-  'storedHotlineIncoming(incoming, translatedIncoming)',
+  'storedHotlineIncoming(',
+  'storedHotlineReply(',
   'Ver ficha del pedido',
   'hotlineOrderReference',
   'setViewingOrder(reference)',
@@ -39,6 +40,11 @@ for (const fragment of [
   'const reference = orderReference.trim().toUpperCase()',
   'asunto: savedSubject',
   "? `[${reference}] ${subject.trim() || 'Contacto Hotline'}`",
+  "fetch('/api/order-notes'",
+  'orderNumber: reference',
+  'Mensaje recibido:\\n${savedIncoming}',
+  'Respuesta enviada:\\n${savedReply}',
+  'Mensaje añadido a las notas del pedido.',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`El módulo Hotline ha perdido: ${fragment}`);
