@@ -105,6 +105,18 @@ type SpeechRecognitionInstance = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
+function isAppleMobileDevice() {
+  const navigatorWithPlatform = navigator as Navigator & {
+    platform?: string;
+    maxTouchPoints?: number;
+  };
+  return (
+    /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+    (navigatorWithPlatform.platform === 'MacIntel' &&
+      (navigatorWithPlatform.maxTouchPoints || 0) > 1)
+  );
+}
+
 // Componente principal: controla las vistas, el formulario, las consultas a
 // WooCommerce/Monday/Incidencias, el archivo y la impresión.
 export default function Home() {
@@ -183,6 +195,16 @@ export default function Home() {
       speechRef.current?.stop();
       return;
     }
+    if (isAppleMobileDevice()) {
+      const field = boxesRef.current;
+      field?.focus();
+      field?.setSelectionRange(field.value.length, field.value.length);
+      field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setMessage(
+        'Campo preparado para dictar. En el teclado del iPhone pulsa el micrófono, di los códigos y después pulsa “OK”.',
+      );
+      return;
+    }
     const speechWindow = window as typeof window & {
       SpeechRecognition?: SpeechRecognitionConstructor;
       webkitSpeechRecognition?: SpeechRecognitionConstructor;
@@ -239,6 +261,66 @@ export default function Home() {
         'No se pudo abrir el micrófono. Pulsa el micrófono del teclado del móvil y dicta directamente en el campo.',
       );
     }
+  }
+
+  function printSelectedPackingList() {
+    if (!isAppleMobileDevice()) {
+      window.print();
+      return;
+    }
+
+    const sheet = document.querySelector<HTMLElement>('.print-packing-sheet');
+    if (!sheet) {
+      setMessage('No se ha podido preparar el PackingList para imprimir.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      setMessage(
+        'Safari ha bloqueado la vista de impresión. Permite las ventanas emergentes para PaddyTools y vuelve a pulsar Imprimir.',
+      );
+      return;
+    }
+
+    const styles = Array.from(
+      document.querySelectorAll<HTMLLinkElement | HTMLStyleElement>(
+        'link[rel="stylesheet"], style',
+      ),
+    )
+      .map((node) => node.outerHTML)
+      .join('\n');
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+      <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+          <base href="${window.location.origin}/">
+          <title>PackingList Paddy</title>
+          ${styles}
+          <style>
+            body { margin: 0; padding: 12px; background: #f3f6f9; }
+            .iphone-print-toolbar { position: sticky; top: 0; z-index: 5; display: grid; gap: 8px; padding: 10px 0 14px; background: #f3f6f9; }
+            .iphone-print-toolbar button { min-height: 48px; border: 0; border-radius: 10px; background: #173f68; color: #fff; font: 700 16px Arial, sans-serif; }
+            .iphone-print-toolbar small { color: #526579; font: 13px/1.4 Arial, sans-serif; }
+            .print-packing-sheet { max-width: 100%; margin: 0 auto; background: #fff; }
+            @media print {
+              body { padding: 0; background: #fff; }
+              .iphone-print-toolbar { display: none !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="iphone-print-toolbar">
+            <button type="button" onclick="window.print()">Imprimir / guardar PDF</button>
+            <small>En el menú del iPhone puedes elegir una impresora AirPrint o guardar y compartir el documento como PDF.</small>
+          </div>
+          ${sheet.outerHTML}
+        </body>
+      </html>`);
+    printWindow.document.close();
+    printWindow.opener = null;
   }
 
   // Recupera el archivo compartido de PackingLists.
@@ -1281,7 +1363,7 @@ export default function Home() {
                   <Button variant="outline" onClick={() => downloadExcel(selected)}>
                     <FileSpreadsheet /> Descargar Excel
                   </Button>
-                  <Button onClick={() => window.print()}>
+                  <Button onClick={printSelectedPackingList}>
                     <Printer /> Imprimir / guardar PDF
                   </Button>
                 </>
