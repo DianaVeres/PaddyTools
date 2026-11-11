@@ -2627,11 +2627,21 @@ a {
     overflow: hidden;
   }
   .reservation-print-sheet {
-    padding: 12mm;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    overflow: hidden;
+    break-after: avoid;
+    page-break-after: avoid;
   }
   .reservation-print-sheet .reservation-print-card {
-    width: 180mm;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
     border-color: #bfe3d1;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   @page {
     size: A4;
