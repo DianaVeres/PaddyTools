@@ -105,6 +105,25 @@ type SpeechRecognitionInstance = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
+async function mapWithConcurrency<Input, Output>(
+  items: Input[],
+  limit: number,
+  task: (item: Input, index: number) => Promise<Output>,
+) {
+  const results = new Array<Output>(items.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await task(items[index], index);
+    }
+  }
+  const workerCount = Math.min(Math.max(1, limit), items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
 function isAppleMobileDevice() {
   const navigatorWithPlatform = navigator as Navigator & {
     platform?: string;
@@ -676,108 +695,102 @@ export default function Home() {
     }
     setLoading(true);
     try {
-      const found: Array<{
+      const found = await mapWithConcurrency(requested, 8, async (item) => {
+        if (/^PA/i.test(item.orderNumber)) {
+          const response = await fetch(
+            `/api/search?number=${encodeURIComponent(item.orderNumber)}`,
+            { cache: 'no-store' },
+          );
+          const data = await readResponseJson<{
+            number?: string;
+            dateCreated?: string;
+            customer?: { name?: string; phone?: string; address?: string };
+            schoolCandidates?: string[];
+            error?: string;
+          }>(response);
+          if (!response.ok)
+            throw new Error(
+              `${item.orderNumber}: ${data.error || 'no encontrado'}`,
+            );
+          return {
+            orderNumber: data.number ?? item.orderNumber,
+            customerName: data.customer?.name ?? '',
+            orderDate: (data.dateCreated ?? '').slice(0, 10),
+            phone: data.customer?.phone ?? '',
+            box: item.box,
+            schoolMismatch: !matchesSchoolCandidates(
+              school,
+              data.schoolCandidates || [],
+              schoolOptions,
+            ),
+          };
+        }
+        if (/^I/i.test(item.orderNumber)) {
+          const response = await fetch(
+            `/api/incidents?number=${encodeURIComponent(item.orderNumber)}`,
+            { cache: 'no-store' },
+          );
+          const data = await readResponseJson<{
+            found?: boolean;
+            incident?: {
+              customerName?: string;
+              customerPhone?: string;
+              incidentDate?: string;
+              school?: string;
+              pickupSchoolName?: string;
+            };
+            error?: string;
+          }>(response);
+          if (!response.ok || !data.found || !data.incident)
+            throw new Error(
+              `${item.orderNumber}: ${data.error || 'incidencia no encontrada'}`,
+            );
+          const incidentSchool =
+            data.incident.school || data.incident.pickupSchoolName || '';
+          return {
+            orderNumber: item.orderNumber,
+            customerName: data.incident.customerName ?? '',
+            orderDate: (data.incident.incidentDate ?? '').slice(0, 10),
+            phone: data.incident.customerPhone ?? '',
+            box: item.box,
+            schoolMismatch: !sameSchool(school, incidentSchool),
+          };
+        }
+        const response = await fetch(
+          `/api/monday?number=${encodeURIComponent(item.orderNumber)}`,
+          { cache: 'no-store' },
+        );
+        const data = await readResponseJson<{
+          found?: boolean;
+          records?: Array<{
+            customer?: string;
+            phone?: string;
+            date?: string;
+            school?: string;
+          }>;
+          error?: string;
+        }>(response);
+        const reservation = data.records?.[0];
+        if (!response.ok || !data.found || !reservation)
+          throw new Error(
+            `${item.orderNumber}: ${data.error || 'reserva no encontrada'}`,
+          );
+        return {
+          orderNumber: item.orderNumber,
+          customerName: reservation.customer ?? '',
+          orderDate: (reservation.date ?? '').slice(0, 10),
+          phone: reservation.phone ?? '',
+          box: item.box,
+          schoolMismatch: !sameSchool(school, reservation.school ?? ''),
+        };
+      }) as Array<{
         orderNumber: string;
         customerName: string;
         orderDate: string;
         phone: string;
         box: string;
         schoolMismatch: boolean;
-      }> = [];
-      for (let start = 0; start < requested.length; start += 3) {
-        const batch = await Promise.all(
-          requested.slice(start, start + 3).map(async (item) => {
-          if (/^PA/i.test(item.orderNumber)) {
-            const response = await fetch(
-              `/api/search?number=${encodeURIComponent(item.orderNumber)}`,
-              { cache: 'no-store' },
-            );
-            const data = await readResponseJson<{
-              number?: string;
-              dateCreated?: string;
-              customer?: { name?: string; phone?: string; address?: string };
-              schoolCandidates?: string[];
-              error?: string;
-            }>(response);
-            if (!response.ok)
-              throw new Error(
-                `${item.orderNumber}: ${data.error || 'no encontrado'}`,
-              );
-            return {
-              orderNumber: data.number ?? item.orderNumber,
-              customerName: data.customer?.name ?? '',
-              orderDate: (data.dateCreated ?? '').slice(0, 10),
-              phone: data.customer?.phone ?? '',
-              box: item.box,
-              schoolMismatch: !matchesSchoolCandidates(
-                school,
-                data.schoolCandidates || [],
-                schoolOptions,
-              ),
-            };
-          }
-          if (/^I/i.test(item.orderNumber)) {
-            const response = await fetch(
-              `/api/incidents?number=${encodeURIComponent(item.orderNumber)}`,
-              { cache: 'no-store' },
-            );
-            const data = await readResponseJson<{
-              found?: boolean;
-              incident?: {
-                customerName?: string;
-                customerPhone?: string;
-                incidentDate?: string;
-                school?: string;
-                pickupSchoolName?: string;
-              };
-              error?: string;
-            }>(response);
-            if (!response.ok || !data.found || !data.incident)
-              throw new Error(
-                `${item.orderNumber}: ${data.error || 'incidencia no encontrada'}`,
-              );
-            const incidentSchool =
-              data.incident.school || data.incident.pickupSchoolName || '';
-            return {
-              orderNumber: item.orderNumber,
-              customerName: data.incident.customerName ?? '',
-              orderDate: (data.incident.incidentDate ?? '').slice(0, 10),
-              phone: data.incident.customerPhone ?? '',
-              box: item.box,
-              schoolMismatch: !sameSchool(school, incidentSchool),
-            };
-          }
-          const response = await fetch(
-            `/api/monday?number=${encodeURIComponent(item.orderNumber)}`,
-            { cache: 'no-store' },
-          );
-          const data = await readResponseJson<{
-            found?: boolean;
-            records?: Array<{
-              customer?: string;
-              phone?: string;
-              date?: string;
-              school?: string;
-            }>;
-            error?: string;
-          }>(response);
-          const reservation = data.records?.[0];
-          if (!response.ok || !data.found || !reservation)
-            throw new Error(
-              `${item.orderNumber}: ${data.error || 'reserva no encontrada'}`,
-            );
-          return {
-            orderNumber: item.orderNumber,
-            customerName: reservation.customer ?? '',
-            orderDate: (reservation.date ?? '').slice(0, 10),
-            phone: reservation.phone ?? '',
-            box: item.box,
-            schoolMismatch: !sameSchool(school, reservation.school ?? ''),
-          };
-          }),
-        );
-        found.push(...batch);
-      }
+      }>;
       const response = await fetch('/api/packing-lists', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
