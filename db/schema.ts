@@ -260,6 +260,26 @@ export const packingListOrders = sqliteTable(
   ],
 );
 
+export const packingListDrafts = sqliteTable(
+  'packing_list_drafts',
+  {
+    id: text('id').primaryKey(),
+    school: text('school').notNull().default(''),
+    shippingDate: text('shipping_date').notNull(),
+    orderYear: integer('order_year').notNull(),
+    orderMonth: integer('order_month').notNull(),
+    boxes: text('boxes').notNull(),
+    createdByEmail: text('created_by_email').notNull(),
+    createdByName: text('created_by_name').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [
+    index('idx_packing_drafts_updated_at').on(table.updatedAt),
+    index('idx_packing_drafts_school').on(table.school),
+  ],
+);
+
 export const packingActivityLogs = sqliteTable(
   'activity_logs',
   {

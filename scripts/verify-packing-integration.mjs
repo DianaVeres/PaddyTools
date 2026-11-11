@@ -39,6 +39,26 @@ for (const route of [
     throw new Error(`${route} todavía usa el proxy antiguo.`);
 }
 
+const packingDraftRoute = read('app/api/packing-drafts/route.ts');
+const packingPage = read('app/packing-list/page.tsx');
+const packingSchema = read('db/schema.ts');
+const packingDraftMigration = read('drizzle/0010_packing_list_drafts.sql');
+for (const fragment of [
+  'packingListDrafts',
+  'createdByName',
+  'updatedAt',
+])
+  if (!packingSchema.includes(fragment))
+    throw new Error(`Los borradores de PackingList han perdido: ${fragment}`);
+for (const fragment of ['export async function GET', 'export async function POST', 'export async function DELETE', '.onConflictDoUpdate'])
+  if (!packingDraftRoute.includes(fragment))
+    throw new Error(`La API de borradores ha perdido: ${fragment}`);
+for (const fragment of ['/api/packing-drafts', 'Guardar borrador', 'Recuperar borrador'])
+  if (!packingPage.includes(fragment))
+    throw new Error(`La pantalla de PackingList ha perdido: ${fragment}`);
+if (!packingDraftMigration.includes('CREATE TABLE `packing_list_drafts`'))
+  throw new Error('Falta la migración de borradores de PackingList.');
+
 const wooRoutes = [
   'app/api/search/route.ts',
   'app/api/schools/route.ts',

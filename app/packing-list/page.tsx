@@ -89,6 +89,16 @@ type Order = {
 };
 type PackingList = RecordSummary & { orders: Array<Order & { id: string }> };
 type Activity = { id: string; action: 'creado' | 'modificado' | 'eliminado'; entityId: string; description: string; createdAt: string };
+type PackingDraft = {
+  id: string;
+  school: string;
+  shippingDate: string;
+  orderYear: number;
+  orderMonth: number;
+  boxes: string;
+  createdByName: string;
+  updatedAt: string;
+};
 type View = 'create' | 'records' | 'folder' | 'detail' | 'messages' | 'activity';
 type SpeechResultEvent = {
   results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }>;
@@ -173,11 +183,99 @@ export default function Home() {
   const [activity, setActivity] = useState<Activity[]>([]);
   const [packingTimerStarted, setPackingTimerStarted] = useState('');
   const [standalonePrintMode, setStandalonePrintMode] = useState(false);
+  const [drafts, setDrafts] = useState<PackingDraft[]>([]);
+  const [draftSelectionId, setDraftSelectionId] = useState('');
+  const [activeDraftId, setActiveDraftId] = useState('');
 
   useEffect(() => {
     const timer = readAutomaticWork('packing-list-create');
     if (timer) setPackingTimerStarted(timer.startedIso);
   }, []);
+
+  async function loadDrafts() {
+    try {
+      const response = await fetch('/api/packing-drafts', { cache: 'no-store' });
+      const data = await readResponseJson<{
+        drafts?: PackingDraft[];
+        error?: string;
+      }>(response);
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudieron cargar los borradores.');
+      setDrafts(data.drafts || []);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron cargar los borradores.',
+      );
+    }
+  }
+
+  useEffect(() => {
+    void loadDrafts();
+  }, []);
+
+  async function saveDraft() {
+    setLoading(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/packing-drafts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: activeDraftId || undefined,
+          school,
+          shippingDate,
+          orderYear,
+          orderMonth,
+          boxes,
+        }),
+      });
+      const data = await readResponseJson<{ id?: string; error?: string }>(response);
+      if (!response.ok || !data.id)
+        throw new Error(data.error || 'No se pudo guardar el borrador.');
+      setActiveDraftId(data.id);
+      setDraftSelectionId(data.id);
+      await loadDrafts();
+      setMessage('Borrador guardado. Podrás recuperarlo desde cualquier dispositivo.');
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : 'No se pudo guardar el borrador.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function recoverDraft() {
+    const draft = drafts.find((item) => item.id === draftSelectionId);
+    if (!draft) {
+      setMessage('Selecciona el borrador que quieres recuperar.');
+      return;
+    }
+    selectPackingSchool(draft.school);
+    setShippingDate(draft.shippingDate);
+    setOrderYear(draft.orderYear);
+    setOrderMonth(draft.orderMonth);
+    setBoxes(draft.boxes);
+    setActiveDraftId(draft.id);
+    setMessage(`Borrador de ${draft.school || 'PackingList sin colegio'} recuperado.`);
+  }
+
+  async function deleteDraft(id: string, showMessage = true) {
+    if (!id) return;
+    const response = await fetch(
+      `/api/packing-drafts?id=${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
+    );
+    const data = await readResponseJson<{ error?: string }>(response);
+    if (!response.ok)
+      throw new Error(data.error || 'No se pudo eliminar el borrador.');
+    if (activeDraftId === id) setActiveDraftId('');
+    if (draftSelectionId === id) setDraftSelectionId('');
+    await loadDrafts();
+    if (showMessage) setMessage('Borrador descartado.');
+  }
 
   function selectPackingSchool(nextSchool: string) {
     setSchool(nextSchool);
@@ -823,7 +921,15 @@ export default function Home() {
       if (!response.ok || !saved.id)
         throw new Error(saved.error || 'No se pudo guardar.');
       await openPackingList(saved.id);
-      setMessage('PackingList generado y archivado automáticamente.');
+      let draftWarning = '';
+      if (activeDraftId) {
+        try {
+          await deleteDraft(activeDraftId, false);
+        } catch {
+          draftWarning = ' El borrador no pudo eliminarse automáticamente.';
+        }
+      }
+      setMessage(`PackingList generado y archivado automáticamente.${draftWarning}`);
       try {
         await completeAutomaticWork('packing-list-create', {
           orders: found.length,
@@ -965,6 +1071,58 @@ export default function Home() {
             </div>
           </div>
           <form className="packing-form" onSubmit={generate}>
+            <div className="draft-tools">
+              <label>
+                <span>Continuar un PackingList pendiente</span>
+                <select
+                  value={draftSelectionId}
+                  onChange={(event) => setDraftSelectionId(event.target.value)}
+                >
+                  <option value="">Selecciona un borrador guardado</option>
+                  {drafts.map((draft) => (
+                    <option key={draft.id} value={draft.id}>
+                      {draft.school || 'Sin colegio'} · {draft.createdByName} ·{' '}
+                      {new Date(draft.updatedAt).toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={recoverDraft}
+                disabled={!draftSelectionId || loading}
+              >
+                <Archive /> Recuperar borrador
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void saveDraft()}
+                disabled={loading}
+              >
+                <Save /> {activeDraftId ? 'Actualizar borrador' : 'Guardar borrador'}
+              </Button>
+              {activeDraftId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="discard-draft"
+                  onClick={() => {
+                    if (window.confirm('¿Descartar este borrador de PackingList?'))
+                      void deleteDraft(activeDraftId);
+                  }}
+                  disabled={loading}
+                >
+                  <Trash2 /> Descartar
+                </Button>
+              )}
+            </div>
             <div className="form-grid">
               <label>
                 <span>Colegio</span>

@@ -180,6 +180,35 @@ button {
   padding: 27px;
   box-shadow: 0 5px 18px rgba(24, 48, 75, 0.06);
 }
+.draft-tools {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto auto auto;
+  align-items: end;
+  gap: 9px;
+  margin: -5px 0 22px;
+  padding: 13px;
+  border: 1px solid #cddbea;
+  border-radius: 12px;
+  background: #f5f8fb;
+}
+.draft-tools label {
+  min-width: 0;
+}
+.draft-tools select {
+  width: 100%;
+  min-width: 0;
+}
+.draft-tools button {
+  min-height: 40px;
+  white-space: nowrap;
+}
+.draft-tools button svg {
+  width: 17px;
+}
+.draft-tools .discard-draft {
+  border-color: #e6b5af;
+  color: #a83b2f;
+}
 .form-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr 1fr 1fr;
@@ -875,6 +904,12 @@ button {
   min-width: 220px;
 }
 @media (max-width: 820px) {
+  .draft-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+  .draft-tools label {
+    grid-column: 1 / -1;
+  }
   .form-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -918,6 +953,15 @@ button {
   }
 }
 @media (max-width: 650px) {
+  .draft-tools {
+    grid-template-columns: 1fr;
+  }
+  .draft-tools label {
+    grid-column: 1;
+  }
+  .draft-tools button {
+    width: 100%;
+  }
   .app-header {
     padding: 10px 14px;
     align-items: stretch;
