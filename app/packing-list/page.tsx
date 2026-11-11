@@ -382,7 +382,57 @@ export default function Home() {
       setLoading(false);
     }
   }
-  // Abre un PackingList y recalcula los PA antiguos para corregir falsos rojos.
+  // Revisa en segundo plano únicamente los PA guardados como discrepancia.
+  // La revisión no bloquea la apertura del PackingList desde el registro.
+  async function refreshStoredSchoolMismatches(data: PackingList) {
+    const pendingIndexes = data.orders
+      .map((order, index) => ({ order, index }))
+      .filter(
+        ({ order }) =>
+          order.schoolMismatch && /^PA/i.test(order.orderNumber.trim()),
+      );
+    if (!pendingIndexes.length) return;
+
+    const refreshedOrders = [...data.orders];
+    for (let start = 0; start < pendingIndexes.length; start += 4) {
+      const batch = pendingIndexes.slice(start, start + 4);
+      const results = await Promise.all(
+        batch.map(async ({ order, index }) => {
+          try {
+            const lookup = await fetch(
+              `/api/search?number=${encodeURIComponent(order.orderNumber)}`,
+              { cache: 'no-store' },
+            );
+            const result = await readResponseJson<{
+              schoolCandidates?: string[];
+            }>(lookup);
+            if (!lookup.ok) return { index, order };
+            return {
+              index,
+              order: {
+                ...order,
+                schoolMismatch: !matchesSchoolCandidates(
+                  data.school,
+                  result.schoolCandidates || [],
+                  schoolOptions,
+                ),
+              },
+            };
+          } catch {
+            return { index, order };
+          }
+        }),
+      );
+      for (const result of results)
+        refreshedOrders[result.index] = result.order;
+    }
+
+    setSelected((current) =>
+      current?.id === data.id ? { ...current, orders: refreshedOrders } : current,
+    );
+  }
+
+  // Abre un PackingList inmediatamente con los datos guardados.
   async function openPackingList(id: string, editAfter = false) {
     setLoading(true);
     setMessage('');
@@ -393,37 +443,11 @@ export default function Home() {
       );
       const data = await readResponseJson<PackingList & { error?: string }>(response);
       if (!response.ok) throw new Error(data.error || 'No se pudo abrir el PackingList.');
-      // Los registros creados antes de mejorar la identificación del colegio
-      // guardaron muchos PA como discrepancia. Los comprobamos de nuevo al
-      // abrirlos para que el color refleje los datos actuales de WooCommerce.
-      const refreshedOrders = await Promise.all(
-        data.orders.map(async (order) => {
-          if (!/^PA/i.test(order.orderNumber)) return order;
-          try {
-            const lookup = await fetch(
-              `/api/search?number=${encodeURIComponent(order.orderNumber)}`,
-              { cache: 'no-store' },
-            );
-            const result = await readResponseJson<{ schoolCandidates?: string[] }>(lookup);
-            if (!lookup.ok) return order;
-            return {
-              ...order,
-              schoolMismatch: !matchesSchoolCandidates(
-                data.school,
-                result.schoolCandidates || [],
-                schoolOptions,
-              ),
-            };
-          } catch {
-            return order;
-          }
-        }),
-      );
-      const refreshed = { ...data, orders: refreshedOrders };
-      setSelected(refreshed);
-      setDraft(structuredClone(refreshed));
+      setSelected(data);
+      setDraft(structuredClone(data));
       setEditing(editAfter);
       setView('detail');
+      if (!editAfter) void refreshStoredSchoolMismatches(data);
     } catch (error) {
       setMessage(
         error instanceof Error
