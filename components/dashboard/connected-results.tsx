@@ -2,12 +2,14 @@ import { IncidentCard } from '@/components/dashboard/incident-card';
 import { CreateIncidentButton } from '@/components/dashboard/create-incident-button';
 import { MondayCards } from '@/components/dashboard/monday-cards';
 import { ReservationNotesCard } from '@/components/dashboard/reservation-notes-card';
+import { HotlineContactsCard } from '@/components/dashboard/hotline-contacts-card';
 import type {
   DashboardMondayRecord as MondayRecord,
   MondayUpdate,
 } from '@/lib/dashboard-types';
 import type { IncidentRecord as Incident } from '@/lib/incident-record';
 import type { OrderNoteRecord as OrderNote } from '@/lib/order-note';
+import type { HotlineOrderContact } from '@/lib/hotline-order-history';
 
 export function ConnectedResults({
   incident,
@@ -27,6 +29,9 @@ export function ConnectedResults({
   onSaveNote,
   onDeleteNote,
   onCreateIncident,
+  hotlineContacts,
+  hotlineLoading,
+  hotlineError,
 }: {
   incident: Incident | null;
   mondayRecords: MondayRecord[];
@@ -48,6 +53,9 @@ export function ConnectedResults({
   onSaveNote: () => void;
   onDeleteNote: (note: OrderNote) => void;
   onCreateIncident: () => void;
+  hotlineContacts: HotlineOrderContact[];
+  hotlineLoading: boolean;
+  hotlineError: string;
 }) {
   return (
     <div className="workspace">
@@ -75,19 +83,26 @@ export function ConnectedResults({
         onEmailReservation={onEmailReservation}
       />
       {mondayRecords.some((record) => record.kind === 'reserva') && (
-        <ReservationNotesCard
-          notes={notes}
-          loading={notesLoading}
-          mondayUpdates={mondayUpdates}
-          mondayLoading={mondayUpdatesLoading}
-          kind={noteKind}
-          draft={noteDraft}
-          deletingId={noteDeletingId}
-          onKindChange={onNoteKindChange}
-          onDraftChange={onNoteDraftChange}
-          onSave={onSaveNote}
-          onDelete={onDeleteNote}
-        />
+        <>
+          <ReservationNotesCard
+            notes={notes}
+            loading={notesLoading}
+            mondayUpdates={mondayUpdates}
+            mondayLoading={mondayUpdatesLoading}
+            kind={noteKind}
+            draft={noteDraft}
+            deletingId={noteDeletingId}
+            onKindChange={onNoteKindChange}
+            onDraftChange={onNoteDraftChange}
+            onSave={onSaveNote}
+            onDelete={onDeleteNote}
+          />
+          <HotlineContactsCard
+            contacts={hotlineContacts}
+            loading={hotlineLoading}
+            error={hotlineError}
+          />
+        </>
       )}
     </div>
   );

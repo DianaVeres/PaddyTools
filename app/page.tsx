@@ -151,9 +151,14 @@ export default function Home() {
   const [hotlineContacts, setHotlineContacts] = useState<HotlineOrderContact[]>([]);
   const [hotlineLoading, setHotlineLoading] = useState(false);
   const [hotlineError, setHotlineError] = useState('');
+  const hotlineReference =
+    order?.number ||
+    mondayRecords.find((record) => record.kind === 'reserva')?.reference ||
+    incident?.orderNumber ||
+    '';
 
   useEffect(() => {
-    if (!order?.number) {
+    if (!hotlineReference) {
       setHotlineContacts([]);
       setHotlineError('');
       setHotlineLoading(false);
@@ -162,7 +167,7 @@ export default function Home() {
     let current = true;
     setHotlineLoading(true);
     setHotlineError('');
-    void fetchHotlineContacts(order.number)
+    void fetchHotlineContacts(hotlineReference)
       .then((contacts) => {
         if (current) setHotlineContacts(contacts);
       })
@@ -180,7 +185,7 @@ export default function Home() {
     return () => {
       current = false;
     };
-  }, [order?.number]);
+  }, [hotlineReference]);
 
   useEffect(() => {
     void fetchSessionUser()
@@ -1296,6 +1301,9 @@ export default function Home() {
           onSaveNote={() => void saveOrderNote()}
           onDeleteNote={(note) => void deleteOrderNote(note)}
           onCreateIncident={openIncidentWorkspace}
+          hotlineContacts={hotlineContacts}
+          hotlineLoading={hotlineLoading}
+          hotlineError={hotlineError}
         />
       )}
       {ticket && <StoreTicketCard ticket={ticket} />}

@@ -7,6 +7,10 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const connected = readFileSync(
+  resolve(root, 'components/dashboard/connected-results.tsx'),
+  'utf8',
+);
 const connectedResults = readFileSync(
   resolve(root, 'components/dashboard/connected-results.tsx'),
   'utf8',
@@ -35,3 +39,15 @@ if (page.includes('function ReservationNotesCard('))
   throw new Error('La pantalla ha recuperado una tarjeta duplicada de notas.');
 
 console.log('Tarjeta de notas de reserva verificada.');
+
+for (const fragment of [
+  'HotlineContactsCard',
+  'contacts={hotlineContacts}',
+  'loading={hotlineLoading}',
+  'error={hotlineError}',
+]) {
+  if (!connected.includes(fragment))
+    throw new Error(`Las reservas han perdido su historial de Hotline: ${fragment}`);
+}
+if (!page.includes("mondayRecords.find((record) => record.kind === 'reserva')?.reference"))
+  throw new Error('Hotline no consulta la referencia de las reservas.');
