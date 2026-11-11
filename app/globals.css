@@ -1056,6 +1056,7 @@ a {
     calc(-50% + var(--reservation-drag-y, 0px)) !important;
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
 }
 .reservation-drag-handle {
@@ -1109,11 +1110,12 @@ a {
   margin-top: 5px;
 }
 .form-grid.two {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 .field {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 6px;
 }
 .field > span {
@@ -1124,6 +1126,9 @@ a {
 .field input,
 .field textarea,
 .field select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid #d6dee6;
   border-radius: 8px;
   background: #fff;
@@ -1138,7 +1143,14 @@ a {
 .customer-picker {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
   gap: 8px;
+}
+.customer-picker > * {
+  min-width: 0;
+}
+.reservation-grid > * {
+  min-width: 0;
 }
 .form-grid > .field:nth-child(5):last-of-type,
 .form-grid.two > .field:last-child {

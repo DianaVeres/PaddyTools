@@ -7,6 +7,7 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const styles = readFileSync(resolve(root, 'app/globals.css'), 'utf8');
 
 for (const fragment of [
   'ReservationCustomerSection',
@@ -40,3 +41,12 @@ for (const fragment of [
 }
 
 console.log('Formulario completo de reservas verificado.');
+
+for (const fragment of [
+  'grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)',
+  '.reservation-grid > *',
+  'overflow-x: hidden',
+]) {
+  if (!styles.includes(fragment))
+    throw new Error(`El formulario de reservas puede volver a desbordarse: ${fragment}`);
+}
