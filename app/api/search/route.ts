@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
         ),
       });
 
-    const order = await loadWooOrderDetail(number as string, config);
+    const order = await loadWooOrderDetail(number as string, config, {
+      summaryOnly: request.nextUrl.searchParams.get('summary') === '1',
+    });
     if (!order)
       return NextResponse.json(
         { error: `No se encontró el pedido ${number}.` },

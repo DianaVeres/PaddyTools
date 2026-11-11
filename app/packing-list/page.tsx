@@ -712,10 +712,10 @@ export default function Home() {
     }
     setLoading(true);
     try {
-      const found = await mapWithConcurrency(requested, 8, async (item) => {
+      const found = await mapWithConcurrency(requested, 6, async (item) => {
         if (/^PA/i.test(item.orderNumber)) {
           const response = await fetch(
-            `/api/search?number=${encodeURIComponent(item.orderNumber)}`,
+            `/api/search?number=${encodeURIComponent(item.orderNumber)}&summary=1`,
             { cache: 'no-store' },
           );
           const data = await readResponseJson<{

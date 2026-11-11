@@ -114,6 +114,7 @@ export function wooOrderSchoolCandidates(order: WooOrder) {
 export async function loadWooOrderDetail(
   exactNumber: string,
   config: Record<string, string>,
+  options: { summaryOnly?: boolean } = {},
 ) {
   let order: WooOrder | undefined;
   if (/^\d+$/.test(exactNumber)) {
@@ -133,6 +134,11 @@ export async function loadWooOrderDetail(
       matches.find((item) => String(item.number) === exactNumber) ?? matches[0];
   }
   if (!order) return null;
+
+  // PackingList solo necesita cliente, fecha y colegio. Evitamos solicitar de
+  // nuevo el pedido completo y sus notas para no sobrecargar WooCommerce al
+  // generar listas con muchas referencias.
+  if (options.summaryOnly) return formatWooOrderDetail(order, [], config);
 
   // La colección puede omitir metadatos protegidos. La lectura completa con
   // context=edit mantiene sincronizado el check de devolución atendida.
