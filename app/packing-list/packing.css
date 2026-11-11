@@ -547,6 +547,37 @@ button {
 .detail-actions .back-link {
   margin: 0;
 }
+.standalone-print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid #cbd8e5;
+  border-radius: 12px;
+  background: #f3f6f9;
+  box-shadow: 0 5px 18px rgba(25, 45, 70, 0.12);
+}
+.standalone-print-toolbar > [data-slot='button'] {
+  min-height: 48px;
+  white-space: normal;
+}
+.standalone-print-toolbar small {
+  grid-column: 1 / -1;
+  color: #526579;
+  line-height: 1.4;
+}
+.standalone-print-mode .app-header,
+.standalone-print-mode .detail-actions,
+.standalone-print-mode .message {
+  display: none;
+}
+.standalone-print-mode .detail-page {
+  padding-top: 10px;
+}
 .packing-sheet {
   background: #fff;
   padding: 38px;
@@ -997,6 +1028,12 @@ button {
     height: auto;
     min-height: 42px;
     white-space: normal;
+  }
+  .standalone-print-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .standalone-print-toolbar small {
+    grid-column: 1;
   }
   .message-actions {
     flex-wrap: wrap;

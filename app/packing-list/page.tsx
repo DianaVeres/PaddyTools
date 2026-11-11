@@ -136,6 +136,16 @@ function isAppleMobileDevice() {
   );
 }
 
+function isStandaloneWebApp() {
+  const standaloneNavigator = navigator as Navigator & {
+    standalone?: boolean;
+  };
+  return (
+    standaloneNavigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches
+  );
+}
+
 // Componente principal: controla las vistas, el formulario, las consultas a
 // WooCommerce/Monday/Incidencias, el archivo y la impresión.
 export default function Home() {
@@ -162,6 +172,7 @@ export default function Home() {
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [packingTimerStarted, setPackingTimerStarted] = useState('');
+  const [standalonePrintMode, setStandalonePrintMode] = useState(false);
 
   useEffect(() => {
     const timer = readAutomaticWork('packing-list-create');
@@ -283,6 +294,12 @@ export default function Home() {
   }
 
   function printSelectedPackingList() {
+    if (isAppleMobileDevice() && isStandaloneWebApp()) {
+      setStandalonePrintMode(true);
+      setMessage('');
+      return;
+    }
+
     if (!isAppleMobileDevice()) {
       window.print();
       return;
@@ -882,7 +899,9 @@ export default function Home() {
 
   // INTERFAZ: cada bloque se muestra únicamente en la vista correspondiente.
   return (
-    <main className="app-shell">
+    <main
+      className={`app-shell${standalonePrintMode ? ' standalone-print-mode' : ''}`}
+    >
       <header className="app-header">
         <button
           className="brand"
@@ -1360,6 +1379,23 @@ export default function Home() {
       {/* Detalle, edición, descarga e impresión del PackingList seleccionado. */}
       {view === 'detail' && selected && (
         <section className="page detail-page">
+          {standalonePrintMode && !editing && (
+            <div className="standalone-print-toolbar no-print">
+              <Button onClick={() => window.print()}>
+                <Printer /> Abrir impresión del iPhone
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setStandalonePrintMode(false)}
+              >
+                <ArrowLeft /> Volver al PackingList
+              </Button>
+              <small>
+                Pulsa “Abrir impresión del iPhone” y elige tu impresora
+                AirPrint o guarda el documento como PDF.
+              </small>
+            </div>
+          )}
           <div className="detail-actions no-print">
             <button
               className="back-link"
@@ -1367,6 +1403,7 @@ export default function Home() {
                 setSelectedSchool(selected.school);
                 setView('folder');
                 setEditing(false);
+                setStandalonePrintMode(false);
               }}
             >
               <ArrowLeft /> {selected.school}
