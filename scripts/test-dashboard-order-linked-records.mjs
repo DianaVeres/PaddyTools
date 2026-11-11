@@ -34,7 +34,7 @@ for (const prop of [
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a los registros conectados: ${prop}`);
 }
-for (const fragment of ['fetchHotlineContacts(order.number)', "'/api/hotline/cases'"])
+for (const fragment of ['fetchHotlineContacts(hotlineReference)', "'/api/hotline/cases'"])
   if (!page.includes(fragment) && !readFileSync(resolve(root, 'lib/dashboard-api.ts'), 'utf8').includes(fragment))
     throw new Error(`La ficha no consulta Hotline: ${fragment}`);
 for (const fragment of ['hotlineContactMatchesOrder', 'RPA', 'IPA', 'PA'])
