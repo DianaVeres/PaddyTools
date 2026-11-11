@@ -6,6 +6,7 @@ import {
   storedHotlineReply,
   withSpanishHotlineInstruction,
 } from '../lib/hotline-language.ts';
+import { historicalHotlineReferences } from '../lib/hotline-backfill.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (path) => readFileSync(resolve(root, path), 'utf8');
@@ -40,15 +41,21 @@ for (const fragment of [
   'const reference = orderReference.trim().toUpperCase()',
   'asunto: savedSubject',
   "? `[${reference}] ${subject.trim() || 'Contacto Hotline'}`",
-  "fetch('/api/order-notes'",
-  'orderNumber: reference',
-  'Mensaje recibido:\\n${savedIncoming}',
-  'Respuesta enviada:\\n${savedReply}',
-  'Mensaje añadido a las notas del pedido.',
+  'Contacto guardado y vinculado en el bloque Hotline.',
 ]) {
   if (!page.includes(fragment))
     throw new Error(`El módulo Hotline ha perdido: ${fragment}`);
 }
+if (page.includes("fetch('/api/order-notes'"))
+  throw new Error('Hotline no debe duplicar sus contactos en Notas de seguimiento.');
+const historicalReferences = historicalHotlineReferences({
+  asunto: 'Consulta PA 51206 y reserva 11575',
+  consulta: 'También pregunta por IPA-46505 y RPA 49955.',
+  respuesta: 'Respondido sobre pedido 50456.',
+});
+for (const reference of ['PA51206', 'R11575', 'IPA46505', 'RPA49955', 'PA50456'])
+  if (!historicalReferences.includes(reference))
+    throw new Error(`Hotline no recupera la referencia antigua ${reference}.`);
 const dashboard = read('app/page.tsx');
 for (const fragment of ["initialParams.get('order')", 'await search(undefined, initialOrder)'])
   if (!dashboard.includes(fragment))

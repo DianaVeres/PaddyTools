@@ -244,38 +244,6 @@ export default function HotlinePage() {
       });
       const data = await readJson<{ error?: string }>(response);
       if (!response.ok) throw new Error(data.error || 'No se pudo guardar el contacto.');
-      let noteWarning = '';
-      if (reference) {
-        try {
-          const noteResponse = await fetch('/api/order-notes', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              orderNumber: reference,
-              kind: email.trim() ? 'email' : 'nota',
-              content: [
-                email.trim()
-                  ? 'Email gestionado desde Hotline'
-                  : 'WhatsApp gestionado desde Hotline',
-                `Mensaje recibido:\n${savedIncoming}`,
-                `Respuesta enviada:\n${savedReply}`,
-              ].join('\n\n'),
-            }),
-          });
-          const noteData = await readJson<{ error?: string }>(noteResponse);
-          if (!noteResponse.ok)
-            throw new Error(
-              noteData.error || 'No se pudo guardar la nota del pedido.',
-            );
-        } catch (error) {
-          console.error(
-            'El contacto se guardó, pero no se pudo vincular a las notas.',
-            error,
-          );
-          noteWarning =
-            ' El contacto se guardó, pero no pudo añadirse a las notas del pedido.';
-        }
-      }
       let timingWarning = '';
       try {
         await completeAutomaticWork(HOTLINE_TIMER_KEY, {
@@ -297,9 +265,7 @@ export default function HotlinePage() {
       setCategory('General');
       setKind('Consulta');
       setSubject(savedSubject);
-      setNotice(
-        `Contacto guardado.${reference && !noteWarning ? ' Mensaje añadido a las notas del pedido.' : ''} Puedes continuar el mismo caso.${noteWarning}${timingWarning}`,
-      );
+      setNotice(`Contacto guardado y vinculado en el bloque Hotline.${timingWarning}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No se pudo guardar.');
     } finally {

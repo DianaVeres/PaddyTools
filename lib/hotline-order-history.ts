@@ -1,3 +1,5 @@
+import { historicalHotlineReferences } from '@/lib/hotline-backfill';
+
 export type HotlineOrderContact = {
   id?: string;
   fecha: string;
@@ -9,11 +11,6 @@ export type HotlineOrderContact = {
   siguiente_paso: string;
   procedimiento: string;
 };
-
-const compactReferences = (text: string) =>
-  text
-    .toUpperCase()
-    .replace(/(RPA|IPA|PA|R)[\s#-]+(?=\d)/g, '$1');
 
 export function hotlineContactMatchesOrder(
   contact: HotlineOrderContact,
@@ -28,13 +25,8 @@ export function hotlineContactMatchesOrder(
     candidates.add(`IPA${prefixed[2]}`);
     candidates.add(`RPA${prefixed[2]}`);
   }
-  const text = compactReferences(
-    [contact.asunto, contact.consulta, contact.respuesta, contact.siguiente_paso]
-      .filter(Boolean)
-      .join(' '),
-  );
-  return [...candidates].some((reference) =>
-    new RegExp(`(^|[^A-Z0-9])${reference}(?![A-Z0-9])`).test(text),
+  return historicalHotlineReferences(contact).some((reference) =>
+    candidates.has(reference),
   );
 }
 
