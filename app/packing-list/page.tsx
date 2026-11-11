@@ -313,13 +313,20 @@ export default function Home() {
         </head>
         <body>
           <div class="iphone-print-toolbar">
-            <button type="button" onclick="window.print()">Imprimir / guardar PDF</button>
+            <button id="iphone-print-button" type="button">Imprimir / guardar PDF</button>
             <small>En el menú del iPhone puedes elegir una impresora AirPrint o guardar y compartir el documento como PDF.</small>
           </div>
           ${sheet.outerHTML}
         </body>
       </html>`);
     printWindow.document.close();
+    const printButton = printWindow.document.getElementById(
+      'iphone-print-button',
+    );
+    printButton?.addEventListener('click', () => {
+      printWindow.focus();
+      printWindow.print();
+    });
     printWindow.opener = null;
   }
 
