@@ -377,7 +377,7 @@ export default function Home() {
       to: record.customerEmail || '',
       phone: record.phone || '',
       customerName: record.customer || 'cliente',
-      recordKind: 'reserva',
+      recordKind: record.kind,
       reference: record.reference || record.id,
       school: record.school || '',
       delivery,
@@ -987,7 +987,9 @@ export default function Home() {
         ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}/${rawDate.slice(0, 4)}`
         : rawDate;
       printStandaloneLabel([
-        `RESERVA ${record.reference}`,
+        record.kind === 'reserva'
+          ? `RESERVA ${record.reference || record.id}`
+          : `PRENDA ESPECIAL ID ${record.id}`,
         `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
         `FECHA: ${shownDate}`,
         `COLEGIO: ${record.school || 'SIN COLEGIO'}`,

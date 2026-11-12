@@ -16,12 +16,15 @@ const orderLinkedRecords = readFileSync(
 for (const fragment of [
   'MondayCards', 'record.reference', 'record.customer', 'record.phone',
   'record.school', 'record.articleDescription', 'record.specialDetails',
+  'Prenda especial · ID ${record.id}',
   "onPrintReservation(record, 'label')", "onPrintReservation(record, 'card')",
   'onEmailReservation(record)',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Las tarjetas de Monday han perdido: ${fragment}`);
 }
+if (component.includes("record.kind === 'reserva' && (\n              <div className=\"reservation-card-actions\""))
+  throw new Error('Las acciones de Monday vuelven a estar limitadas a las reservas.');
 if (!page.includes("@/components/dashboard/connected-results"))
   throw new Error('La pantalla no usa los resultados conectados compartidos.');
 for (const wrapper of [connectedResults, orderLinkedRecords]) {

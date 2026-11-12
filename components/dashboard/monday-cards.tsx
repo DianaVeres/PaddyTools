@@ -20,7 +20,9 @@ export function MondayCards({
             <div className="section-head">
               <div>
                 <span className="linked-type">
-                  {record.kind === 'reserva' ? `Reserva nº ${record.reference || record.id}` : `Monday · ${record.board}`}
+                  {record.kind === 'reserva'
+                    ? `Reserva nº ${record.reference || record.id}`
+                    : `Prenda especial · ID ${record.id}`}
                 </span>
                 <h3>{record.article || record.specialDetails || (record.kind === 'reserva' ? 'Reserva registrada' : 'Prenda especial')}</h3>
               </div>
@@ -39,13 +41,11 @@ export function MondayCards({
               {record.specialDetails && <div className="wide"><dt>Datos de la prenda especial</dt><dd>{record.specialDetails}</dd></div>}
               {record.observations && <div className="wide"><dt>Observaciones</dt><dd>{record.observations}</dd></div>}
             </dl>
-            {record.kind === 'reserva' && (
-              <div className="reservation-card-actions">
-                <Button variant="outline" onClick={() => onPrintReservation(record, 'label')}><Tag /> Imprimir etiqueta</Button>
-                <Button onClick={() => onPrintReservation(record, 'card')}><Printer /> Imprimir</Button>
-                <Button variant="outline" onClick={() => onEmailReservation(record)}><Mail /> Preparar email</Button>
-              </div>
-            )}
+            <div className="reservation-card-actions">
+              <Button variant="outline" onClick={() => onPrintReservation(record, 'label')}><Tag /> Imprimir etiqueta</Button>
+              <Button onClick={() => onPrintReservation(record, 'card')}><Printer /> Imprimir</Button>
+              <Button variant="outline" onClick={() => onEmailReservation(record)}><Mail /> Preparar email</Button>
+            </div>
           </div>
         </article>
       ))}

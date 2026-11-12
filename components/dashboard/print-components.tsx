@@ -124,18 +124,20 @@ export function IncidentDocument({ incident }: { incident: Incident }) {
 }
 
 export function ReservationPrintCard({ record }: { record: MondayRecord }) {
+  const isReservation = record.kind === 'reserva';
+  const shownReference = record.reference || record.id || 'No indicado';
   return (
     <article className="reservation-print-card">
       <div className="reservation-print-accent">
         <CalendarDays />
       </div>
       <div className="reservation-print-content">
-        <span>MONDAY · REGISTRO RESERVAS</span>
-        <h2>Reserva {record.reference || record.id || 'registrada'}</h2>
+        <span>{isReservation ? 'MONDAY · REGISTRO RESERVAS' : 'MONDAY · PRENDAS ESPECIALES'}</span>
+        <h2>{isReservation ? `Reserva ${shownReference}` : `Prenda especial · ID ${record.id}`}</h2>
         <dl>
           <div>
-            <dt>Número de reserva</dt>
-            <dd>{record.reference || record.id || 'No indicado'}</dd>
+            <dt>{isReservation ? 'Número de reserva' : 'ID de Monday'}</dt>
+            <dd>{isReservation ? shownReference : record.id}</dd>
           </div>
           <div>
             <dt>Estado</dt>
@@ -199,7 +201,9 @@ export function ReservationPrintCard({ record }: { record: MondayRecord }) {
 
 export function ReservationLabel({ record }: { record: MondayRecord }) {
   const lines = [
-    `RESERVA ${record.reference}`,
+    record.kind === 'reserva'
+      ? `RESERVA ${record.reference || record.id}`
+      : `PRENDA ESPECIAL ID ${record.id}`,
     `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
     `FECHA: ${printDate(record.updatedAt)}`,
     `COLEGIO: ${record.school || 'SIN COLEGIO'}`,

@@ -1,7 +1,7 @@
 import { foldSearchText } from './global-search.ts';
 
 export type DeliveryEmailKind = 'colegio' | 'domicilio' | 'tienda';
-export type DeliveryRecordKind = 'pedido' | 'reserva' | 'incidencia';
+export type DeliveryRecordKind = 'pedido' | 'reserva' | 'prenda' | 'incidencia';
 export type DeliveryEmailDraft = {
   to: string;
   phone: string;
@@ -19,8 +19,10 @@ export type DeliveryEmailDraft = {
 function recordKindLabel(kind: DeliveryRecordKind) {
   return kind === 'pedido'
     ? { lower: 'pedido', title: 'Pedido', prepared: 'preparado', sent: 'enviado' }
-    : kind === 'reserva'
-      ? { lower: 'reserva', title: 'Reserva', prepared: 'preparada', sent: 'enviada' }
+    : kind === 'reserva' || kind === 'prenda'
+      ? kind === 'reserva'
+        ? { lower: 'reserva', title: 'Reserva', prepared: 'preparada', sent: 'enviada' }
+        : { lower: 'prenda especial', title: 'Prenda especial', prepared: 'preparada', sent: 'enviada' }
       : {
           lower: 'incidencia',
           title: 'Incidencia',

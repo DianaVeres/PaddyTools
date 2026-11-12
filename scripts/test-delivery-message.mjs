@@ -44,4 +44,15 @@ assert.equal(incidentDraft.subject, 'Incidencia R10692 preparada');
 assert.match(incidentDraft.body, /Su incidencia R10692 está preparada/);
 assert.doesNotMatch(incidentDraft.body, /Su pedido/);
 
+const specialGarmentDraft = createDeliveryEmailDraft({
+  ...base,
+  recordKind: 'prenda',
+  reference: '9876543210',
+});
+assert.equal(
+  specialGarmentDraft.subject,
+  'Prenda especial 9876543210 preparada',
+);
+assert.match(specialGarmentDraft.body, /prenda especial 9876543210/);
+
 console.log('Mensajes de entrega verificados.');

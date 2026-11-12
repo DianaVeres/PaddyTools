@@ -29,6 +29,8 @@ for (const fragment of [
   'Colegio sin indicar',
   'Producto seleccionado del catálogo:',
   'MONDAY · REGISTRO RESERVAS',
+  'MONDAY · PRENDAS ESPECIALES',
+  'PRENDA ESPECIAL ID',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los impresos del panel han perdido: ${fragment}`);
