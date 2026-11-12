@@ -133,11 +133,11 @@ export function ReservationPrintCard({ record }: { record: MondayRecord }) {
       </div>
       <div className="reservation-print-content">
         <span>{isReservation ? 'MONDAY · REGISTRO RESERVAS' : 'MONDAY · PRENDAS ESPECIALES'}</span>
-        <h2>{isReservation ? `Reserva ${shownReference}` : `Prenda especial · ID ${record.id}`}</h2>
+        <h2>{isReservation ? `Reserva ${shownReference}` : `Prenda especial · ID ${shownReference}`}</h2>
         <dl>
           <div>
-            <dt>{isReservation ? 'Número de reserva' : 'ID de Monday'}</dt>
-            <dd>{isReservation ? shownReference : record.id}</dd>
+            <dt>{isReservation ? 'Número de reserva' : 'Número de prenda especial'}</dt>
+            <dd>{shownReference}</dd>
           </div>
           <div>
             <dt>Estado</dt>
@@ -203,7 +203,7 @@ export function ReservationLabel({ record }: { record: MondayRecord }) {
   const lines = [
     record.kind === 'reserva'
       ? `RESERVA ${record.reference || record.id}`
-      : `PRENDA ESPECIAL ID ${record.id}`,
+      : `PRENDA ESPECIAL ${record.reference || record.id}`,
     `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
     `FECHA: ${printDate(record.updatedAt)}`,
     `COLEGIO: ${record.school || 'SIN COLEGIO'}`,

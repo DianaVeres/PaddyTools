@@ -22,7 +22,7 @@ export function MondayCards({
                 <span className="linked-type">
                   {record.kind === 'reserva'
                     ? `Reserva nº ${record.reference || record.id}`
-                    : `Prenda especial · ID ${record.id}`}
+                    : `Prenda especial · ID ${record.reference || record.id}`}
                 </span>
                 <h3>{record.article || record.specialDetails || (record.kind === 'reserva' ? 'Reserva registrada' : 'Prenda especial')}</h3>
               </div>

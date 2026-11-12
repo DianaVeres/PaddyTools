@@ -30,7 +30,7 @@ for (const fragment of [
   'Producto seleccionado del catálogo:',
   'MONDAY · REGISTRO RESERVAS',
   'MONDAY · PRENDAS ESPECIALES',
-  'PRENDA ESPECIAL ID',
+  'PRENDA ESPECIAL ${record.reference || record.id}',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Los impresos del panel han perdido: ${fragment}`);

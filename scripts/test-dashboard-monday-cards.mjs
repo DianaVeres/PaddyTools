@@ -16,7 +16,7 @@ const orderLinkedRecords = readFileSync(
 for (const fragment of [
   'MondayCards', 'record.reference', 'record.customer', 'record.phone',
   'record.school', 'record.articleDescription', 'record.specialDetails',
-  'Prenda especial · ID ${record.id}',
+  'Prenda especial · ID ${record.reference || record.id}',
   "onPrintReservation(record, 'label')", "onPrintReservation(record, 'card')",
   'onEmailReservation(record)',
 ]) {

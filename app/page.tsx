@@ -989,7 +989,7 @@ export default function Home() {
       printStandaloneLabel([
         record.kind === 'reserva'
           ? `RESERVA ${record.reference || record.id}`
-          : `PRENDA ESPECIAL ID ${record.id}`,
+          : `PRENDA ESPECIAL ${record.reference || record.id}`,
         `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
         `FECHA: ${shownDate}`,
         `COLEGIO: ${record.school || 'SIN COLEGIO'}`,
