@@ -22,6 +22,8 @@ for (const fragment of [
   'canDelete &&',
   'Volver a pendiente',
   'Marcar recibida',
+  'formatIncidentDateTime(row.pickupReceivedAt)',
+  'Recibida el',
   'No hay registros para mostrar',
 ])
   if (!component.includes(fragment))

@@ -1,6 +1,9 @@
 import { AlertTriangle, ExternalLink, Printer, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { IncidentRecord as Incident } from '@/lib/incident-record';
+import {
+  formatIncidentDateTime,
+  type IncidentRecord as Incident,
+} from '@/lib/incident-record';
 import { openIncidentHref } from '@/lib/incident-navigation';
 
 export function IncidentCard({
@@ -54,6 +57,12 @@ export function IncidentCard({
                 : 'No solicitada'}
             </dd>
           </div>
+          {incident.pickupReceived && (
+            <div>
+              <dt>Marcada como recibida</dt>
+              <dd>{formatIncidentDateTime(incident.pickupReceivedAt)}</dd>
+            </div>
+          )}
           <div>
             <dt>Envío</dt>
             <dd>

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   formatIncidentDate,
+  formatIncidentDateTime,
   incidentLabelLines,
   incidentStatusLabel,
 } from '../lib/incident-record.ts';
@@ -31,6 +32,11 @@ const incident = {
 
 assert.equal(formatIncidentDate(incident.incidentDate), '30/10/2026');
 assert.equal(formatIncidentDate('', 'Sin fecha'), 'Sin fecha');
+assert.match(
+  formatIncidentDateTime('2026-11-13T09:15:00.000Z'),
+  /13\/11\/2026.*10:15/,
+);
+assert.equal(formatIncidentDateTime('', 'Sin registro'), 'Sin registro');
 assert.deepEqual(incidentLabelLines(incident), [
   'INCIDENCIA IPA49547',
   'NOMBRE: Ana María',

@@ -43,6 +43,23 @@ export const formatIncidentDate = (value: string, fallback = 'No indicada') => {
     : value || fallback;
 };
 
+export const formatIncidentDateTime = (
+  value: string,
+  fallback = 'Fecha no registrada',
+) => {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('es-ES', {
+    timeZone: 'Europe/Madrid',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
 export const incidentSchoolName = (incident: IncidentRecord) =>
   incident.school || incident.pickupSchoolName || 'SIN COLEGIO';
 

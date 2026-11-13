@@ -1,6 +1,7 @@
 import { CalendarDays } from 'lucide-react';
 import {
   formatIncidentDate,
+  formatIncidentDateTime,
   incidentLabelLines,
   incidentStatusLabel,
   incidentImageUrl,
@@ -114,7 +115,7 @@ export function IncidentDocument({ incident }: { incident: Incident }) {
           <p>{incident.pickupDetails || 'Sin detalle de prendas'}</p>
           {incident.pickupReceivedAt && (
             <small>
-              Fecha de recepción: {incident.pickupReceivedAt.replace('T', ' ')}
+              Fecha de recepción: {formatIncidentDateTime(incident.pickupReceivedAt)}
             </small>
           )}
         </section>

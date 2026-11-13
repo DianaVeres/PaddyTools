@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  formatIncidentDateTime,
   incidentStatusLabel,
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
@@ -131,6 +132,11 @@ export function IncidentRegistryDialog(props: Props) {
                       row.pickupSchoolName ||
                       'Colegio sin indicar'}
                   </small>
+                  {pickups && row.pickupReceived && (
+                    <small>
+                      Recibida el {formatIncidentDateTime(row.pickupReceivedAt)}
+                    </small>
+                  )}
                 </div>
                 <span
                   className={`status ${pickups ? (row.pickupReceived ? 'status-green' : 'status-amber') : row.solved ? 'status-green' : 'status-amber'}`}

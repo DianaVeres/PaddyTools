@@ -21,6 +21,8 @@ for (const fragment of [
   'incident.orderNumber',
   'incident.solved',
   'incident.pickupReceived',
+  'formatIncidentDateTime(incident.pickupReceivedAt)',
+  'Marcada como recibida',
   'incident.recurrenceCount',
   "onPrintIncident(incident, 'label')",
   "onPrintIncident(incident, 'document')",
