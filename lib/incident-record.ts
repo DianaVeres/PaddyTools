@@ -1,3 +1,5 @@
+import type { IncidentAuditEntry } from '@/lib/incident-audit';
+
 export type IncidentRecord = {
   id: string;
   orderNumber: string;
@@ -23,6 +25,7 @@ export type IncidentRecord = {
   recurrenceCount: number;
   products: unknown[];
   images: IncidentImage[];
+  auditLog: IncidentAuditEntry[];
 };
 
 export type IncidentImage = {

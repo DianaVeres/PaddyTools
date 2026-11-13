@@ -14,6 +14,8 @@ import {
   incidentResolutionFromRecord,
   resolvedIncidentState,
 } from '@/lib/incident-resolution';
+import type { AuthUser } from '@/lib/auth';
+import { appendIncidentAudit } from '@/lib/incident-audit';
 
 export type IncidentSelector = { id?: string; orderNumber?: string };
 export type IncidentStatusChanges = IncidentSelector & {
@@ -38,7 +40,10 @@ export function findStoredIncident(
   );
 }
 
-export async function updateIncidentStatus(changes: IncidentStatusChanges) {
+export async function updateIncidentStatus(
+  changes: IncidentStatusChanges,
+  actor: AuthUser | null = null,
+) {
   const stored = findStoredIncident(await readAllIncidentRows(), changes);
   if (!stored) return null;
   const now = new Date().toISOString();
@@ -65,10 +70,39 @@ export async function updateIncidentStatus(changes: IncidentStatusChanges) {
     incidentResolutionFromRecord(requested),
     Boolean(Number(requested.solved)),
   );
+  const statusAction =
+    typeof changes.received === 'boolean'
+      ? changes.received
+        ? 'Recogida marcada como recibida'
+        : 'Recogida devuelta a pendiente'
+      : typeof changes.sent === 'boolean'
+        ? changes.sent
+          ? 'Envío marcado como enviado'
+          : 'Envío devuelto a pendiente'
+        : changes.solved
+          ? 'Incidencia marcada como solucionada'
+          : 'Incidencia reabierta';
+  let auditLog = appendIncidentAudit(
+    stored.data.audit_log_json,
+    statusAction,
+    actor,
+    now,
+  );
+  const wasSolved = Boolean(Number(stored.data.solved));
+  if (typeof changes.solved !== 'boolean' && solved !== wasSolved)
+    auditLog = appendIncidentAudit(
+      auditLog,
+      solved
+        ? 'Incidencia solucionada automáticamente'
+        : 'Incidencia reabierta automáticamente',
+      actor,
+      now,
+    );
   const data = {
     ...requested,
     solved: solved ? 1 : 0,
     solved_at: solved ? incidentTextValue(stored.data.solved_at) || now : '',
+    audit_log_json: auditLog,
   };
   await getDb()
     .update(incidentRecords)

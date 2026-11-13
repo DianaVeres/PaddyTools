@@ -23,6 +23,8 @@ for (const fragment of [
   'incident.pickupReceived',
   'formatIncidentDateTime(incident.pickupReceivedAt)',
   'Marcada como recibida',
+  'Historial de actividad',
+  'entry.userName',
   'incident.recurrenceCount',
   "onPrintIncident(incident, 'label')",
   "onPrintIncident(incident, 'document')",

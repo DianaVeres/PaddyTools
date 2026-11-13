@@ -24,6 +24,7 @@ for (const fragment of [
   'Marcar recibida',
   'formatIncidentDateTime(row.pickupReceivedAt)',
   'Recibida el',
+  'latestIncidentAudit(',
   'No hay registros para mostrar',
 ])
   if (!component.includes(fragment))

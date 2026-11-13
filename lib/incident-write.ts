@@ -12,6 +12,8 @@ import {
   incidentResolutionFromRecord,
   resolvedIncidentState,
 } from '@/lib/incident-resolution';
+import type { AuthUser } from '@/lib/auth';
+import { appendIncidentAudit } from '@/lib/incident-audit';
 
 export class IncidentValidationError extends Error {}
 export class IncidentPermissionError extends Error {}
@@ -22,7 +24,7 @@ export async function allocateAutomaticIncidentId() {
 
 export async function saveIncident(
   incoming: Record<string, unknown>,
-  options: { allowManual?: boolean } = {},
+  options: { allowManual?: boolean; actor?: AuthUser | null } = {},
 ) {
   const rows = await readAllIncidentRows();
   let originalReference = incidentTextValue(incoming.order_number)
@@ -69,6 +71,12 @@ export async function saveIncident(
     recurrence_count:
       Number(previous?.data.recurrence_count || 0) +
       (Boolean(record.is_recurrence) ? 1 : 0),
+    audit_log_json: appendIncidentAudit(
+      previous?.data.audit_log_json,
+      previous ? 'Incidencia modificada' : 'Incidencia creada',
+      options.actor || null,
+      now,
+    ),
   };
   if (
     incidentTextValue(saved.source_type).toLowerCase() === 'manual' &&
@@ -85,6 +93,34 @@ export async function saveIncident(
   saved.solved_at = solved
     ? incidentTextValue(previous?.data.solved_at) || now
     : '';
+  const statusChanges = [
+    {
+      field: 'pickup_received',
+      enabled: 'Recogida marcada como recibida',
+      disabled: 'Recogida devuelta a pendiente',
+    },
+    {
+      field: 'sent',
+      enabled: 'Envío marcado como enviado',
+      disabled: 'Envío devuelto a pendiente',
+    },
+    {
+      field: 'solved',
+      enabled: 'Incidencia marcada como solucionada',
+      disabled: 'Incidencia reabierta',
+    },
+  ] as const;
+  for (const change of statusChanges) {
+    const before = Boolean(Number(previous?.data[change.field]));
+    const after = Boolean(Number(saved[change.field]));
+    if (before === after) continue;
+    saved.audit_log_json = appendIncidentAudit(
+      saved.audit_log_json,
+      after ? change.enabled : change.disabled,
+      options.actor || null,
+      now,
+    );
+  }
   const id = previous?.id || `INC-${crypto.randomUUID()}`;
   if (previous)
     await getDb()

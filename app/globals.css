@@ -705,6 +705,31 @@ a {
   width: 16px;
   height: 16px;
 }
+.incident-audit {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #d9e6ee;
+  border-radius: 10px;
+  background: #f7fbfd;
+}
+.incident-audit ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.incident-audit li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e1eaf0;
+}
+.incident-audit small {
+  color: #66788a;
+  text-align: right;
+}
 .item-row {
   display: grid;
   grid-template-columns: 42px minmax(170px, 1fr) 58px 48px 76px;

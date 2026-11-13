@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { getDb } from '@/db';
 import { incidentRecords } from '@/db/schema';
 import type { IncidentImage } from '@/lib/incident-record';
+import { readIncidentAudit } from '@/lib/incident-audit';
 
 export const incidentTextValue = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : '';
@@ -99,6 +100,7 @@ export function mapStoredIncident(stored: StoredIncident, fallback = '') {
     recurrenceCount: Number(row.recurrence_count || 0),
     products,
     images,
+    auditLog: readIncidentAudit(row.audit_log_json),
   };
 }
 

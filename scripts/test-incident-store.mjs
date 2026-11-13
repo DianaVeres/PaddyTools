@@ -16,6 +16,7 @@ for (const fragment of [
   'shippingRequired:',
   'sent:',
   'recurrenceCount:',
+  'auditLog:',
   "['order', 'pedido', 'reservation', 'reserva'].includes(storedSource)",
   'explicitSource ||',
 ]) {

@@ -4,6 +4,7 @@ import {
   formatIncidentDateTime,
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
+import { latestIncidentAudit } from '@/lib/incident-audit';
 import { openIncidentHref } from '@/lib/incident-navigation';
 
 export function IncidentCard({
@@ -13,6 +14,10 @@ export function IncidentCard({
   incident: Incident;
   onPrintIncident: (incident: Incident, mode?: 'document' | 'label') => void;
 }) {
+  const receivedAudit = latestIncidentAudit(
+    incident.auditLog,
+    'Recogida marcada como recibida',
+  );
   return (
     <article className="linked-card incident-live">
       <div className="linked-accent">
@@ -60,7 +65,10 @@ export function IncidentCard({
           {incident.pickupReceived && (
             <div>
               <dt>Marcada como recibida</dt>
-              <dd>{formatIncidentDateTime(incident.pickupReceivedAt)}</dd>
+              <dd>
+                {formatIncidentDateTime(incident.pickupReceivedAt)}
+                {receivedAudit ? ` · por ${receivedAudit.userName}` : ''}
+              </dd>
             </div>
           )}
           <div>
@@ -80,6 +88,21 @@ export function IncidentCard({
             </div>
           )}
         </dl>
+        {incident.auditLog.length > 0 && (
+          <div className="incident-audit">
+            <b>Historial de actividad</b>
+            <ul>
+              {[...incident.auditLog].reverse().slice(0, 8).map((entry, index) => (
+                <li key={`${entry.at}-${entry.action}-${index}`}>
+                  <span>{entry.action}</span>
+                  <small>
+                    {formatIncidentDateTime(entry.at)} · {entry.userName}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {incident.recurrenceCount > 0 && (
           <div className="meta-line">
             <span>{incident.recurrenceCount} recurrencia(s) registrada(s)</span>

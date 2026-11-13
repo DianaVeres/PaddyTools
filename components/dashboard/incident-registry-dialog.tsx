@@ -23,6 +23,7 @@ import {
   incidentStatusLabel,
   type IncidentRecord as Incident,
 } from '@/lib/incident-record';
+import { latestIncidentAudit } from '@/lib/incident-audit';
 
 type RegistryMode = 'registro' | 'recogidas';
 type Props = {
@@ -135,6 +136,15 @@ export function IncidentRegistryDialog(props: Props) {
                   {pickups && row.pickupReceived && (
                     <small>
                       Recibida el {formatIncidentDateTime(row.pickupReceivedAt)}
+                      {latestIncidentAudit(
+                        row.auditLog,
+                        'Recogida marcada como recibida',
+                      )?.userName
+                        ? ` · por ${latestIncidentAudit(
+                            row.auditLog,
+                            'Recogida marcada como recibida',
+                          )?.userName}`
+                        : ''}
                     </small>
                   )}
                 </div>

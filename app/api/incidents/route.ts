@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const user = await getSessionUser(request);
     const body = (await request.json()) as {
       id?: string;
       orderNumber?: string;
@@ -66,7 +67,7 @@ export async function PATCH(request: NextRequest) {
         { error: 'No se ha indicado ningún cambio.' },
         { status: 400 },
       );
-    const incident = await updateIncidentStatus(body);
+    const incident = await updateIncidentStatus(body, user);
     if (!incident)
       return NextResponse.json(
         { error: 'No se encontró la incidencia para actualizarla.' },
@@ -100,7 +101,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         generatedId: await allocateAutomaticIncidentId(),
       });
-    return NextResponse.json(await saveIncident(incoming, { allowManual }));
+    return NextResponse.json(
+      await saveIncident(incoming, { allowManual, actor: user }),
+    );
   } catch (error) {
     if (error instanceof IncidentPermissionError)
       return NextResponse.json({ error: error.message }, { status: 403 });

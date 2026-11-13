@@ -14,6 +14,8 @@ for (const fragment of [
   'record_id',
   'products_json:',
   'recurrence_count:',
+  'audit_log_json:',
+  'appendIncidentAudit(',
   'resolvedIncidentState(',
   'incidentResolutionFromRecord(saved)',
   'saved.solved = solved ? 1 : 0',
@@ -28,7 +30,7 @@ for (const fragment of [
 for (const fragment of [
   '@/lib/incident-write',
   'allocateAutomaticIncidentId()',
-  'saveIncident(incoming, { allowManual })',
+  'saveIncident(incoming, { allowManual, actor: user })',
   'error instanceof IncidentPermissionError',
   'error instanceof IncidentValidationError',
 ]) {

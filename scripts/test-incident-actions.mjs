@@ -19,6 +19,7 @@ for (const fragment of [
   'sent:',
   'resolvedIncidentState(',
   'incidentResolutionFromRecord(requested)',
+  'appendIncidentAudit(',
   '.delete(incidentRecords)',
 ]) {
   if (!service.includes(fragment))
@@ -37,7 +38,7 @@ for (const fragment of [
 }
 for (const fragment of [
   '@/lib/incident-actions',
-  'updateIncidentStatus(body)',
+  'updateIncidentStatus(body, user)',
   'deleteStoredIncident(body)',
 ]) {
   if (!route.includes(fragment))

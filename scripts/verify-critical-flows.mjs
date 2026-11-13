@@ -327,7 +327,7 @@ requireAll(
     'normalizeReferenceInput',
     '@/lib/incident-write',
     '@/lib/incident-query',
-    'saveIncident(incoming, { allowManual })',
+    'saveIncident(incoming, { allowManual, actor: user })',
   ],
   'Las incidencias individuales',
 );
@@ -363,7 +363,7 @@ requireAll(
   'app/api/incidents/route.ts',
   [
     '@/lib/incident-actions',
-    'updateIncidentStatus(body)',
+    'updateIncidentStatus(body, user)',
     'deleteStoredIncident(body)',
   ],
   'Las acciones compartidas de incidencias',
