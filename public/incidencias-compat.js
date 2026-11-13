@@ -33,6 +33,7 @@
     recurrence_count: row.recurrenceCount || 0,
     products_json: JSON.stringify(row.products || []),
     images: row.images || [],
+    audit_log_json: JSON.stringify(row.auditLog || []),
   });
 
   const request = async (url, options) => {
@@ -712,6 +713,102 @@
       products: productUnits(row),
       notes: `Incidencia ${row.order_number || ''}`,
     });
+    return row;
+  };
+
+  // Muestra dentro del propio módulo quién realizó cada cambio. Los registros
+  // anteriores a esta función siguen siendo válidos, aunque no puedan atribuirse.
+  const incidentAuditEntries = (row) => {
+    try {
+      const parsed = typeof row?.audit_log_json === 'string'
+        ? JSON.parse(row.audit_log_json)
+        : row?.audit_log_json || [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+  const incidentAuditTime = (value) => {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return value || 'Sin fecha';
+    return new Intl.DateTimeFormat('es-ES', {
+      timeZone: 'Europe/Madrid',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).format(date);
+  };
+  const latestIncidentActor = (row, action) =>
+    [...incidentAuditEntries(row)].reverse().find((entry) => entry.action === action);
+  const pickupReceivedByHtml = (row) => {
+    const entry = latestIncidentActor(row, 'Recogida marcada como recibida');
+    return entry
+      ? `<br><small>Por ${esc(entry.userName || entry.userEmail || 'Usuario no identificado')}</small>`
+      : '';
+  };
+  const ensureIncidentAuditPanel = (kind) => {
+    const solvedId = kind === 'store' ? 'storeSolved' : kind === 'own' ? 'ownSolved' : 'solved';
+    const id = kind === 'store' ? 'storeAudit' : kind === 'own' ? 'ownAudit' : 'incidentAudit';
+    let panel = document.getElementById(id);
+    if (panel) return panel;
+    const actions = document.getElementById(solvedId)?.closest('.actions');
+    if (!actions) return null;
+    panel = document.createElement('div');
+    panel.id = id;
+    panel.className = 'incident-audit-panel';
+    actions.insertAdjacentElement('afterend', panel);
+    return panel;
+  };
+  const renderIncidentAudit = (kind, row) => {
+    const panel = ensureIncidentAuditPanel(kind);
+    if (!panel) return;
+    const entries = incidentAuditEntries(row).slice(-8).reverse();
+    panel.innerHTML = `<b>HISTORIAL DE ACTIVIDAD</b>${entries.length
+      ? `<ul>${entries.map((entry) => `<li><span>${esc(entry.action)}</span><small>${esc(incidentAuditTime(entry.at))} · ${esc(entry.userName || entry.userEmail || 'Usuario no identificado')}</small></li>`).join('')}</ul>`
+      : '<p class="muted">Este registro es anterior al historial de usuarios. Las próximas acciones aparecerán aquí.</p>'}`;
+  };
+  const auditStyles = document.createElement('style');
+  auditStyles.textContent = '.incident-audit-panel{margin:14px 0;padding:12px;border:1px solid #d8e3df;border-radius:10px;background:#f7faf8}.incident-audit-panel ul{list-style:none;margin:8px 0 0;padding:0}.incident-audit-panel li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #e1e9e5}.incident-audit-panel small{color:#687973;text-align:right}.incident-audit-panel p{margin:8px 0 0}@media(max-width:700px){.incident-audit-panel li{display:block}.incident-audit-panel small{display:block;margin-top:3px;text-align:left}}';
+  document.head.appendChild(auditStyles);
+
+  const renderPickupsWithAudit = renderPickups;
+  renderPickups = function () {
+    renderPickupsWithAudit();
+    document.querySelectorAll('#pickupLists tbody tr').forEach((tableRow) => {
+      const reference = tableRow.querySelector('td:first-child b')?.textContent?.replace(/^#/, '');
+      const row = pickupRows.find((item) => String(item.order_number) === reference);
+      if (!row?.pickup_received) return;
+      const actor = latestIncidentActor(row, 'Recogida marcada como recibida');
+      const statusCell = tableRow.querySelector('td:nth-child(6)');
+      if (!statusCell || !actor) return;
+      statusCell.insertAdjacentHTML(
+        'beforeend',
+        `<br><small>Por ${esc(actor.userName || actor.userEmail || 'Usuario no identificado')}</small>`,
+      );
+    });
+  };
+
+  const showWithAudit = show;
+  show = function (row) { showWithAudit(row); renderIncidentAudit('order', row); };
+  const showStoreWithAudit = showStore;
+  showStore = function (row) { showStoreWithAudit(row); renderIncidentAudit('store', row); };
+  const showOwnWithAudit = showOwn;
+  showOwn = function (row) { showOwnWithAudit(row); renderIncidentAudit('own', row); };
+  const saveWithAudit = save;
+  save = async function (force = false) {
+    const row = await saveWithAudit(force);
+    if (row) renderIncidentAudit('order', row);
+    return row;
+  };
+  const saveStoreWithAudit = saveStore;
+  saveStore = async function () {
+    const row = await saveStoreWithAudit();
+    if (row) renderIncidentAudit('store', row);
+    return row;
+  };
+  const saveOwnWithAudit = saveOwn;
+  saveOwn = async function () {
+    const row = await saveOwnWithAudit();
+    if (row) renderIncidentAudit('own', row);
     return row;
   };
   document.getElementById('storeSaveBtn').onclick = saveStore;

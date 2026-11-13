@@ -48,6 +48,12 @@ for (const fragment of [
   "row.source_type === 'tienda'",
   "row.source_type === 'manual'",
   "show(row);",
+  'audit_log_json: JSON.stringify(row.auditLog || [])',
+  'HISTORIAL DE ACTIVIDAD',
+  "renderIncidentAudit('order', row)",
+  "renderIncidentAudit('store', row)",
+  "renderIncidentAudit('own', row)",
+  'pickupReceivedByHtml',
 ])
   if (!compatibility.includes(fragment))
     throw new Error(`La incidencia no se abre directamente: ${fragment}`);
