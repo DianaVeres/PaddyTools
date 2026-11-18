@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -17,7 +19,7 @@ function labelFontSize(text: string) {
         : 17;
 }
 
-export function buildStandaloneLabelHtml(lines: string[]) {
+export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
   const rows = lines
     .slice(0, 4)
     .map(
@@ -25,6 +27,10 @@ export function buildStandaloneLabelHtml(lines: string[]) {
         `<p class="line-${index + 1}" style="font-size:${labelFontSize(line)}pt">${escapeHtml(line.toUpperCase())}</p>`,
     )
     .join('');
+
+  const qr = qrDataUrl
+    ? `<div class="qr"><img src="${escapeHtml(qrDataUrl)}" alt="Código QR de la referencia"><span>ESCANEAR EN PACKINGLIST</span></div>`
+    : '';
 
   return `<!doctype html><html><head><meta charset="utf-8"><title></title><style>
     @page { size: 150mm 100mm; margin: 0; }
@@ -42,19 +48,30 @@ export function buildStandaloneLabelHtml(lines: string[]) {
       page-break-inside: avoid;
       page-break-after: avoid;
     }
-    p { position: absolute; left: 15mm; width: 120mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
+    p { position: absolute; left: 15mm; width: 91mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
     .line-1 { bottom: 75mm; }
     .line-2 { bottom: 62mm; }
     .line-3 { bottom: 49mm; }
     .line-4 { bottom: 36mm; }
+    .qr { position: absolute; right: 9mm; top: 12mm; width: 30mm; text-align: center; }
+    .qr img { display: block; width: 30mm; height: 30mm; image-rendering: pixelated; }
+    .qr span { display: block; margin-top: 2mm; font-size: 6.5pt; line-height: 1.15; }
     @media print {
       html, body { width: 0 !important; height: 0 !important; }
       .label { display: block !important; }
     }
-  </style></head><body><article class="label">${rows}</article></body></html>`;
+  </style></head><body><article class="label">${rows}${qr}</article></body></html>`;
 }
 
-export function printStandaloneLabel(lines: string[]) {
+export async function printStandaloneLabel(lines: string[], reference = '') {
+  const normalizedReference = reference.replace(/\s/g, '').toUpperCase();
+  const qrDataUrl = normalizedReference
+    ? await QRCode.toDataURL(normalizedReference, {
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: 300,
+      })
+    : '';
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
   Object.assign(frame.style, {
@@ -74,7 +91,7 @@ export function printStandaloneLabel(lines: string[]) {
   }
 
   labelDocument.open();
-  labelDocument.write(buildStandaloneLabelHtml(lines));
+  labelDocument.write(buildStandaloneLabelHtml(lines, qrDataUrl));
   labelDocument.close();
 
   const cleanup = () => setTimeout(() => frame.remove(), 500);

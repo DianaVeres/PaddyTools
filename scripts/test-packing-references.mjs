@@ -1,11 +1,24 @@
 import assert from 'node:assert/strict';
 import {
+  appendScannedPackingReference,
   dictatedPackingReferences,
   mergePackingDictation,
   normalizePackingReference,
   packingListType,
   parsePackingBoxes,
 } from '../lib/packing-references.ts';
+
+const scanned = appendScannedPackingReference('CAJA 1: R1234', 'PADDY:IPA49547');
+assert.equal(scanned.text, 'CAJA 1: R1234, IPA49547');
+assert.equal(scanned.error, '');
+assert.match(
+  appendScannedPackingReference(scanned.text, 'IPA49547').error,
+  /ya está incluido/,
+);
+assert.equal(
+  appendScannedPackingReference('CAJA 1: ', 'INC-2026-001').reference,
+  'INC-2026-001',
+);
 
 assert.equal(normalizePackingReference(' rpa 10 633 '), 'RPA10633');
 assert.equal(packingListType('PA49547'), 'on-line');

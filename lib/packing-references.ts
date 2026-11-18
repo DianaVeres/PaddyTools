@@ -14,6 +14,13 @@ export const packingListType = (number: string) => {
 export const normalizePackingReference = (value: string) =>
   value.replace(/\s/g, '').toUpperCase();
 
+export function packingReferenceFromQr(value: string) {
+  const reference = normalizePackingReference(value.replace(/^PADDY:/i, ''));
+  if (/^(?:PA\d+|RPA\d+|R\d+|I[A-Z0-9-]*\d[A-Z0-9-]*)$/.test(reference))
+    return reference;
+  return '';
+}
+
 export function parsePackingBoxes(text: string) {
   const parsed: ParsedPackingReference[] = [];
   for (const raw of text.split(/\r?\n/)) {
@@ -25,7 +32,7 @@ export function parsePackingBoxes(text: string) {
       .toUpperCase();
     const numbers =
       (split >= 0 ? line.slice(split + 1) : line).match(
-        /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z]*\s*\d[A-Z0-9-]*)\b/gi,
+        /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z-]*\s*\d[A-Z0-9-]*)\b/gi,
       ) ?? [];
     for (const number of numbers)
       parsed.push({
@@ -34,6 +41,24 @@ export function parsePackingBoxes(text: string) {
       });
   }
   return parsed;
+}
+
+export function appendScannedPackingReference(current: string, raw: string) {
+  const reference = packingReferenceFromQr(raw);
+  if (!reference)
+    return { text: current, reference: '', error: 'El QR no contiene una referencia válida.' };
+  if (parsePackingBoxes(current).some((item) => item.orderNumber === reference))
+    return { text: current, reference, error: `${reference} ya está incluido en el PackingList.` };
+  const lines = current.split(/\r?\n/);
+  let index = lines.findLastIndex((line) => line.trim());
+  if (index < 0) {
+    lines.push('CAJA 1:');
+    index = lines.length - 1;
+  }
+  if (!lines[index].includes(':')) lines[index] = `CAJA 1: ${lines[index].trim()}`;
+  const separator = lines[index].trimEnd().endsWith(':') ? ' ' : ', ';
+  lines[index] = `${lines[index].trimEnd()}${separator}${reference}`;
+  return { text: lines.join('\n'), reference, error: '' };
 }
 
 const spokenDigits: Record<string, string> = {

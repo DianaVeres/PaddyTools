@@ -21,4 +21,11 @@ assert.match(html, /class="line-4"/);
 assert.doesNotMatch(html, /ESTA LÍNEA NO DEBE IMPRIMIRSE/);
 assert.doesNotMatch(html, /<PADDY>/);
 
+const qrHtml = buildStandaloneLabelHtml(
+  ['RESERVA R1234'],
+  'data:image/png;base64,QR',
+);
+assert.match(qrHtml, /ESCANEAR EN PACKINGLIST/);
+assert.match(qrHtml, /class="qr"/);
+
 console.log('Impresión independiente de etiquetas verificada.');

@@ -262,6 +262,56 @@ button {
   min-height: 42px;
   flex: none;
 }
+.qr-button {
+  min-height: 42px;
+  flex: none;
+}
+.qr-button svg { width: 18px; }
+.qr-scanner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(5 20 38 / 82%);
+}
+.qr-scanner-dialog {
+  width: min(100%, 440px);
+  padding: 18px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 32%);
+}
+.qr-scanner-dialog header,
+.qr-scanner-dialog header > div,
+.qr-scanner-dialog header span {
+  display: flex;
+  align-items: center;
+}
+.qr-scanner-dialog header { justify-content: space-between; gap: 12px; }
+.qr-scanner-dialog header > div { gap: 10px; }
+.qr-scanner-dialog header span { align-items: flex-start; flex-direction: column; gap: 2px; }
+.qr-scanner-dialog header small { color: #68788a; font-size: 12px; font-weight: 500; }
+.qr-scanner-dialog header button { border: 0; background: transparent; padding: 8px; cursor: pointer; }
+.qr-camera {
+  position: relative;
+  aspect-ratio: 1;
+  margin: 16px 0 12px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #07192c;
+}
+.qr-camera video { width: 100%; height: 100%; object-fit: cover; }
+.qr-camera span {
+  position: absolute;
+  inset: 18%;
+  border: 3px solid #fff;
+  border-radius: 14px;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 20%);
+}
+.qr-scanner-dialog > p { min-height: 20px; margin: 0 0 12px; color: #34516d; font-size: 13px; }
+.qr-scanner-dialog > [data-slot='button'] { width: 100%; }
 .voice-button svg {
   width: 18px;
 }
@@ -1031,6 +1081,7 @@ button {
     width: 100%;
     min-height: 48px;
   }
+  .qr-button { width: 100%; min-height: 48px; }
   .packing-form input,
   .packing-form select,
   .packing-form textarea,

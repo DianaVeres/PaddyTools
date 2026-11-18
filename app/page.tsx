@@ -967,7 +967,7 @@ export default function Home() {
     mode: 'document' | 'label' = 'document',
   ) {
     if (mode === 'label') {
-      printStandaloneLabel(incidentLabelLines(row));
+      void printStandaloneLabel(incidentLabelLines(row), row.orderNumber);
       return;
     }
     setPrintMode(mode);
@@ -982,18 +982,19 @@ export default function Home() {
     mode: 'card' | 'label' = 'card',
   ) {
     if (mode === 'label') {
+      const reference = record.reference || record.id || '';
       const rawDate = record.updatedAt?.slice(0, 10) || '';
       const shownDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
         ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}/${rawDate.slice(0, 4)}`
         : rawDate;
-      printStandaloneLabel([
+      void printStandaloneLabel([
         record.kind === 'reserva'
-          ? `RESERVA ${record.reference || record.id}`
-          : `PRENDA ESPECIAL ${record.reference || record.id}`,
+          ? `RESERVA ${reference}`
+          : `PRENDA ESPECIAL ${reference}`,
         `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
         `FECHA: ${shownDate}`,
         `COLEGIO: ${record.school || 'SIN COLEGIO'}`,
-      ]);
+      ], reference);
       return;
     }
     setReservationPrintMode(mode);

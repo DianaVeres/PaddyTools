@@ -3,6 +3,7 @@
 // Pantalla completa de PackingList. Se ejecuta en el navegador porque utiliza
 // estado de React, impresión, portapapeles, voz y llamadas a las APIs.
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser';
 import {
   Archive,
   AlertTriangle,
@@ -21,6 +22,7 @@ import {
   Pencil,
   Plus,
   Printer,
+  QrCode,
   Save,
   Send,
   Search,
@@ -38,6 +40,7 @@ import {
   schoolFolderName,
 } from '@/lib/school-matching';
 import {
+  appendScannedPackingReference,
   mergePackingDictation,
   packingListType,
   parsePackingBoxes,
@@ -170,6 +173,12 @@ export default function Home() {
   const [listening, setListening] = useState(false);
   const speechRef = useRef<SpeechRecognitionInstance | null>(null);
   const boxesRef = useRef<HTMLTextAreaElement | null>(null);
+  const boxesValueRef = useRef(boxes);
+  const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const scanHandledRef = useRef(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerMessage, setScannerMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [records, setRecords] = useState<RecordSummary[]>([]);
@@ -316,6 +325,66 @@ export default function Home() {
   }, [records]);
 
   useEffect(() => () => speechRef.current?.stop(), []);
+  useEffect(() => {
+    boxesValueRef.current = boxes;
+  }, [boxes]);
+
+  function closeQrScanner() {
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+    setScannerOpen(false);
+  }
+
+  useEffect(() => {
+    if (!scannerOpen || !scannerVideoRef.current) return;
+    let cancelled = false;
+    scanHandledRef.current = false;
+    setScannerMessage('Apunta la cámara al QR de la etiqueta.');
+    const reader = new BrowserQRCodeReader();
+    void reader
+      .decodeFromConstraints(
+        {
+          audio: false,
+          video: { facingMode: { ideal: 'environment' } },
+        },
+        scannerVideoRef.current,
+        (result) => {
+          if (!result || cancelled || scanHandledRef.current) return;
+          const scannedValue = result.getText();
+          const added = appendScannedPackingReference(boxesValueRef.current, scannedValue);
+          if (added.error) {
+            setScannerMessage(added.error);
+            return;
+          }
+          scanHandledRef.current = true;
+          boxesValueRef.current = added.text;
+          setBoxes(added.text);
+          setMessage(`${added.reference} añadido a la caja activa.`);
+          if ('vibrate' in navigator) navigator.vibrate(120);
+          scannerControlsRef.current?.stop();
+          scannerControlsRef.current = null;
+          setScannerOpen(false);
+          requestAnimationFrame(() => boxesRef.current?.focus());
+        },
+      )
+      .then((controls) => {
+        if (cancelled) controls.stop();
+        else scannerControlsRef.current = controls;
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setScannerMessage(
+          error instanceof Error && /permission|allowed|denied/i.test(error.message)
+            ? 'No hay permiso para usar la cámara. Actívalo en los ajustes del navegador.'
+            : 'No se pudo abrir la cámara. Comprueba que ninguna otra aplicación la esté usando.',
+        );
+      });
+    return () => {
+      cancelled = true;
+      scannerControlsRef.current?.stop();
+      scannerControlsRef.current = null;
+    };
+  }, [scannerOpen]);
 
   // Activa o detiene el reconocimiento de voz y añade lo reconocido al campo.
   function toggleDictation() {
@@ -1197,6 +1266,14 @@ export default function Home() {
                 >
                   <Mic /> {listening ? 'Detener dictado' : 'Dictar códigos'}
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="qr-button"
+                  onClick={() => setScannerOpen(true)}
+                >
+                  <QrCode /> Escanear QR
+                </Button>
                 <small>Ejemplo: “Caja uno, PA 46904, reserva 1234”.</small>
               </div>
               <Textarea
@@ -1889,6 +1966,22 @@ export default function Home() {
             </article>
           )}
         </section>
+      )}
+      {scannerOpen && (
+        <div className="qr-scanner-overlay no-print" role="dialog" aria-modal="true" aria-label="Escanear etiqueta">
+          <section className="qr-scanner-dialog">
+            <header>
+              <div><QrCode /><span><b>Escanear etiqueta</b><small>La referencia se añadirá a la caja activa.</small></span></div>
+              <button type="button" onClick={closeQrScanner} aria-label="Cerrar lector"><X /></button>
+            </header>
+            <div className="qr-camera">
+              <video ref={scannerVideoRef} muted playsInline />
+              <span aria-hidden="true" />
+            </div>
+            <p>{scannerMessage}</p>
+            <Button type="button" variant="outline" onClick={closeQrScanner}>Cancelar</Button>
+          </section>
+        </div>
       )}
     </main>
   );
