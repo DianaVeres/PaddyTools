@@ -5,6 +5,7 @@ import {
   LogOut,
   Mail,
   Store,
+  TicketPercent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,7 @@ function userInitials(user: SessionUser | null) {
 export function DashboardHeader({
   sessionUser,
   onOpenKpis,
+  onOpenCoupons,
   onOpenWooCommerce,
   onOpenHotline,
   onOpenReservations,
@@ -37,6 +39,7 @@ export function DashboardHeader({
 }: {
   sessionUser: SessionUser | null;
   onOpenKpis: () => void;
+  onOpenCoupons: () => void;
   onOpenWooCommerce: () => void;
   onOpenHotline: () => void;
   onOpenReservations: () => void;
@@ -60,6 +63,13 @@ export function DashboardHeader({
           onClick={onOpenKpis}
         >
           <BarChart3 /> KPIs
+        </Button>
+        <Button
+          className="action-button coupons"
+          variant="outline"
+          onClick={onOpenCoupons}
+        >
+          <TicketPercent /> Cupones
         </Button>
         <Button
           className="action-button woocommerce"

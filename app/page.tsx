@@ -1145,6 +1145,13 @@ export default function Home() {
       <DashboardHeader
         sessionUser={sessionUser}
         onOpenKpis={() => window.location.assign('/kpis')}
+        onOpenCoupons={() =>
+          window.open(
+            'https://paddy.es/wp-admin/edit.php?post_type=shop_coupon&legacy_coupon_menu=1',
+            '_blank',
+            'noopener,noreferrer',
+          )
+        }
         onOpenWooCommerce={() =>
           window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')
         }

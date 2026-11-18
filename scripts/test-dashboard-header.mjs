@@ -17,6 +17,8 @@ for (const fragment of [
   '/paddy-logo-granate.png',
   'PaddyTools',
   'KPIs',
+  'Cupones',
+  'TicketPercent',
   'WooCommerce',
   'Hotline',
   'Reservas',
@@ -34,6 +36,7 @@ if (!page.includes("@/components/dashboard/dashboard-header"))
 for (const prop of [
   'sessionUser={sessionUser}',
   "window.location.assign('/kpis')",
+  "https://paddy.es/wp-admin/edit.php?post_type=shop_coupon&legacy_coupon_menu=1",
   "window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')",
   "window.location.assign('/hotline')",
   'void openReservation()',
