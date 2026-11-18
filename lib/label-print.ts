@@ -9,7 +9,18 @@ function escapeHtml(value: string) {
     .replace(/'/g, '&#039;');
 }
 
-function labelFontSize(text: string) {
+function labelFontSize(text: string, hasQr: boolean) {
+  if (hasQr) {
+    return text.length > 42
+      ? 10
+      : text.length > 34
+        ? 11.5
+        : text.length > 28
+          ? 13
+          : text.length > 23
+            ? 15
+            : 17;
+  }
   return text.length > 46
     ? 11
     : text.length > 40
@@ -20,11 +31,12 @@ function labelFontSize(text: string) {
 }
 
 export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
+  const hasQr = Boolean(qrDataUrl);
   const rows = lines
     .slice(0, 4)
     .map(
       (line, index) =>
-        `<p class="line-${index + 1}" style="font-size:${labelFontSize(line)}pt">${escapeHtml(line.toUpperCase())}</p>`,
+        `<p class="line-${index + 1}" style="font-size:${labelFontSize(line, hasQr)}pt">${escapeHtml(line.toUpperCase())}</p>`,
     )
     .join('');
 
@@ -48,13 +60,13 @@ export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
       page-break-inside: avoid;
       page-break-after: avoid;
     }
-    p { position: absolute; left: 15mm; width: 91mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
+    p { position: absolute; left: 15mm; width: 103mm; margin: 0; line-height: 1; white-space: nowrap; font-weight: 700; }
     .line-1 { bottom: 75mm; }
     .line-2 { bottom: 62mm; }
     .line-3 { bottom: 49mm; }
     .line-4 { bottom: 36mm; }
-    .qr { position: absolute; right: 9mm; top: 12mm; width: 30mm; text-align: center; }
-    .qr img { display: block; width: 30mm; height: 30mm; image-rendering: pixelated; }
+    .qr { position: absolute; right: 3mm; top: 12mm; width: 27mm; text-align: center; }
+    .qr img { display: block; width: 27mm; height: 27mm; image-rendering: pixelated; }
     .qr span { display: block; margin-top: 2mm; font-size: 6.5pt; line-height: 1.15; }
     @media print {
       html, body { width: 0 !important; height: 0 !important; }

@@ -27,5 +27,7 @@ const qrHtml = buildStandaloneLabelHtml(
 );
 assert.match(qrHtml, /ESCANEAR EN PACKINGLIST/);
 assert.match(qrHtml, /class="qr"/);
+assert.match(qrHtml, /right: 3mm/);
+assert.match(qrHtml, /width: 27mm/);
 
 console.log('Impresión independiente de etiquetas verificada.');
