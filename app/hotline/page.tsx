@@ -14,6 +14,7 @@ import {
   Plus,
   Save,
   Search,
+  TicketPercent,
   Timer,
   X,
 } from 'lucide-react';
@@ -376,7 +377,17 @@ export default function HotlinePage() {
               <div className={styles.panel}>
                 <div className={styles.panelHead}>
                   <div><p className={styles.eyebrow}>Entrada</p><h2>Email de la clienta</h2></div>
-                  <button className={styles.secondary} onClick={reset}><Plus /> Nuevo caso</button>
+                  <div className={styles.panelHeadActions}>
+                    <a
+                      className={styles.secondary}
+                      href="https://paddy.es/wp-admin/edit.php?post_type=shop_coupon&legacy_coupon_menu=1"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <TicketPercent /> Cupones
+                    </a>
+                    <button className={styles.secondary} onClick={reset}><Plus /> Nuevo caso</button>
+                  </div>
                 </div>
                 <div className={styles.formGrid}>
                   <Field label="Email"><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="clienta@email.com" /></Field>

@@ -167,6 +167,22 @@
 .sectionHead > div:first-child {
   margin-right: auto;
 }
+.panelHeadActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.panelHeadActions .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
 .eyebrow {
   margin-bottom: 3px;
   color: #1f6b54;
@@ -533,6 +549,14 @@
   .sectionHead > div:first-child,
   .panelHead > div:first-child {
     margin-right: 0;
+  }
+  .panelHeadActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .panelHeadActions .secondary {
+    width: 100%;
   }
   .search,
   .compact {
