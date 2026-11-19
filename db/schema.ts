@@ -297,3 +297,43 @@ export const packingActivityLogs = sqliteTable(
     index('idx_activity_entity').on(table.entityType, table.entityId),
   ],
 );
+
+export const inventorySessions = sqliteTable(
+  'inventory_sessions',
+  {
+    id: text('id').primaryKey(),
+    warehouse: text('warehouse').notNull(),
+    season: text('season').notNull().default(''),
+    countDate: text('count_date').notNull(),
+    status: text('status', { enum: ['draft', 'closed', 'exported'] })
+      .notNull()
+      .default('draft'),
+    createdByEmail: text('created_by_email').notNull(),
+    createdByName: text('created_by_name').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    closedAt: integer('closed_at', { mode: 'timestamp_ms' }),
+  },
+  (table) => [
+    index('idx_inventory_sessions_date').on(table.countDate, table.updatedAt),
+    index('idx_inventory_sessions_status').on(table.status, table.updatedAt),
+  ],
+);
+
+export const inventoryItems = sqliteTable(
+  'inventory_items',
+  {
+    id: text('id').primaryKey(),
+    sessionId: text('session_id')
+      .notNull()
+      .references(() => inventorySessions.id, { onDelete: 'cascade' }),
+    barcode: text('barcode').notNull(),
+    quantity: integer('quantity').notNull().default(1),
+    firstScannedAt: integer('first_scanned_at', { mode: 'timestamp_ms' }).notNull(),
+    lastScannedAt: integer('last_scanned_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [
+    index('idx_inventory_items_session').on(table.sessionId),
+    index('idx_inventory_items_barcode').on(table.sessionId, table.barcode),
+  ],
+);

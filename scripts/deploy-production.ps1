@@ -87,6 +87,7 @@ $kpiTimerCheck = Join-Path $officialRoot 'scripts\test-kpi-timer.mjs'
 $kpiInitialStatusCountCheck = Join-Path $officialRoot 'scripts\test-kpi-initial-status-count.mjs'
 $kpiAutoTimerCheck = Join-Path $officialRoot 'scripts\test-kpi-auto-timer.mjs'
 $hotlineModuleCheck = Join-Path $officialRoot 'scripts\test-hotline-module.mjs'
+$inventoryModuleCheck = Join-Path $officialRoot 'scripts\test-inventory-module.mjs'
 $qualityErrorsCheck = Join-Path $officialRoot 'scripts\test-quality-errors.mjs'
 $documentationCheck = Join-Path $officialRoot 'scripts\test-documentation.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
@@ -109,6 +110,10 @@ foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integration
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
+}
+
+if (-not (Test-Path -LiteralPath $inventoryModuleCheck -PathType Leaf)) {
+  throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $inventoryModuleCheck"
 }
 
 if ($ValidateOnly) {
@@ -382,6 +387,10 @@ try {
   & $node $hotlineModuleCheck
   if ($LASTEXITCODE -ne 0) {
     throw "El módulo Hotline ha fallado. No se desplegará nada."
+  }
+  & $node $inventoryModuleCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El módulo de inventarios ha fallado. No se desplegará nada."
   }
   & $node $qualityErrorsCheck
   if ($LASTEXITCODE -ne 0) {

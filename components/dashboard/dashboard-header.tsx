@@ -4,6 +4,7 @@ import {
   ChevronDown,
   LogOut,
   Mail,
+  ScanBarcode,
   Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export function DashboardHeader({
   onOpenKpis,
   onOpenWooCommerce,
   onOpenHotline,
+  onOpenInventories,
   onOpenReservations,
   onCreateReservation,
   onLogout,
@@ -39,6 +41,7 @@ export function DashboardHeader({
   onOpenKpis: () => void;
   onOpenWooCommerce: () => void;
   onOpenHotline: () => void;
+  onOpenInventories: () => void;
   onOpenReservations: () => void;
   onCreateReservation: () => void;
   onLogout: () => void;
@@ -74,6 +77,13 @@ export function DashboardHeader({
           onClick={onOpenHotline}
         >
           <Mail /> Hotline
+        </Button>
+        <Button
+          className="action-button inventories"
+          variant="outline"
+          onClick={onOpenInventories}
+        >
+          <ScanBarcode /> Inventarios
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger

@@ -1149,6 +1149,7 @@ export default function Home() {
           window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')
         }
         onOpenHotline={() => window.location.assign('/hotline')}
+        onOpenInventories={() => window.location.assign('/inventarios')}
         onOpenReservations={() => void openReservations()}
         onCreateReservation={() => void openReservation()}
         onLogout={() => void logout()}
