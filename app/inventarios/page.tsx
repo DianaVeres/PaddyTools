@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Boxes, CheckCircle2, Download, Minus, Plus, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,7 @@ export default function InventoriesPage() {
   const [busy, setBusy] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef({ barcode: '', at: 0 });
+  const scanInProgressRef = useRef(false);
 
   const totalUnits = useMemo(
     () => active?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
@@ -106,12 +107,11 @@ export default function InventoriesPage() {
     }
   }
 
-  async function scan(event: FormEvent) {
-    event.preventDefault();
+  async function saveScan(rawValue: string) {
     if (!active || active.status !== 'draft') return;
-    const value = barcode.trim().replace(/\s+/g, '').toUpperCase();
+    const value = rawValue.trim().replace(/\s+/g, '').toUpperCase();
+    if (!value || scanInProgressRef.current) return;
     setBarcode('');
-    if (!value) return;
     const now = Date.now();
     if (lastScanRef.current.barcode === value && now - lastScanRef.current.at < 900) {
       setNotice(`${value} no se ha contado dos veces: lectura repetida demasiado rápida.`);
@@ -119,6 +119,7 @@ export default function InventoriesPage() {
       return;
     }
     lastScanRef.current = { barcode: value, at: now };
+    scanInProgressRef.current = true;
     setBusy(true);
     try {
       const data = await json<{ session: InventorySession }>(
@@ -135,10 +136,28 @@ export default function InventoriesPage() {
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No se pudo guardar la lectura.');
     } finally {
+      scanInProgressRef.current = false;
       setBusy(false);
       requestAnimationFrame(() => scanRef.current?.focus());
     }
   }
+
+  function scan(event: FormEvent) {
+    event.preventDefault();
+    void saveScan(barcode);
+  }
+
+  function finishScanWithKey(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+    event.preventDefault();
+    void saveScan(event.currentTarget.value);
+  }
+
+  useEffect(() => {
+    if (!barcode.trim() || busy || active?.status !== 'draft') return;
+    const timer = window.setTimeout(() => void saveScan(barcode), 350);
+    return () => window.clearTimeout(timer);
+  }, [barcode, busy, active?.id, active?.status]);
 
   async function setQuantity(item: InventoryItem, quantity: number) {
     if (!active || active.status !== 'draft') return;
@@ -228,7 +247,7 @@ export default function InventoriesPage() {
               <div className="inventory-totals"><b>{active.items?.length || 0}</b><small>Referencias</small><b>{totalUnits}</b><small>Unidades</small></div>
             </div>
             {active.status === 'draft' && <form className="scan-box" onSubmit={scan}>
-              <ScanLine /><label>Código de barras<Input ref={scanRef} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Pulsa SCAN" autoComplete="off" inputMode="none" disabled={busy} /></label>
+              <ScanLine /><label>Código de barras<Input ref={scanRef} value={barcode} onChange={(e) => setBarcode(e.target.value)} onKeyDown={finishScanWithKey} placeholder="Pulsa SCAN" autoComplete="off" autoCapitalize="characters" disabled={busy} /></label>
               <Button type="submit" disabled={busy || !barcode.trim()}>Añadir</Button>
             </form>}
             {notice && <p className="inventory-notice">{notice}</p>}

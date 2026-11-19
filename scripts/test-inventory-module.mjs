@@ -18,6 +18,8 @@ assert.ok(route.includes('getSessionUser(request)'), 'la API debe exigir sesión
 assert.ok(route.includes("action === 'scan'"), 'la API debe registrar lecturas');
 assert.ok(route.includes("action === 'close'"), 'la API debe cerrar recuentos');
 assert.ok(page.includes('lastScanRef.current'), 'la PDA debe filtrar dobles lecturas rápidas');
+assert.ok(page.includes('setTimeout(() => void saveScan(barcode), 350)'), 'la lectura debe guardarse aunque el escáner no envíe Enter');
+assert.ok(page.includes("event.key !== 'Enter' && event.key !== 'Tab'"), 'la lectura debe aceptar los sufijos Enter y Tab');
 assert.ok(page.includes('Pulsa SCAN'), 'la pantalla debe guiar el uso del botón físico');
 assert.ok(page.includes('Descargar revisión'), 'debe existir una copia de revisión');
 assert.ok(header.includes('Inventarios'), 'Inventarios debe ser accesible desde la cabecera');
