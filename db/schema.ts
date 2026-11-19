@@ -337,3 +337,18 @@ export const inventoryItems = sqliteTable(
     index('idx_inventory_items_barcode').on(table.sessionId, table.barcode),
   ],
 );
+
+export const inventoryCatalog = sqliteTable(
+  'inventory_catalog',
+  {
+    code: text('code').primaryKey(),
+    article: text('article').notNull(),
+    description: text('description').notNull(),
+    color: text('color').notNull().default(''),
+    colorDescription: text('color_description').notNull().default(''),
+    size: text('size').notNull().default(''),
+    sourceCode: text('source_code').notNull().default(''),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [index('idx_inventory_catalog_article').on(table.article)],
+);

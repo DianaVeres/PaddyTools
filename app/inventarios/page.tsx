@@ -12,6 +12,11 @@ type InventoryItem = {
   quantity: number;
   firstScannedAt: string;
   lastScannedAt: string;
+  article: string;
+  description: string;
+  color: string;
+  colorDescription: string;
+  size: string;
 };
 
 type InventorySession = {
@@ -204,8 +209,8 @@ export default function InventoriesPage() {
   function downloadAudit() {
     if (!active) return;
     const rows = [
-      ['ALMACEN', 'FECHA', 'TEMPORADA', 'CODIGO_BARRAS', 'CANTIDAD'],
-      ...(active.items || []).map((item) => [active.warehouse, active.countDate, active.season, item.barcode, String(item.quantity)]),
+      ['ALMACEN', 'FECHA', 'TEMPORADA', 'CODIGO_BARRAS', 'ARTICULO', 'DESCRIPCION', 'COLOR', 'TALLA', 'CANTIDAD'],
+      ...(active.items || []).map((item) => [active.warehouse, active.countDate, active.season, item.barcode, item.article, item.description, item.colorDescription || item.color, item.size, String(item.quantity)]),
     ];
     const csv = rows.map((row) => row.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(';')).join('\r\n');
     const link = document.createElement('a');
@@ -252,7 +257,7 @@ export default function InventoriesPage() {
             </form>}
             {notice && <p className="inventory-notice">{notice}</p>}
             <div className="inventory-items">{active.items?.map((item) => (
-              <article key={item.id}><div><b>{item.barcode}</b><small>Última lectura: {new Date(item.lastScannedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</small></div>
+              <article key={item.id}><div><b>{item.description || 'Artículo sin identificar'}</b><span className="inventory-product-meta">{item.article && `Art. ${item.article}`}{item.colorDescription && ` · ${item.colorDescription}`}{item.size && ` · Talla ${item.size}`}</span><small>Código {item.barcode} · Última lectura: {new Date(item.lastScannedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</small></div>
                 <div className="quantity"><button disabled={busy || active.status !== 'draft'} onClick={() => void setQuantity(item, item.quantity - 1)}><Minus /></button><strong>{item.quantity}</strong><button disabled={busy || active.status !== 'draft'} onClick={() => void setQuantity(item, item.quantity + 1)}><Plus /></button></div>
               </article>
             ))}{!active.items?.length && <div className="inventory-empty"><ScanLine /><b>Aún no hay lecturas</b><span>Coloca el cursor en Código de barras y pulsa SCAN.</span></div>}</div>

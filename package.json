@@ -77,6 +77,7 @@
     "test:kpi-auto-timer": "node scripts/test-kpi-auto-timer.mjs",
     "test:hotline-module": "node scripts/test-hotline-module.mjs",
     "test:inventory-module": "node scripts/test-inventory-module.mjs",
+    "inventory:catalog": "node scripts/import-stm-catalog.mjs",
     "test:quality-errors": "node scripts/test-quality-errors.mjs",
     "test:documentation": "node scripts/test-documentation.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",
@@ -122,7 +123,8 @@
     "shadcn": "4.18.0",
     "tailwind-merge": "3.6.0",
     "tw-animate-css": "1.4.0",
-    "vinext": "1.0.0-beta.5"
+    "vinext": "1.0.0-beta.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

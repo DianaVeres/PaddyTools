@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { inventoryItems, inventorySessions } from '@/db/schema';
+import { inventoryCatalog, inventoryItems, inventorySessions } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
+import { inventoryCodeCandidates, normalizeInventoryCode } from '@/lib/inventory-catalog';
 
-const cleanBarcode = (value: unknown) =>
-  String(value || '').trim().replace(/\s+/g, '').toUpperCase().slice(0, 40);
+const cleanBarcode = normalizeInventoryCode;
 
 async function sessionWithItems(id: string) {
   const db = getDb();
@@ -15,11 +15,29 @@ async function sessionWithItems(id: string) {
     .where(eq(inventorySessions.id, id))
     .limit(1);
   if (!session) return null;
-  const items = await db
+  const rawItems = await db
     .select()
     .from(inventoryItems)
     .where(eq(inventoryItems.sessionId, id))
     .orderBy(desc(inventoryItems.lastScannedAt));
+  const codes = [...new Set(rawItems.flatMap((item) => inventoryCodeCandidates(item.barcode)))];
+  const catalogRows = codes.length
+    ? await db.select().from(inventoryCatalog).where(inArray(inventoryCatalog.code, codes))
+    : [];
+  const catalog = new Map(catalogRows.map((row) => [row.code, row]));
+  const items = rawItems.map((item) => {
+    const product = inventoryCodeCandidates(item.barcode)
+      .map((code) => catalog.get(code))
+      .find(Boolean);
+    return {
+      ...item,
+      article: product?.article || '',
+      description: product?.description || '',
+      color: product?.color || '',
+      colorDescription: product?.colorDescription || '',
+      size: product?.size || '',
+    };
+  });
   return { ...session, items };
 }
 
