@@ -43,6 +43,41 @@ export function parsePackingBoxes(text: string) {
   return parsed;
 }
 
+const packingReferencePattern =
+  /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z-]*\s*\d[A-Z0-9-]*)\b/gi;
+
+/**
+ * Removes repeated references while preserving the boxes and their order.
+ * This is used by every input method, including Datalogic keyboard-wedge
+ * scanners, which write directly into the textarea without using the camera
+ * scanner flow.
+ */
+export function deduplicatePackingBoxText(text: string) {
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  const lines = text.split(/\r?\n/).map((line) => {
+    const separatorIndex = line.indexOf(':');
+    const prefix = separatorIndex >= 0 ? line.slice(0, separatorIndex + 1) : '';
+    let content = separatorIndex >= 0 ? line.slice(separatorIndex + 1) : line;
+    content = content.replace(packingReferencePattern, (match) => {
+      const reference = normalizePackingReference(match);
+      if (!seen.has(reference)) {
+        seen.add(reference);
+        return match;
+      }
+      if (!duplicates.includes(reference)) duplicates.push(reference);
+      return '';
+    });
+    content = content
+      .replace(/\s*,\s*,+/g, ', ')
+      .replace(/^\s*,\s*/, ' ')
+      .replace(/\s*,\s*$/, '')
+      .replace(/[ \t]{2,}/g, ' ');
+    return `${prefix}${content}`.trimEnd();
+  });
+  return { text: lines.join('\n'), duplicates };
+}
+
 export function appendScannedPackingReference(current: string, raw: string) {
   const reference = packingReferenceFromQr(raw);
   if (!reference)

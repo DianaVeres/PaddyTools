@@ -61,7 +61,19 @@ foreach ($database in $databases) {
   if ($file.Length -lt 100) {
     throw "La copia $fileName está vacía o incompleta."
   }
-  $hash = (Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash
+  # Use the .NET implementation because some managed Windows environments do
+  # not expose the Get-FileHash cmdlet even though SHA-256 is available.
+  $stream = [System.IO.File]::OpenRead($output)
+  try {
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      $hash = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '')
+    } finally {
+      $sha256.Dispose()
+    }
+  } finally {
+    $stream.Dispose()
+  }
   $created += [pscustomobject]@{
     database = $database.Name
     file = $file.Name

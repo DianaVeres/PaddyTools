@@ -1,12 +1,23 @@
 import assert from 'node:assert/strict';
 import {
   appendScannedPackingReference,
+  deduplicatePackingBoxText,
   dictatedPackingReferences,
   mergePackingDictation,
   normalizePackingReference,
   packingListType,
   parsePackingBoxes,
 } from '../lib/packing-references.ts';
+
+const hardwareScan = deduplicatePackingBoxText(
+  'CAJA 1: R12140, IPA51355, R12140\nCAJA 2: IPA51355, PA50001',
+);
+assert.equal(
+  hardwareScan.text,
+  'CAJA 1: R12140, IPA51355\nCAJA 2: PA50001',
+  'el lector fisico no debe insertar dos veces una referencia',
+);
+assert.deepEqual(hardwareScan.duplicates, ['R12140', 'IPA51355']);
 
 const scanned = appendScannedPackingReference('CAJA 1: R1234', 'PADDY:IPA49547');
 assert.equal(scanned.text, 'CAJA 1: R1234, IPA49547');

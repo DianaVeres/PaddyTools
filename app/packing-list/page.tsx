@@ -41,6 +41,7 @@ import {
 } from '@/lib/school-matching';
 import {
   appendScannedPackingReference,
+  deduplicatePackingBoxText,
   mergePackingDictation,
   packingListType,
   parsePackingBoxes,
@@ -1280,7 +1281,16 @@ export default function Home() {
                 ref={boxesRef}
                 rows={9}
                 value={boxes}
-                onChange={(e) => setBoxes(e.target.value)}
+                onChange={(e) => {
+                  const result = deduplicatePackingBoxText(e.target.value);
+                  boxesValueRef.current = result.text;
+                  setBoxes(result.text);
+                  if (result.duplicates.length) {
+                    setMessage(
+                      `${result.duplicates.join(', ')} ya está incluido en el PackingList y no se ha añadido otra vez.`,
+                    );
+                  }
+                }}
                 placeholder={
                   'CAJA 1: PA46904, R1234, IN5678\nCAJA 2 RESERVAS: R46884, R46883'
                 }
