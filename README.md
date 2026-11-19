@@ -5,9 +5,14 @@ incidencias, recogidas, PackingLists, atención de mensajes y medición de KPIs.
 
 ## Documentación
 
-- [Manual visual editable (Word)](docs/Manual_visual_PaddyTools.docx)
-- [Manual visual listo para enviar (PDF)](docs/Manual_visual_PaddyTools.pdf)
+- [Guía rápida visual editable (Word)](docs/manuales/Guia_rapida_visual_PaddyTools.docx)
+- [Guía rápida visual lista para enviar (PDF)](docs/manuales/Guia_rapida_visual_PaddyTools.pdf)
+- [Manual completo editable (Word)](docs/manuales/Manual_completo_PaddyTools.docx)
+- [Manual completo listo para enviar (PDF)](docs/manuales/Manual_completo_PaddyTools.pdf)
 - [Manual técnico de uso y lectura de KPIs](docs/MANUAL_DE_USO_PADDYTOOLS.md)
+
+La versión visual anterior se conserva como referencia histórica en
+`docs/Manual_visual_PaddyTools.*`.
 
 ## Fuente oficial
 

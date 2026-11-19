@@ -12,14 +12,16 @@ if (!readme.includes('docs/MANUAL_DE_USO_PADDYTOOLS.md'))
   throw new Error('El README no enlaza el manual oficial.');
 
 for (const document of [
-  'docs/Manual_visual_PaddyTools.docx',
-  'docs/Manual_visual_PaddyTools.pdf',
+  'docs/manuales/Guia_rapida_visual_PaddyTools.docx',
+  'docs/manuales/Guia_rapida_visual_PaddyTools.pdf',
+  'docs/manuales/Manual_completo_PaddyTools.docx',
+  'docs/manuales/Manual_completo_PaddyTools.pdf',
 ]) {
   const path = resolve(root, document);
   if (!readme.includes(document))
     throw new Error(`El README no enlaza ${document}.`);
   if (!existsSync(path) || statSync(path).size === 0)
-    throw new Error(`Falta el documento visual o está vacío: ${document}`);
+    throw new Error(`Falta un manual visual o está vacío: ${document}`);
 }
 
 for (const section of [

@@ -38,6 +38,7 @@ next-env.d.ts
 /outputs/
 /work/
 /backups/
+/docs/manuales/_qa_*/
 *.tsbuildinfo
 /.tmp-*.js
 /.tmp-*.bin
