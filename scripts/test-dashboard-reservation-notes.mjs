@@ -6,6 +6,10 @@ const component = readFileSync(
   resolve(root, 'components/dashboard/reservation-notes-card.tsx'),
   'utf8',
 );
+const mondayCard = readFileSync(
+  resolve(root, 'components/dashboard/monday-updates-card.tsx'),
+  'utf8',
+);
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
 const connected = readFileSync(
   resolve(root, 'components/dashboard/connected-results.tsx'),
@@ -18,9 +22,8 @@ const connectedResults = readFileSync(
 
 for (const fragment of [
   'ReservationNotesCard',
-  'Comentarios de Monday',
   'Notas internas de PaddyTools',
-  'mondayUpdates.map',
+  'MondayUpdatesCard',
   'notes.map',
   'onKindChange',
   'onDraftChange',
@@ -30,6 +33,10 @@ for (const fragment of [
 ]) {
   if (!component.includes(fragment))
     throw new Error(`Las notas de reserva han perdido: ${fragment}`);
+}
+for (const fragment of ['Comentarios de Monday', 'updates.map', 'update.text']) {
+  if (!mondayCard.includes(fragment))
+    throw new Error(`Los comentarios compartidos de Monday han perdido: ${fragment}`);
 }
 if (!page.includes("@/components/dashboard/connected-results"))
   throw new Error('La pantalla no usa los resultados conectados compartidos.');

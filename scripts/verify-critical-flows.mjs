@@ -530,10 +530,14 @@ requireAll(
   'app/page.tsx',
   [
     '@/lib/dashboard-reservation-options',
-    'mondayReservationUpdateItemIds',
     'reservationArticlesForSchool',
   ],
   'Las opciones compartidas de reservas',
+);
+requireAll(
+  'app/page.tsx',
+  ['@/lib/dashboard-monday-updates', 'mondayUpdateItemIds'],
+  'Los comentarios vinculados de Monday',
 );
 requireAll(
   'app/page.tsx',

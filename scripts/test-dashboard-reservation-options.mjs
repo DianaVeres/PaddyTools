@@ -18,7 +18,7 @@ const globalJs = ts.transpileModule(globalSource, {
 const folder = mkdtempSync(join(tmpdir(), 'paddytools-reservation-options-'));
 writeFileSync(resolve(folder, 'global-search.js'), globalJs);
 writeFileSync(resolve(folder, 'dashboard-reservation-options.js'), js);
-const { mondayReservationUpdateItemIds, reservationArticlesForSchool } = await import(
+const { reservationArticlesForSchool } = await import(
   `file:///${resolve(folder, 'dashboard-reservation-options.js').replaceAll('\\', '/')}?v=${Date.now()}`
 );
 
@@ -31,16 +31,8 @@ assert.deepEqual(reservationArticlesForSchool(articles, 'Colegio Teatinas Pinto 
 assert.deepEqual(reservationArticlesForSchool(articles, 'Centro desconocido'), articles);
 assert.deepEqual(reservationArticlesForSchool(articles, ''), []);
 
-const records = [
-  { id: '9', kind: 'reserva' },
-  { id: '2', kind: 'incidencia' },
-  { id: '3', kind: 'reserva' },
-  { id: '9', kind: 'reserva' },
-];
-assert.equal(mondayReservationUpdateItemIds(records), '3,9');
-
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
-for (const fragment of ['mondayReservationUpdateItemIds(', 'reservationArticlesForSchool('])
+for (const fragment of ['reservationArticlesForSchool('])
   if (!page.includes(fragment)) throw new Error(`La pantalla no usa la opción compartida: ${fragment}`);
 rmSync(folder, { recursive: true, force: true });
 console.log('Opciones compartidas de reservas verificadas.');

@@ -2,6 +2,7 @@ import { Mail, MessageSquarePlus, Phone, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDashboardDate as fmt } from '@/components/dashboard/common';
+import { MondayUpdatesCard } from '@/components/dashboard/monday-updates-card';
 import type { MondayUpdate } from '@/lib/dashboard-types';
 import type { OrderNoteRecord as OrderNote } from '@/lib/order-note';
 
@@ -39,36 +40,11 @@ export function ReservationNotesCard({
           <p>Anotaciones compartidas del equipo para esta reserva</p>
         </div>
       </div>
-      <section className="monday-updates">
-        <div className="notes-source-title">
-          <b>Comentarios de Monday</b>
-          <span>{mondayUpdates.length}</span>
-        </div>
-        {mondayLoading ? (
-          <p className="notes-empty">Cargando comentarios de Monday…</p>
-        ) : mondayUpdates.length ? (
-          <div className="notes-list">
-            {mondayUpdates.map((update) => (
-              <article className="note-row monday-note" key={update.id}>
-                <span className="note-icon monday">
-                  <MessageSquarePlus />
-                </span>
-                <div>
-                  <div className="note-head">
-                    <b>{update.author || 'Monday'}</b>
-                    <time>{fmt(update.createdAt)}</time>
-                  </div>
-                  <p>{update.text}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="notes-empty">
-            Esta reserva no tiene comentarios en Monday.
-          </p>
-        )}
-      </section>
+      <MondayUpdatesCard
+        updates={mondayUpdates}
+        loading={mondayLoading}
+        emptyMessage="Esta reserva no tiene comentarios en Monday."
+      />
       <div className="notes-source-title paddytools-notes-title">
         <b>Notas internas de PaddyTools</b>
         <span>{notes.length}</span>

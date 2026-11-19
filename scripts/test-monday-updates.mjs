@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { normalizeMondayUpdates } from '../lib/monday-updates.ts';
+import { mondayUpdateItemIds } from '../lib/dashboard-monday-updates.ts';
 
 const updates = normalizeMondayUpdates([
   {
@@ -35,5 +36,15 @@ assert.deepEqual(updates.map((update) => update.id), ['UPDATE-2', 'UPDATE-1']);
 assert.equal(updates[0].author, 'administracion@paddy.es');
 assert.equal(updates[1].text, 'Primera nota');
 assert.equal(updates[1].itemId, 'ITEM-1');
+
+assert.equal(
+  mondayUpdateItemIds([
+    { id: '9', kind: 'reserva' },
+    { id: '2', kind: 'prenda' },
+    { id: '3', kind: 'reserva' },
+    { id: '9', kind: 'reserva' },
+  ]),
+  '2,3,9',
+);
 
 console.log('Comentarios de Monday verificados.');

@@ -1,7 +1,4 @@
-import type {
-  DashboardMondayRecord,
-  ReservationOptions,
-} from '@/lib/dashboard-types';
+import type { ReservationOptions } from '@/lib/dashboard-types';
 import { foldSearchText } from '@/lib/global-search';
 
 const IGNORED_SCHOOL_WORDS = new Set([
@@ -17,21 +14,6 @@ const IGNORED_SCHOOL_WORDS = new Set([
   'las',
   'los',
 ]);
-
-export function mondayReservationUpdateItemIds(
-  records: DashboardMondayRecord[],
-): string {
-  return [
-    ...new Set(
-      records
-        .filter((record) => record.kind === 'reserva')
-        .map((record) => record.id)
-        .filter(Boolean),
-    ),
-  ]
-    .sort()
-    .join(',');
-}
 
 export function reservationArticlesForSchool(
   articles: ReservationOptions['articles'],

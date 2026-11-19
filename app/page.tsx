@@ -23,10 +23,8 @@ import {
   filterIncidentRegistry,
   filterReservationRegistry,
 } from '@/lib/dashboard-registry-filter';
-import {
-  mondayReservationUpdateItemIds,
-  reservationArticlesForSchool,
-} from '@/lib/dashboard-reservation-options';
+import { reservationArticlesForSchool } from '@/lib/dashboard-reservation-options';
+import { mondayUpdateItemIds } from '@/lib/dashboard-monday-updates';
 import {
   emptyConnectedSearchMessage,
   hasConnectedSearchResults,
@@ -106,6 +104,7 @@ import { OrderActivity } from '@/components/dashboard/order-activity';
 import { OrderMovements } from '@/components/dashboard/order-movements';
 import { OrderDocuments } from '@/components/dashboard/order-documents';
 import { OrderNotesCard } from '@/components/dashboard/order-notes-card';
+import { MondayUpdatesCard } from '@/components/dashboard/monday-updates-card';
 import { HotlineContactsCard } from '@/components/dashboard/hotline-contacts-card';
 import { OrderFollowUp } from '@/components/dashboard/order-follow-up';
 import { OrderSummary } from '@/components/dashboard/order-summary';
@@ -315,8 +314,8 @@ export default function Home() {
   const [noteDraft, setNoteDraft] = useState('');
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null);
   const normalized = useMemo(() => normalizeReferenceInput(query), [query]);
-  const mondayUpdateItemIds = useMemo(
-    () => mondayReservationUpdateItemIds(mondayRecords),
+  const mondayUpdateIds = useMemo(
+    () => mondayUpdateItemIds(mondayRecords),
     [mondayRecords],
   );
   const linkedOrderNumber = useMemo(
@@ -643,13 +642,13 @@ export default function Home() {
     else setOrderNotes([]);
   }, [order?.number, mondayRecords]);
   useEffect(() => {
-    if (!mondayUpdateItemIds) {
+    if (!mondayUpdateIds) {
       setMondayUpdates([]);
       return;
     }
     let cancelled = false;
     setMondayUpdatesLoading(true);
-    void fetchMondayUpdates(mondayUpdateItemIds)
+    void fetchMondayUpdates(mondayUpdateIds)
       .then((updates) => {
         if (!cancelled) setMondayUpdates(updates);
       })
@@ -669,7 +668,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [mondayUpdateItemIds]);
+  }, [mondayUpdateIds]);
   function openIncidentWorkspace() {
     const reference =
       order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '';
@@ -1210,7 +1209,7 @@ export default function Home() {
                   <TabsTrigger value="notas">
                     Notas{' '}
                     <span className="count">
-                      {orderNotes.length + hotlineContacts.length}
+                      {orderNotes.length + hotlineContacts.length + mondayUpdates.length}
                     </span>
                   </TabsTrigger>
                   <TabsTrigger value="movimientos">
@@ -1259,6 +1258,13 @@ export default function Home() {
                     onSave={() => void saveOrderNote()}
                     onDelete={(note) => void deleteOrderNote(note)}
                   />
+                  {mondayRecords.length > 0 && (
+                    <MondayUpdatesCard
+                      updates={mondayUpdates}
+                      loading={mondayUpdatesLoading}
+                      emptyMessage="Los registros vinculados no tienen comentarios en Monday."
+                    />
+                  )}
                   <HotlineContactsCard
                     contacts={hotlineContacts}
                     loading={hotlineLoading}

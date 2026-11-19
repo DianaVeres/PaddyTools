@@ -41,6 +41,10 @@ for (const prop of [
   'loading={hotlineLoading}',
   'error={hotlineError}',
   'orderNotes.length + hotlineContacts.length',
+  '<MondayUpdatesCard',
+  'updates={mondayUpdates}',
+  'loading={mondayUpdatesLoading}',
+  'mondayUpdates.length',
 ]) {
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a las notas: ${prop}`);
