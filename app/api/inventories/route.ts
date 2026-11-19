@@ -36,6 +36,7 @@ async function sessionWithItems(id: string) {
       color: product?.color || '',
       colorDescription: product?.colorDescription || '',
       size: product?.size || '',
+      sourceCode: product?.sourceCode || '',
     };
   });
   return { ...session, items };
@@ -160,9 +161,35 @@ export async function PATCH(request: NextRequest) {
     .limit(1);
   if (!session)
     return NextResponse.json({ error: 'Inventario no encontrado.' }, { status: 404 });
+  const now = new Date();
+
+  if (action === 'export_stm') {
+    if (session.status === 'draft')
+      return NextResponse.json(
+        { error: 'Cierra el inventario antes de exportarlo a STM.' },
+        { status: 409 },
+      );
+    const items = await db
+      .select()
+      .from(inventoryItems)
+      .where(eq(inventoryItems.sessionId, sessionId));
+    if (!items.length)
+      return NextResponse.json({ error: 'El inventario está vacío.' }, { status: 400 });
+    await db
+      .update(inventorySessions)
+      .set({
+        status: 'exported',
+        stmExportedAt: now,
+        stmExportedByEmail: user.email,
+        stmExportedByName: user.displayName,
+        updatedAt: now,
+      })
+      .where(eq(inventorySessions.id, sessionId));
+    return NextResponse.json({ session: await sessionWithItems(sessionId) });
+  }
+
   if (session.status !== 'draft')
     return NextResponse.json({ error: 'El inventario está cerrado.' }, { status: 409 });
-  const now = new Date();
 
   if (action === 'close') {
     const items = await db

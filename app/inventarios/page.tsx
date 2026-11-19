@@ -17,6 +17,7 @@ type InventoryItem = {
   color: string;
   colorDescription: string;
   size: string;
+  sourceCode: string;
 };
 
 type InventorySession = {
@@ -27,6 +28,8 @@ type InventorySession = {
   status: 'draft' | 'closed' | 'exported';
   createdByName: string;
   updatedAt: string;
+  stmExportedAt?: string | null;
+  stmExportedByName?: string;
   items?: InventoryItem[];
 };
 
@@ -220,6 +223,43 @@ export default function InventoriesPage() {
     URL.revokeObjectURL(link.href);
   }
 
+  async function exportStmPartial() {
+    if (!active?.items?.length || active.status === 'draft') return;
+    const unidentified = active.items.filter((item) => !item.article || !item.color || !item.size);
+    if (unidentified.length) {
+      setNotice(`No se puede preparar STM: ${unidentified.length} referencia(s) no tienen artículo, color o talla identificados.`);
+      return;
+    }
+    if (active.status === 'exported' && !window.confirm('Este inventario ya fue exportado. ¿Descargar otra copia del mismo archivo?')) return;
+    setBusy(true);
+    try {
+      const rows = [
+        ['TIPO_REGULARIZACION', 'TEMPORADA', 'ALMACEN', 'ARTICULO', 'COLOR', 'TALLA', 'CANTIDAD', 'CODIGO_AECOC', 'DESCRIPCION'],
+        ...active.items.map((item) => ['PARCIAL', active.season, active.warehouse, item.article, item.color, item.size, String(item.quantity), item.sourceCode || item.barcode, item.description]),
+      ];
+      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(';')).join('\r\n');
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+      link.download = `STM-PARCIAL-${active.warehouse}-${active.countDate}-${active.id.slice(-8)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      const data = await json<{ session: InventorySession }>(
+        await fetch('/api/inventories', {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'export_stm', sessionId: active.id }),
+        }),
+      );
+      setActive(data.session);
+      setNotice('Archivo parcial para STM descargado. Revísalo antes de grabar la regularización en Global Textile.');
+      await loadSessions();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'No se pudo preparar el archivo para STM.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="inventory-page">
       <header className="inventory-header">
@@ -240,7 +280,7 @@ export default function InventoriesPage() {
             <div className="inventory-history"><h2>Continuar o consultar</h2>{sessions.map((session) => (
               <button key={session.id} onClick={() => void openInventory(session.id)}>
                 <span><b>{session.warehouse}</b><small>{session.countDate} · {session.season || 'Sin temporada'} · {session.createdByName}</small></span>
-                <em className={session.status}>{session.status === 'draft' ? 'Pendiente' : 'Cerrado'}</em>
+                <em className={session.status}>{session.status === 'draft' ? 'Pendiente' : session.status === 'exported' ? 'Exportado STM' : 'Cerrado'}</em>
               </button>
             ))}{!sessions.length && <p>Todavía no hay inventarios guardados.</p>}</div>
           </>
@@ -248,7 +288,7 @@ export default function InventoriesPage() {
           <>
             <div className="inventory-active-heading">
               <button onClick={() => setActive(null)}><ArrowLeft /> Recuentos</button>
-              <div><p>{active.status === 'draft' ? 'RECUENTO ACTIVO' : 'RECUENTO CERRADO'}</p><h1>{active.warehouse}</h1><span>{active.countDate} · {active.season || 'Sin temporada'}</span></div>
+              <div><p>{active.status === 'draft' ? 'RECUENTO ACTIVO' : active.status === 'exported' ? 'EXPORTADO PARA STM · PARCIAL' : 'RECUENTO CERRADO'}</p><h1>{active.warehouse}</h1><span>{active.countDate} · {active.season || 'Sin temporada'}{active.stmExportedAt ? ` · Exportado por ${active.stmExportedByName || 'usuario'} el ${new Date(active.stmExportedAt).toLocaleString('es-ES')}` : ''}</span></div>
               <div className="inventory-totals"><b>{active.items?.length || 0}</b><small>Referencias</small><b>{totalUnits}</b><small>Unidades</small></div>
             </div>
             {active.status === 'draft' && <form className="scan-box" onSubmit={scan}>
@@ -261,7 +301,7 @@ export default function InventoriesPage() {
                 <div className="quantity"><button disabled={busy || active.status !== 'draft'} onClick={() => void setQuantity(item, item.quantity - 1)}><Minus /></button><strong>{item.quantity}</strong><button disabled={busy || active.status !== 'draft'} onClick={() => void setQuantity(item, item.quantity + 1)}><Plus /></button></div>
               </article>
             ))}{!active.items?.length && <div className="inventory-empty"><ScanLine /><b>Aún no hay lecturas</b><span>Coloca el cursor en Código de barras y pulsa SCAN.</span></div>}</div>
-            <div className="inventory-footer"><Button variant="outline" onClick={downloadAudit} disabled={!active.items?.length}><Download /> Descargar revisión</Button>{active.status === 'draft' && <Button onClick={() => void closeInventory()} disabled={busy || !active.items?.length}><CheckCircle2 /> Cerrar inventario</Button>}</div>
+            <div className="inventory-footer"><Button variant="outline" onClick={downloadAudit} disabled={!active.items?.length}><Download /> Descargar revisión</Button>{active.status !== 'draft' && <Button onClick={() => void exportStmPartial()} disabled={busy || !active.items?.length}><Download /> Exportar STM parcial</Button>}{active.status === 'draft' && <Button onClick={() => void closeInventory()} disabled={busy || !active.items?.length}><CheckCircle2 /> Cerrar inventario</Button>}</div>
           </>
         )}
         {notice && !active && <p className="inventory-notice">{notice}</p>}

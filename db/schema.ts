@@ -313,6 +313,9 @@ export const inventorySessions = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     closedAt: integer('closed_at', { mode: 'timestamp_ms' }),
+    stmExportedAt: integer('stm_exported_at', { mode: 'timestamp_ms' }),
+    stmExportedByEmail: text('stm_exported_by_email').notNull().default(''),
+    stmExportedByName: text('stm_exported_by_name').notNull().default(''),
   },
   (table) => [
     index('idx_inventory_sessions_date').on(table.countDate, table.updatedAt),

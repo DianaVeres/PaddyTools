@@ -7,6 +7,7 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8');
 const schema = read('db/schema.ts');
 const migration = read('drizzle/0011_inventory_counts.sql');
 const catalogMigration = read('drizzle/0012_inventory_catalog.sql');
+const stmExportMigration = read('drizzle/0013_inventory_stm_export.sql');
 const route = read('app/api/inventories/route.ts');
 const page = read('app/inventarios/page.tsx');
 const header = read('components/dashboard/dashboard-header.tsx');
@@ -19,6 +20,8 @@ assert.ok(route.includes('getSessionUser(request)'), 'la API debe exigir sesión
 assert.ok(schema.includes("'inventory_catalog'"), 'falta el catálogo de artículos STM');
 assert.ok(catalogMigration.includes('CREATE TABLE `inventory_catalog`'), 'falta la migración del catálogo STM');
 assert.ok(route.includes('inventoryCodeCandidates'), 'las lecturas deben buscar su descripción en el catálogo');
+assert.ok(stmExportMigration.includes('stm_exported_at'), 'falta el control de exportación a STM');
+assert.ok(route.includes("action === 'export_stm'"), 'la API debe registrar la exportación a STM');
 assert.ok(route.includes("action === 'scan'"), 'la API debe registrar lecturas');
 assert.ok(route.includes("action === 'close'"), 'la API debe cerrar recuentos');
 assert.ok(page.includes('lastScanRef.current'), 'la PDA debe filtrar dobles lecturas rápidas');
@@ -27,6 +30,8 @@ assert.ok(page.includes("event.key !== 'Enter' && event.key !== 'Tab'"), 'la lec
 assert.ok(page.includes('Pulsa SCAN'), 'la pantalla debe guiar el uso del botón físico');
 assert.ok(page.includes('Descargar revisión'), 'debe existir una copia de revisión');
 assert.ok(page.includes("item.description || 'Artículo sin identificar'"), 'el recuento debe mostrar la descripción del producto');
+assert.ok(page.includes('Exportar STM parcial'), 'debe existir la exportación de regularización parcial a STM');
+assert.ok(page.includes("['PARCIAL', active.season, active.warehouse"), 'el archivo STM debe declarar la regularización parcial');
 assert.ok(header.includes('Inventarios'), 'Inventarios debe ser accesible desde la cabecera');
 
 console.log('Módulo de inventarios con PDA verificado.');
