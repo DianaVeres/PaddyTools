@@ -20,12 +20,39 @@ type WooPreparationOrder = {
   date_created?: string;
   total?: string;
   currency_symbol?: string;
-  billing?: { first_name?: string; last_name?: string };
+  billing?: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    email?: string;
+  };
+  meta_data?: Array<{ key?: string; value?: unknown }>;
   line_items?: WooPreparationLine[];
 };
 
 const clean = (value: unknown) =>
-  String(value ?? '').replace(/<[^>]*>/g, '').trim();
+  String(value ?? '')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+
+function preparationSchool(order: WooPreparationOrder) {
+  const values = [
+    ...(order.meta_data || []).map((meta) => ({
+      label: meta.key || '',
+      value: meta.value,
+    })),
+    ...(order.line_items || []).flatMap((item) =>
+      (item.meta_data || []).map((meta) => ({
+        label: `${meta.key || ''} ${meta.display_key || ''}`,
+        value: meta.display_value ?? meta.value,
+      })),
+    ),
+  ];
+  return clean(
+    values.find((entry) => /colegio|college|school|centro/i.test(entry.label))
+      ?.value,
+  );
+}
 
 function formatOrder(order: WooPreparationOrder) {
   return {
@@ -34,6 +61,9 @@ function formatOrder(order: WooPreparationOrder) {
     customer: clean(
       `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`,
     ),
+    phone: clean(order.billing?.phone),
+    customerEmail: clean(order.billing?.email),
+    school: preparationSchool(order),
     dateCreated: clean(order.date_created),
     total: `${clean(order.total)} ${clean(order.currency_symbol) || '€'}`,
     items: (order.line_items || []).map((item) => {
@@ -51,7 +81,9 @@ function formatOrder(order: WooPreparationOrder) {
   };
 }
 
-export async function loadAcceptedPaymentOrders(config: Record<string, string>) {
+export async function loadAcceptedPaymentOrders(
+  config: Record<string, string>,
+) {
   const totalsResponse = await wooFetch('reports/orders/totals', config);
   if (!totalsResponse.ok)
     throw new Error(

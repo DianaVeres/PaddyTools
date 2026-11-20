@@ -465,6 +465,17 @@
   grid-auto-flow: column;
   gap: 20px;
 }
+.preparation-product-progress {
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+}
+.preparation-product-progress > button {
+  color: #9a4a12;
+  border-color: #df9b50;
+  background: #fff;
+  white-space: nowrap;
+}
 .preparation-quantity span {
   min-width: 72px;
   display: grid;
@@ -534,5 +545,12 @@
     justify-content: space-around;
     border-top: 1px solid rgba(16, 45, 76, 0.12);
     padding-top: 10px;
+  }
+  .preparation-product-progress {
+    width: 100%;
+    display: grid !important;
+  }
+  .preparation-product-progress > button {
+    width: 100%;
   }
 }

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import {
   ArrowLeft,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
   PackageCheck,
@@ -19,6 +20,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchSessionUser } from '@/lib/dashboard-api';
+import {
+  reservationArticleCodeFromSku,
+  reservationPrefillStorageKey,
+} from '@/lib/reservation-prefill';
 import './preparar-pedidos.css';
 
 type PreparationItem = {
@@ -33,6 +38,9 @@ type PreparationOrder = {
   id: number;
   number: string;
   customer: string;
+  phone: string;
+  customerEmail: string;
+  school: string;
   dateCreated: string;
   total: string;
   items: PreparationItem[];
@@ -154,6 +162,24 @@ export default function PrepararPedidosPage() {
     if (event.key !== 'Enter' && event.key !== 'Tab') return;
     event.preventDefault();
     registerScan(scanCode);
+  }
+
+  function createReservation(item: PreparationItem, units: number) {
+    if (!selectedOrder || units < 1) return;
+    window.sessionStorage.setItem(
+      reservationPrefillStorageKey,
+      JSON.stringify({
+        reference: selectedOrder.number,
+        customerName: selectedOrder.customer,
+        phone: selectedOrder.phone,
+        customerEmail: selectedOrder.customerEmail,
+        school: selectedOrder.school,
+        articleCode: reservationArticleCodeFromSku(item.sku),
+        size: item.size === '—' ? '' : item.size,
+        units,
+      }),
+    );
+    window.location.assign('/?createReservation=1');
   }
 
   function showOrder(event: FormEvent) {
@@ -295,17 +321,27 @@ export default function PrepararPedidosPage() {
                         {item.sku} · Talla {item.size}
                       </small>
                     </div>
-                    <div className="preparation-quantity">
-                      <span>
-                        <b>{remaining}</b>
-                        <small>pendientes</small>
-                      </span>
-                      <span>
-                        <b>
-                          {completed}/{item.quantity}
-                        </b>
-                        <small>escaneadas</small>
-                      </span>
+                    <div className="preparation-product-progress">
+                      <div className="preparation-quantity">
+                        <span>
+                          <b>{remaining}</b>
+                          <small>pendientes</small>
+                        </span>
+                        <span>
+                          <b>
+                            {completed}/{item.quantity}
+                          </b>
+                          <small>escaneadas</small>
+                        </span>
+                      </div>
+                      {remaining > 0 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => createReservation(item, remaining)}
+                        >
+                          <CalendarDays /> Generar reserva
+                        </Button>
+                      )}
                     </div>
                   </article>
                 );

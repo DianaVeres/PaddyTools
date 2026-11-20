@@ -10,6 +10,7 @@ const page = read('app/preparar-pedidos/page.tsx');
 const route = read('app/api/order-preparation/route.ts');
 const woo = read('lib/woo-order-preparation.ts');
 const catalog = read('lib/order-preparation-catalog.ts');
+const prefill = read('lib/reservation-prefill.ts');
 
 assert.ok(
   header.includes('Preparar pedidos'),
@@ -71,6 +72,22 @@ assert.ok(
 assert.ok(
   page.includes('localStorage.setItem'),
   'el conteo debe sobrevivir a una recarga en la PDA',
+);
+assert.ok(
+  page.includes('Generar reserva'),
+  'debe poder reservar las unidades que falten',
+);
+assert.ok(
+  page.includes('reservationPrefillStorageKey'),
+  'debe transferir los datos al formulario oficial',
+);
+assert.ok(
+  home.includes("initialParams.get('createReservation')"),
+  'la portada debe abrir la reserva prerrellenada',
+);
+assert.ok(
+  prefill.includes('reservationArticleIdForCode'),
+  'el artículo debe asociarse por su código',
 );
 assert.ok(
   route.includes('getSessionUser(request)'),

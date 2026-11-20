@@ -74,6 +74,11 @@ import {
   completeAutomaticWork,
 } from '@/lib/kpi-auto-timer';
 import { validateReservationDraft } from '@/lib/dashboard-form-rules';
+import {
+  reservationArticleIdForCode,
+  reservationPrefillStorageKey,
+  type ReservationPrefill,
+} from '@/lib/reservation-prefill';
 import { useDraggableDialog } from '@/lib/use-draggable-dialog';
 import {
   normalizeOrderNoteContent,
@@ -147,7 +152,9 @@ export default function Home() {
   >(null);
   const reservationDialog = useDraggableDialog();
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
-  const [hotlineContacts, setHotlineContacts] = useState<HotlineOrderContact[]>([]);
+  const [hotlineContacts, setHotlineContacts] = useState<HotlineOrderContact[]>(
+    [],
+  );
   const [hotlineLoading, setHotlineLoading] = useState(false);
   const [hotlineError, setHotlineError] = useState('');
   const hotlineReference =
@@ -191,9 +198,23 @@ export default function Home() {
       .then(async (user) => {
         setSessionUser(user);
         const initialParams = new URLSearchParams(window.location.search);
-        const initialView = initialParams.get(
-          'view',
-        );
+        if (initialParams.get('createReservation') === '1') {
+          const storedPrefill = window.sessionStorage.getItem(
+            reservationPrefillStorageKey,
+          );
+          window.sessionStorage.removeItem(reservationPrefillStorageKey);
+          window.history.replaceState({}, '', window.location.pathname);
+          if (storedPrefill) {
+            try {
+              const prefill = JSON.parse(storedPrefill) as ReservationPrefill;
+              setQuery(prefill.reference);
+              await openReservation(undefined, prefill);
+            } catch {
+              setSaved('No se pudieron recuperar los datos de la reserva.');
+            }
+          }
+        }
+        const initialView = initialParams.get('view');
         if (initialView === 'incidencias') {
           window.history.replaceState({}, '', window.location.pathname);
           await openRegistry('registro');
@@ -203,9 +224,7 @@ export default function Home() {
           setQuery(initialOrder);
           await search(undefined, initialOrder);
         }
-        const pendingDelete = initialParams.get(
-          'deleteIncident',
-        );
+        const pendingDelete = initialParams.get('deleteIncident');
         if (pendingDelete) {
           window.history.replaceState({}, '', window.location.pathname);
           if (!canDeleteIncidents(user)) {
@@ -671,16 +690,25 @@ export default function Home() {
   }, [mondayUpdateIds]);
   function openIncidentWorkspace() {
     const reference =
-      order?.number || incident?.orderNumber || mondayRecords[0]?.reference || '';
+      order?.number ||
+      incident?.orderNumber ||
+      mondayRecords[0]?.reference ||
+      '';
     if (!reference) return;
     window.location.assign(createIncidentHref(reference));
   }
-  async function openReservation(existing?: MondayRecord) {
+  async function openReservation(
+    existing?: MondayRecord,
+    prefill?: ReservationPrefill,
+  ) {
     if (!existing)
       beginAutomaticWork(
         'reservation-create',
         'reservas',
-        order?.number || mondayRecords[0]?.reference || '',
+        prefill?.reference ||
+          order?.number ||
+          mondayRecords[0]?.reference ||
+          '',
       );
     else cancelAutomaticWork('reservation-create');
     reservationDialog.reset();
@@ -689,18 +717,21 @@ export default function Home() {
     setNewReservationCustomer(false);
     const customerName =
       existing?.customer ||
+      prefill?.customerName ||
       order?.customer.name ||
       incident?.customerName ||
       mondayRecords[0]?.customer ||
       '';
     const sourcePhone =
       existing?.phone ||
+      prefill?.phone ||
       order?.customer.phone ||
       incident?.customerPhone ||
       mondayRecords[0]?.phone ||
       '';
     const sourceCustomerEmail =
       existing?.customerEmail ||
+      prefill?.customerEmail ||
       order?.customer.email ||
       incident?.customerEmail ||
       '';
@@ -711,6 +742,7 @@ export default function Home() {
     const customerEmail = sourceCustomerEmail || knownCustomer?.email || '';
     const school =
       existing?.school ||
+      prefill?.school ||
       mondayRecords[0]?.school ||
       knownCustomer?.school ||
       '';
@@ -718,6 +750,7 @@ export default function Home() {
       ...current,
       reference:
         existing?.reference ||
+        prefill?.reference ||
         order?.number ||
         incident?.orderNumber ||
         mondayRecords[0]?.reference ||
@@ -728,11 +761,16 @@ export default function Home() {
       customerEmail,
       school,
       date: existing?.date || today,
-      articleId: existing?.articleIds?.[0] || '',
-      size: existing?.size || '',
-      units: Number(existing?.units) || 1,
+      articleId:
+        existing?.articleIds?.[0] ||
+        reservationArticleIdForCode(
+          reservationOptions?.articles || [],
+          prefill?.articleCode || '',
+        ),
+      size: existing?.size || prefill?.size || '',
+      units: Number(existing?.units || prefill?.units) || 1,
       sentUnits: Number(existing?.sentUnits) || 0,
-      pending: Number(existing?.pending) || 0,
+      pending: Number(existing?.pending || prefill?.units) || 0,
       paid: existing?.paid || 'SÍ',
       observations: existing?.observations || 'ENTREGA COLEGIO',
       status: existing?.status || '',
@@ -778,11 +816,17 @@ export default function Home() {
         customerEmail: sourceCustomerEmail || customer?.email || '',
         school:
           existing?.school ||
+          prefill?.school ||
           mondayRecords[0]?.school ||
           customer?.school ||
           '',
         date: existing?.date || today,
-        articleId: existing?.articleIds?.[0] || '',
+        articleId:
+          existing?.articleIds?.[0] ||
+          reservationArticleIdForCode(
+            [...articleMap.values()],
+            prefill?.articleCode || '',
+          ),
       }));
     } catch (error) {
       setSaved(
@@ -864,37 +908,37 @@ export default function Home() {
         (item) => item.id === reservationDraft.articleId,
       );
       const savedReservation: MondayRecord = {
-          id: record.id || '',
-          kind: 'reserva',
-          board: 'Registro Reservas',
-          reference: reservationReference,
-          customer: reservationDraft.customerName,
-          phone: reservationDraft.phone,
-          school: reservationDraft.school,
-          date: reservationDraft.date,
-          article: article?.description || '',
-          articleDescription: article?.description || '',
-          code: article?.code || '',
-          size: reservationDraft.size,
-          units: String(reservationDraft.units),
-          sentUnits: String(reservationDraft.sentUnits),
-          pending: String(reservationDraft.pending),
-          paid: reservationDraft.paid,
-          status: reservationDraft.status,
-          observations: reservationDraft.observations,
-          specialDetails: '',
-          articleIds: reservationDraft.articleId
-            ? [reservationDraft.articleId]
-            : [],
-          customerIds: reservationDraft.customerId
-            ? [reservationDraft.customerId]
-            : [],
-          endDate: reservationDraft.endDate,
-          productionDate: reservationDraft.productionDate,
-          estimatedProduction: reservationDraft.estimatedProduction,
-          formula: record.formula || reservationDraft.formula,
-          customerEmail: reservationDraft.customerEmail,
-          updatedAt: new Date().toISOString(),
+        id: record.id || '',
+        kind: 'reserva',
+        board: 'Registro Reservas',
+        reference: reservationReference,
+        customer: reservationDraft.customerName,
+        phone: reservationDraft.phone,
+        school: reservationDraft.school,
+        date: reservationDraft.date,
+        article: article?.description || '',
+        articleDescription: article?.description || '',
+        code: article?.code || '',
+        size: reservationDraft.size,
+        units: String(reservationDraft.units),
+        sentUnits: String(reservationDraft.sentUnits),
+        pending: String(reservationDraft.pending),
+        paid: reservationDraft.paid,
+        status: reservationDraft.status,
+        observations: reservationDraft.observations,
+        specialDetails: '',
+        articleIds: reservationDraft.articleId
+          ? [reservationDraft.articleId]
+          : [],
+        customerIds: reservationDraft.customerId
+          ? [reservationDraft.customerId]
+          : [],
+        endDate: reservationDraft.endDate,
+        productionDate: reservationDraft.productionDate,
+        estimatedProduction: reservationDraft.estimatedProduction,
+        formula: record.formula || reservationDraft.formula,
+        customerEmail: reservationDraft.customerEmail,
+        updatedAt: new Date().toISOString(),
       };
       setCreatedReservation(savedReservation);
       if (editingReservationId) {
@@ -986,14 +1030,17 @@ export default function Home() {
       const shownDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
         ? `${rawDate.slice(8, 10)}/${rawDate.slice(5, 7)}/${rawDate.slice(0, 4)}`
         : rawDate;
-      void printStandaloneLabel([
-        record.kind === 'reserva'
-          ? `RESERVA ${reference}`
-          : `PRENDA ESPECIAL ${reference}`,
-        `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
-        `FECHA: ${shownDate}`,
-        `COLEGIO: ${record.school || 'SIN COLEGIO'}`,
-      ], reference);
+      void printStandaloneLabel(
+        [
+          record.kind === 'reserva'
+            ? `RESERVA ${reference}`
+            : `PRENDA ESPECIAL ${reference}`,
+          `NOMBRE: ${record.customer || 'SIN NOMBRE'}`,
+          `FECHA: ${shownDate}`,
+          `COLEGIO: ${record.school || 'SIN COLEGIO'}`,
+        ],
+        reference,
+      );
       return;
     }
     setReservationPrintMode(mode);
@@ -1213,7 +1260,9 @@ export default function Home() {
                   <TabsTrigger value="notas">
                     Notas{' '}
                     <span className="count">
-                      {orderNotes.length + hotlineContacts.length + mondayUpdates.length}
+                      {orderNotes.length +
+                        hotlineContacts.length +
+                        mondayUpdates.length}
                     </span>
                   </TabsTrigger>
                   <TabsTrigger value="movimientos">
