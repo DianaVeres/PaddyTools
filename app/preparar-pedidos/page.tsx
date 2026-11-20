@@ -23,6 +23,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BarcodeCameraScanner } from '@/components/order-preparation/barcode-camera-scanner';
+import { CustomerMessageDialog } from '@/components/dashboard/customer-message-dialog';
+import {
+  createDeliveryEmailDraft,
+  updateDeliveryEmailDraft,
+  type DeliveryEmailDraft,
+} from '@/lib/delivery-message';
+import { buildEmailLink, buildWhatsAppLink } from '@/lib/contact-links';
 import { barcodeMatchesPreparationItem } from '@/lib/order-preparation-catalog';
 import { fetchSessionUser } from '@/lib/dashboard-api';
 import {
@@ -63,6 +70,8 @@ type PreparedOrder = {
   orderId: number;
   orderNumber: string;
   customerName: string;
+  customerEmail: string;
+  customerPhone: string;
   units: number;
   products: number;
   completedByName: string;
@@ -71,6 +80,8 @@ type PreparedOrder = {
   hasReservation: boolean;
   treatment: string;
   wooStatus: string;
+  carrier: string;
+  trackingNumber: string;
 };
 
 async function responseJson<T>(response: Response) {
@@ -97,6 +108,10 @@ export default function PrepararPedidosPage() {
   const [preparedToday, setPreparedToday] = useState<PreparedOrder[]>([]);
   const [finishMessage, setFinishMessage] = useState('');
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [shippingDraft, setShippingDraft] = useState<DeliveryEmailDraft | null>(
+    null,
+  );
+  const [markingSent, setMarkingSent] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef({ code: '', at: 0 });
 
@@ -307,6 +322,107 @@ export default function PrepararPedidosPage() {
       );
     } finally {
       setFinishing(false);
+    }
+  }
+
+  function openShipping(order: PreparedOrder) {
+    setFinishMessage('');
+    setShippingDraft(
+      createDeliveryEmailDraft({
+        to: order.customerEmail,
+        phone: order.customerPhone,
+        customerName: order.customerName || 'cliente',
+        recordKind: 'pedido',
+        reference: order.orderNumber,
+        school: '',
+        delivery: 'domicilio',
+      }),
+    );
+  }
+
+  async function copyShippingMessage() {
+    if (!shippingDraft) return;
+    try {
+      await navigator.clipboard.writeText(shippingDraft.body);
+      setFinishMessage('Mensaje copiado.');
+    } catch {
+      setFinishMessage('No se pudo copiar el mensaje automáticamente.');
+    }
+  }
+
+  function launchShippingEmail() {
+    if (!shippingDraft) return;
+    if (!shippingDraft.trackingNumber.trim()) {
+      setFinishMessage('Escanea primero el número de seguimiento.');
+      return;
+    }
+    const link = buildEmailLink(
+      shippingDraft.to,
+      shippingDraft.subject,
+      shippingDraft.body,
+    );
+    if (!link) {
+      setFinishMessage('El pedido no tiene un email válido.');
+      return;
+    }
+    window.location.href = link;
+  }
+
+  function launchShippingWhatsApp() {
+    if (!shippingDraft) return;
+    if (!shippingDraft.trackingNumber.trim()) {
+      setFinishMessage('Escanea primero el número de seguimiento.');
+      return;
+    }
+    const link = buildWhatsAppLink(shippingDraft.phone, shippingDraft.body);
+    if (!link) {
+      setFinishMessage('El pedido no tiene un teléfono válido.');
+      return;
+    }
+    window.location.href = link;
+  }
+
+  async function markShippingSent() {
+    if (!shippingDraft || markingSent) return;
+    if (!shippingDraft.trackingNumber.trim()) {
+      setFinishMessage('Escanea primero el número de seguimiento.');
+      return;
+    }
+    const prepared = preparedToday.find(
+      (order) => order.orderNumber === shippingDraft.reference,
+    );
+    if (!prepared) return;
+    setMarkingSent(true);
+    try {
+      const data = await responseJson<{
+        completion: PreparedOrder;
+        message: string;
+      }>(
+        await fetch('/api/order-preparation', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            orderId: prepared.orderId,
+            carrier: shippingDraft.carrier,
+            trackingNumber: shippingDraft.trackingNumber,
+          }),
+        }),
+      );
+      setPreparedToday((current) =>
+        current.map((order) =>
+          order.orderId === data.completion.orderId ? data.completion : order,
+        ),
+      );
+      setShippingDraft(null);
+      setFinishMessage(data.message);
+    } catch (sentError) {
+      setFinishMessage(
+        sentError instanceof Error
+          ? sentError.message
+          : 'No se pudo marcar el pedido como enviado.',
+      );
+    } finally {
+      setMarkingSent(false);
     }
   }
 
@@ -622,10 +738,17 @@ export default function PrepararPedidosPage() {
                       ? 'Pedido preparado'
                       : order.treatment === 'store-ready'
                         ? 'Disponible en tienda'
-                        : order.hasReservation
-                          ? 'Reserva · revisión manual'
-                          : 'Revisión manual'}
+                        : order.treatment === 'sent'
+                          ? 'Enviado'
+                          : order.hasReservation
+                            ? 'Reserva · revisión manual'
+                            : 'Revisión manual'}
                   </strong>
+                  {order.treatment === 'manual-home-delivery' && (
+                    <Button type="button" onClick={() => openShipping(order)}>
+                      Gestionar envío
+                    </Button>
+                  )}
                 </article>
               ))}
             </div>
@@ -662,6 +785,22 @@ export default function PrepararPedidosPage() {
           onClose={() => setCameraOpen(false)}
         />
       )}
+      <CustomerMessageDialog
+        open={Boolean(shippingDraft)}
+        draft={shippingDraft}
+        onClose={() => setShippingDraft(null)}
+        onChange={setShippingDraft}
+        onGeneratedChange={(changes) =>
+          setShippingDraft((current) =>
+            current ? updateDeliveryEmailDraft(current, changes) : current,
+          )
+        }
+        onCopy={() => void copyShippingMessage()}
+        onWhatsApp={launchShippingWhatsApp}
+        onEmail={launchShippingEmail}
+        onMarkSent={() => void markShippingSent()}
+        markingSent={markingSent}
+      />
     </main>
   );
 }

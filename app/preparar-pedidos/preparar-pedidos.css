@@ -655,7 +655,7 @@
 }
 .prepared-order-list article {
   display: grid;
-  grid-template-columns: 1.4fr 0.7fr 0.9fr auto;
+  grid-template-columns: 1.3fr 0.6fr 0.8fr auto auto;
   align-items: center;
   gap: 18px;
   padding: 15px 18px;
@@ -675,6 +675,11 @@
 }
 .prepared-order-list article > strong {
   color: #16844c;
+}
+.prepared-order-list article > button {
+  white-space: nowrap;
+  background: #176f63;
+  color: #fff;
 }
 .preparation-quantity span {
   min-width: 72px;
@@ -775,5 +780,9 @@
   }
   .prepared-order-list article > strong {
     text-align: right;
+  }
+  .prepared-order-list article > button {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 }

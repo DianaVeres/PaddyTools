@@ -17,6 +17,8 @@ const completionMigration = read(
   'drizzle/0014_order_preparation_completions.sql',
 );
 const routingMigration = read('drizzle/0015_order_preparation_routing.sql');
+const shippingMigration = read('drizzle/0016_order_preparation_shipping.sql');
+const messageDialog = read('components/dashboard/customer-message-dialog.tsx');
 
 assert.ok(
   header.includes('Preparar pedidos'),
@@ -109,6 +111,17 @@ assert.ok(
   'los controles manuales deben ser accesibles',
 );
 assert.ok(
+  page.includes('Gestionar envío') &&
+    page.includes('markShippingSent') &&
+    page.includes('Escanea primero el número de seguimiento'),
+  'los envíos a domicilio deben pedir seguimiento antes de marcarlos enviados',
+);
+assert.ok(
+  messageDialog.includes('Marcar enviado') &&
+    messageDialog.includes('onMarkSent'),
+  'el aviso al cliente debe permitir confirmar el cambio a Enviado',
+);
+assert.ok(
   page.includes('<small>preparadas</small>'),
   'el conteo debe representar unidades preparadas, escaneadas o manuales',
 );
@@ -156,8 +169,16 @@ assert.ok(
   schema.includes('orderPreparationCompletions') &&
     completionMigration.includes('order_preparation_completions') &&
     routingMigration.includes('shipping_method') &&
-    routingMigration.includes('treatment'),
+    routingMigration.includes('treatment') &&
+    shippingMigration.includes('tracking_number') &&
+    shippingMigration.includes('customer_email'),
   'falta el almacenamiento persistente de pedidos preparados',
+);
+assert.ok(
+  route.includes("wooStatusSlugByName(statuses, 'Enviado')") &&
+    route.includes("treatment: 'sent'") &&
+    route.includes('trackingNumber'),
+  'la API debe cambiar a Enviado y conservar el seguimiento',
 );
 assert.ok(
   catalog.includes('barcodesForPreparationItem'),

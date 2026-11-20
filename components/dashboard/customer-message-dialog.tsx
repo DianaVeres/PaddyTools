@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +28,8 @@ type CustomerMessageDialogProps = {
   onCopy: () => void;
   onWhatsApp: () => void;
   onEmail: () => void;
+  onMarkSent?: () => void;
+  markingSent?: boolean;
 };
 
 export function CustomerMessageDialog({
@@ -39,6 +41,8 @@ export function CustomerMessageDialog({
   onCopy,
   onWhatsApp,
   onEmail,
+  onMarkSent,
+  markingSent = false,
 }: CustomerMessageDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
@@ -131,6 +135,7 @@ export function CustomerMessageDialog({
                 </Field>
                 <Field label="Número de envío">
                   <Input
+                    autoFocus
                     value={draft.trackingNumber}
                     onChange={(event) =>
                       onGeneratedChange({ trackingNumber: event.target.value })
@@ -172,6 +177,11 @@ export function CustomerMessageDialog({
           <Button onClick={onEmail}>
             <Mail /> Abrir correo
           </Button>
+          {onMarkSent && (
+            <Button onClick={onMarkSent} disabled={markingSent}>
+              <Truck /> {markingSent ? 'Cambiando…' : 'Marcar enviado'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
