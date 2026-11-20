@@ -21,10 +21,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchSessionUser } from '@/lib/dashboard-api';
 import {
+  beginAutomaticWork,
+  cancelAutomaticWork,
+  completeAutomaticWork,
+  readAutomaticWork,
+} from '@/lib/kpi-auto-timer';
+import {
   reservationArticleCodeFromSku,
   reservationPrefillStorageKey,
 } from '@/lib/reservation-prefill';
 import './preparar-pedidos.css';
+
+const PREPARATION_TIMER_KEY = 'order-preparation';
 
 type PreparationItem = {
   id: number;
@@ -64,6 +72,10 @@ export default function PrepararPedidosPage() {
     Record<number, Record<number, number>>
   >({});
   const [scanAlert, setScanAlert] = useState('');
+  const [timerStarted, setTimerStarted] = useState('');
+  const [finishing, setFinishing] = useState(false);
+  const [finalizedToday, setFinalizedToday] = useState(0);
+  const [finishMessage, setFinishMessage] = useState('');
   const scanInputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef({ code: '', at: 0 });
 
@@ -186,7 +198,56 @@ export default function PrepararPedidosPage() {
     event.preventDefault();
     const value = reference.trim().toUpperCase();
     const match = orders.find((order) => order.number.toUpperCase() === value);
-    if (match) setSelectedOrderId(match.id);
+    if (match) openOrder(match);
+  }
+
+  function openOrder(order: PreparationOrder) {
+    const context = `Pedido #${order.number}`;
+    const existing = readAutomaticWork(PREPARATION_TIMER_KEY);
+    if (existing && existing.context !== context)
+      cancelAutomaticWork(PREPARATION_TIMER_KEY);
+    const timer = beginAutomaticWork(
+      PREPARATION_TIMER_KEY,
+      'preparacion',
+      context,
+    );
+    setTimerStarted(timer.startedIso);
+    setFinishMessage('');
+    setSelectedOrderId(order.id);
+  }
+
+  async function finishOrder() {
+    if (!selectedOrder || finishing) return;
+    setFinishing(true);
+    setFinishMessage('');
+    try {
+      const units = selectedOrder.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
+      await completeAutomaticWork(PREPARATION_TIMER_KEY, {
+        orders: 1,
+        products: units,
+        notes: `Pedido #${selectedOrder.number} finalizado`,
+      });
+      setOrders((current) =>
+        current.filter((order) => order.id !== selectedOrder.id),
+      );
+      setFinalizedToday((current) => current + 1);
+      setTimerStarted('');
+      setSelectedOrderId(null);
+      setFinishMessage(
+        `Pedido #${selectedOrder.number} finalizado y tiempo guardado.`,
+      );
+    } catch (finishError) {
+      setFinishMessage(
+        finishError instanceof Error
+          ? finishError.message
+          : 'No se pudo guardar el tiempo de preparación.',
+      );
+    } finally {
+      setFinishing(false);
+    }
   }
 
   return (
@@ -247,7 +308,7 @@ export default function PrepararPedidosPage() {
             <CheckCircle2 />
             <div>
               <span>PREPARADOS</span>
-              <strong>Finalizados hoy</strong>
+              <strong>{finalizedToday} finalizados hoy</strong>
             </div>
           </article>
         </div>
@@ -281,6 +342,17 @@ export default function PrepararPedidosPage() {
                 <small>productos</small>
               </div>
             </header>
+            <div className="preparation-finish-bar">
+              <span>
+                {timerStarted
+                  ? `Medición automática activa desde ${new Date(timerStarted).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Iniciando medición automática…'}
+              </span>
+              <Button onClick={() => void finishOrder()} disabled={finishing}>
+                <CheckCircle2 />
+                {finishing ? 'Finalizando…' : 'Finalizar pedido'}
+              </Button>
+            </div>
             <div className="preparation-scanner">
               <label htmlFor="product-barcode">
                 <ScanLine />
@@ -386,7 +458,7 @@ export default function PrepararPedidosPage() {
                   <article key={order.id}>
                     <button
                       className="accepted-order-summary"
-                      onClick={() => setSelectedOrderId(order.id)}
+                      onClick={() => openOrder(order)}
                     >
                       <span>
                         <b>#{order.number}</b>
@@ -413,6 +485,9 @@ export default function PrepararPedidosPage() {
               })}
             </div>
           </section>
+        )}
+        {finishMessage && (
+          <p className="order-preparation-success">{finishMessage}</p>
         )}
       </section>
       {scanAlert && (

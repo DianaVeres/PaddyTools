@@ -82,6 +82,18 @@ assert.ok(
   'debe transferir los datos al formulario oficial',
 );
 assert.ok(
+  page.includes("'preparacion'"),
+  'debe iniciar la medición automática de preparación',
+);
+assert.ok(
+  page.includes('completeAutomaticWork(PREPARATION_TIMER_KEY'),
+  'debe cerrar la medición al finalizar el pedido',
+);
+assert.ok(
+  page.includes('Finalizar pedido'),
+  'falta el botón para finalizar el pedido',
+);
+assert.ok(
   home.includes("initialParams.get('createReservation')"),
   'la portada debe abrir la reserva prerrellenada',
 );

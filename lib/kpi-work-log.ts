@@ -24,6 +24,7 @@ export const KPI_ACTIVITIES = [
 // PackingList y Hotline abren y cierran su propio contador. No deben aparecer
 // en el selector manual porque eso duplicaría el tiempo registrado.
 export const AUTOMATIC_KPI_ACTIVITIES = [
+  'preparacion',
   'packing',
   'correos',
   'reservas',

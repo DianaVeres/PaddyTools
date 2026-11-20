@@ -16,6 +16,11 @@ const bridge = readFileSync(
   resolve(root, 'components/kpis/kpi-timer.tsx'),
   'utf8',
 );
+const orderPreparation = readFileSync(
+  resolve(root, 'app/preparar-pedidos/page.tsx'),
+  'utf8',
+);
+const workLog = readFileSync(resolve(root, 'lib/kpi-work-log.ts'), 'utf8');
 for (const fragment of [
   'beginAutomaticWork',
   'completeAutomaticWork',
@@ -27,6 +32,18 @@ for (const fragment of [
     throw new Error(
       `El servicio de medición automática ha perdido: ${fragment}`,
     );
+for (const fragment of [
+  'beginAutomaticWork(',
+  "'preparacion'",
+  'completeAutomaticWork(PREPARATION_TIMER_KEY',
+  'Finalizar pedido',
+])
+  if (!orderPreparation.includes(fragment))
+    throw new Error(
+      `Preparar pedidos ha perdido la medición automática: ${fragment}`,
+    );
+if (!/AUTOMATIC_KPI_ACTIVITIES\s*=\s*\[\s*'preparacion'/.test(workLog))
+  throw new Error('Preparar pedidos sigue disponible como contador manual.');
 for (const fragment of [
   "beginAutomaticWork(\n      'packing-list-create'",
   "completeAutomaticWork('packing-list-create'",
