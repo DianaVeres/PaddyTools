@@ -1,18 +1,47 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, ClipboardList, PackageCheck, RefreshCw, ScanLine } from 'lucide-react';
+import {
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ClipboardList,
+  PackageCheck,
+  RefreshCw,
+  ScanLine,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchSessionUser } from '@/lib/dashboard-api';
 import './preparar-pedidos.css';
 
-type PreparationItem = { id: number; name: string; sku: string; quantity: number; size: string };
-type PreparationOrder = { id: number; number: string; customer: string; dateCreated: string; total: string; items: PreparationItem[] };
+type PreparationItem = {
+  id: number;
+  name: string;
+  sku: string;
+  quantity: number;
+  size: string;
+  barcodes: string[];
+};
+type PreparationOrder = {
+  id: number;
+  number: string;
+  customer: string;
+  dateCreated: string;
+  total: string;
+  items: PreparationItem[];
+};
 
 async function responseJson<T>(response: Response) {
   const data = (await response.json()) as T & { error?: string };
-  if (!response.ok) throw new Error(data.error || 'No se pudo completar la consulta.');
+  if (!response.ok)
+    throw new Error(data.error || 'No se pudo completar la consulta.');
   return data;
 }
 
@@ -22,6 +51,13 @@ export default function PrepararPedidosPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [scanCode, setScanCode] = useState('');
+  const [scanned, setScanned] = useState<
+    Record<number, Record<number, number>>
+  >({});
+  const [scanAlert, setScanAlert] = useState('');
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const lastScanRef = useRef({ code: '', at: 0 });
 
   async function loadOrders() {
     setLoading(true);
@@ -33,25 +69,92 @@ export default function PrepararPedidosPage() {
       setOrders(data.orders);
     } catch (loadError) {
       setOrders([]);
-      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los pedidos.');
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'No se pudieron cargar los pedidos.',
+      );
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void fetchSessionUser().then(() => loadOrders()).catch(() => window.location.assign('/login'));
+    void fetchSessionUser()
+      .then(() => loadOrders())
+      .catch(() => window.location.assign('/login'));
   }, []);
 
   const visibleOrders = useMemo(() => {
     const term = reference.trim().toLowerCase();
     if (!term) return orders;
-    return orders.filter((order) => order.number.toLowerCase().includes(term) || order.customer.toLowerCase().includes(term));
+    return orders.filter(
+      (order) =>
+        order.number.toLowerCase().includes(term) ||
+        order.customer.toLowerCase().includes(term),
+    );
   }, [orders, reference]);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) || null,
     [orders, selectedOrderId],
   );
+  const selectedCounts = selectedOrderId ? scanned[selectedOrderId] || {} : {};
+
+  useEffect(() => {
+    if (!selectedOrderId) return;
+    const saved = window.localStorage.getItem(
+      `paddytools:preparation:${selectedOrderId}`,
+    );
+    if (saved) {
+      try {
+        const counts = JSON.parse(saved) as Record<number, number>;
+        setScanned((current) => ({ ...current, [selectedOrderId]: counts }));
+      } catch {
+        /* Si el dato local estaba dañado, el pedido empieza sin lecturas. */
+      }
+    }
+    window.setTimeout(() => scanInputRef.current?.focus(), 80);
+  }, [selectedOrderId]);
+
+  function closeScanAlert() {
+    setScanAlert('');
+    window.setTimeout(() => scanInputRef.current?.focus(), 50);
+  }
+
+  function registerScan(rawCode: string) {
+    if (!selectedOrder || scanAlert) return;
+    const code = rawCode.trim().replace(/\s+/g, '').toUpperCase();
+    setScanCode('');
+    if (!code) return;
+    const now = Date.now();
+    if (lastScanRef.current.code === code && now - lastScanRef.current.at < 900)
+      return;
+    lastScanRef.current = { code, at: now };
+    const item = selectedOrder.items.find((candidate) =>
+      candidate.barcodes.includes(code),
+    );
+    if (!item) {
+      setScanAlert('PRODUCTO ERRONEO');
+      return;
+    }
+    const current = selectedCounts[item.id] || 0;
+    if (current >= item.quantity) {
+      setScanAlert('PRODUCTO YA COMPLETO');
+      return;
+    }
+    const counts = { ...selectedCounts, [item.id]: current + 1 };
+    setScanned((all) => ({ ...all, [selectedOrder.id]: counts }));
+    window.localStorage.setItem(
+      `paddytools:preparation:${selectedOrder.id}`,
+      JSON.stringify(counts),
+    );
+  }
+
+  function handleScanKey(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+    event.preventDefault();
+    registerScan(scanCode);
+  }
 
   function showOrder(event: FormEvent) {
     event.preventDefault();
@@ -63,80 +166,255 @@ export default function PrepararPedidosPage() {
   return (
     <main className="order-preparation-page">
       <header className="order-preparation-topbar">
-        <a href="/"><img src="/paddy-logo-granate.png" alt="Paddy" /><span><strong>PaddyTools · Preparar pedidos</strong><small>Control de preparación</small></span></a>
+        <a href="/">
+          <img src="/paddy-logo-granate.png" alt="Paddy" />
+          <span>
+            <strong>PaddyTools · Preparar pedidos</strong>
+            <small>Control de preparación</small>
+          </span>
+        </a>
         <div id="kpi-timer-slot" className="kpi-timer-slot" />
-        <Button variant="outline" onClick={() => window.location.assign('/')}><ArrowLeft /> Gestión unificada</Button>
+        <Button variant="outline" onClick={() => window.location.assign('/')}>
+          <ArrowLeft /> Gestión unificada
+        </Button>
       </header>
 
       <section className="order-preparation-hero">
-        <div><span>PREPARACIÓN</span><h1>Pedidos con pago aceptado</h1><p>La lista se carga automáticamente desde WooCommerce. Pulsa sobre un pedido para consultar todos los productos que contiene.</p></div>
+        <div>
+          <span>PREPARACIÓN</span>
+          <h1>Pedidos con pago aceptado</h1>
+          <p>
+            La lista se carga automáticamente desde WooCommerce. Pulsa sobre un
+            pedido para consultar todos los productos que contiene.
+          </p>
+        </div>
         <PackageCheck />
       </section>
 
       <section className="order-preparation-shell">
         <form className="order-preparation-search" onSubmit={showOrder}>
-          <div><span>LOCALIZAR PEDIDO</span><h2>Filtra o escanea el número del pedido</h2></div>
-          <label>Pedido o cliente<Input value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Ej. PA51548" autoCapitalize="characters" autoComplete="off" /></label>
-          <Button type="submit" disabled={!reference.trim()}><ScanLine /> Mostrar productos</Button>
+          <div>
+            <span>LOCALIZAR PEDIDO</span>
+            <h2>Filtra o escanea el número del pedido</h2>
+          </div>
+          <label>
+            Pedido o cliente
+            <Input
+              value={reference}
+              onChange={(event) => setReference(event.target.value)}
+              placeholder="Ej. PA51548"
+              autoCapitalize="characters"
+              autoComplete="off"
+            />
+          </label>
+          <Button type="submit" disabled={!reference.trim()}>
+            <ScanLine /> Mostrar productos
+          </Button>
         </form>
 
         <div className="order-preparation-columns">
-          <article><ClipboardList /><div><span>POR PREPARAR</span><strong>{orders.length} pedidos pendientes</strong><p>Cargados automáticamente desde Pago aceptado.</p></div></article>
-          <article><PackageCheck /><div><span>EN PREPARACIÓN</span><strong>Trabajo en curso</strong><p>En el siguiente paso registraremos quién empieza cada pedido.</p></div></article>
-          <article><CheckCircle2 /><div><span>PREPARADOS</span><strong>Finalizados hoy</strong><p>Quedará registrado cuándo se terminó y quién lo hizo.</p></div></article>
+          <article>
+            <ClipboardList />
+            <div>
+              <span>POR PREPARAR</span>
+              <strong>{orders.length} pedidos pendientes</strong>
+              <p>Cargados automáticamente desde Pago aceptado.</p>
+            </div>
+          </article>
+          <article>
+            <PackageCheck />
+            <div>
+              <span>EN PREPARACIÓN</span>
+              <strong>Trabajo en curso</strong>
+              <p>
+                En el siguiente paso registraremos quién empieza cada pedido.
+              </p>
+            </div>
+          </article>
+          <article>
+            <CheckCircle2 />
+            <div>
+              <span>PREPARADOS</span>
+              <strong>Finalizados hoy</strong>
+              <p>Quedará registrado cuándo se terminó y quién lo hizo.</p>
+            </div>
+          </article>
         </div>
 
         {selectedOrder ? (
           <section className="preparation-order-detail">
             <header>
-              <Button variant="outline" onClick={() => setSelectedOrderId(null)}>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedOrderId(null)}
+              >
                 <ArrowLeft /> Volver al listado
               </Button>
               <div>
                 <span>PEDIDO EN PAGO ACEPTADO</span>
                 <h2>#{selectedOrder.number}</h2>
-                <p>{selectedOrder.customer || 'Cliente sin nombre'} · {selectedOrder.total}</p>
+                <p>
+                  {selectedOrder.customer || 'Cliente sin nombre'} ·{' '}
+                  {selectedOrder.total}
+                </p>
               </div>
               <div className="preparation-order-totals">
-                <b>{selectedOrder.items.reduce((sum, item) => sum + item.quantity, 0)}</b>
+                <b>
+                  {selectedOrder.items.reduce(
+                    (sum, item) => sum + item.quantity,
+                    0,
+                  )}
+                </b>
                 <small>unidades</small>
                 <b>{selectedOrder.items.length}</b>
                 <small>productos</small>
               </div>
             </header>
+            <div className="preparation-scanner">
+              <label htmlFor="product-barcode">
+                <ScanLine />
+                <span>
+                  <b>Escanear productos</b>
+                  <small>Lee cada código con el botón SCAN de la PDA.</small>
+                </span>
+              </label>
+              <Input
+                ref={scanInputRef}
+                id="product-barcode"
+                value={scanCode}
+                onChange={(event) => setScanCode(event.target.value)}
+                onKeyDown={handleScanKey}
+                placeholder="Código de barras"
+                autoComplete="off"
+                inputMode="numeric"
+              />
+              <Button
+                onClick={() => registerScan(scanCode)}
+                disabled={!scanCode.trim()}
+              >
+                Añadir
+              </Button>
+            </div>
             <div className="preparation-product-list">
-              {selectedOrder.items.map((item) => (
-                <article key={item.id}>
-                  <div><b>{item.name}</b><small>{item.sku} · Talla {item.size}</small></div>
-                  <strong>{item.quantity} uds.</strong>
-                </article>
-              ))}
+              {selectedOrder.items.map((item) => {
+                const completed = selectedCounts[item.id] || 0;
+                const remaining = Math.max(0, item.quantity - completed);
+                return (
+                  <article
+                    key={item.id}
+                    className={remaining === 0 ? 'complete' : 'incomplete'}
+                  >
+                    <div>
+                      <b>{item.name}</b>
+                      <small>
+                        {item.sku} · Talla {item.size}
+                      </small>
+                    </div>
+                    <div className="preparation-quantity">
+                      <span>
+                        <b>{remaining}</b>
+                        <small>pendientes</small>
+                      </span>
+                      <span>
+                        <b>
+                          {completed}/{item.quantity}
+                        </b>
+                        <small>escaneadas</small>
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </section>
         ) : (
-        <section className="accepted-orders">
-          <header><div><span>WOOCOMMERCE · PAGO ACEPTADO</span><h2>Pedidos para preparar</h2></div><Button variant="outline" onClick={() => void loadOrders()} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /> Actualizar</Button></header>
-          {error && <p className="order-preparation-error">{error}</p>}
-          {loading && <p className="order-preparation-empty">Cargando pedidos de WooCommerce…</p>}
-          {!loading && !error && !visibleOrders.length && <p className="order-preparation-empty">{reference.trim() ? 'No hay coincidencias con ese pedido o cliente.' : 'No hay pedidos en Pago aceptado.'}</p>}
-          <div className="accepted-order-list">
-            {visibleOrders.map((order) => {
-              const units = order.items.reduce((sum, item) => sum + item.quantity, 0);
-              return (
-                <article key={order.id}>
-                  <button className="accepted-order-summary" onClick={() => setSelectedOrderId(order.id)}>
-                    <span><b>#{order.number}</b><small>{order.customer || 'Cliente sin nombre'}</small></span>
-                    <span><b>{units} uds.</b><small>{order.items.length} productos</small></span>
-                    <span><b>{order.total}</b><small>{order.dateCreated ? new Date(order.dateCreated).toLocaleString('es-ES') : 'Sin fecha'}</small></span>
-                    <strong>Abrir pedido</strong>
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+          <section className="accepted-orders">
+            <header>
+              <div>
+                <span>WOOCOMMERCE · PAGO ACEPTADO</span>
+                <h2>Pedidos para preparar</h2>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => void loadOrders()}
+                disabled={loading}
+              >
+                <RefreshCw className={loading ? 'spin' : ''} /> Actualizar
+              </Button>
+            </header>
+            {error && <p className="order-preparation-error">{error}</p>}
+            {loading && (
+              <p className="order-preparation-empty">
+                Cargando pedidos de WooCommerce…
+              </p>
+            )}
+            {!loading && !error && !visibleOrders.length && (
+              <p className="order-preparation-empty">
+                {reference.trim()
+                  ? 'No hay coincidencias con ese pedido o cliente.'
+                  : 'No hay pedidos en Pago aceptado.'}
+              </p>
+            )}
+            <div className="accepted-order-list">
+              {visibleOrders.map((order) => {
+                const units = order.items.reduce(
+                  (sum, item) => sum + item.quantity,
+                  0,
+                );
+                return (
+                  <article key={order.id}>
+                    <button
+                      className="accepted-order-summary"
+                      onClick={() => setSelectedOrderId(order.id)}
+                    >
+                      <span>
+                        <b>#{order.number}</b>
+                        <small>{order.customer || 'Cliente sin nombre'}</small>
+                      </span>
+                      <span>
+                        <b>{units} uds.</b>
+                        <small>{order.items.length} productos</small>
+                      </span>
+                      <span>
+                        <b>{order.total}</b>
+                        <small>
+                          {order.dateCreated
+                            ? new Date(order.dateCreated).toLocaleString(
+                                'es-ES',
+                              )
+                            : 'Sin fecha'}
+                        </small>
+                      </span>
+                      <strong>Abrir pedido</strong>
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
         )}
       </section>
+      {scanAlert && (
+        <div
+          className="preparation-alert"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="scan-alert-title"
+        >
+          <div>
+            <ScanLine />
+            <h2 id="scan-alert-title">{scanAlert}</h2>
+            <p>
+              {scanAlert === 'PRODUCTO ERRONEO'
+                ? 'El código escaneado no pertenece a este pedido.'
+                : 'Ya se han escaneado todas las unidades solicitadas de este producto.'}
+            </p>
+            <Button autoFocus onClick={closeScanAlert}>
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

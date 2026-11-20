@@ -9,20 +9,84 @@ const home = read('app/page.tsx');
 const page = read('app/preparar-pedidos/page.tsx');
 const route = read('app/api/order-preparation/route.ts');
 const woo = read('lib/woo-order-preparation.ts');
+const catalog = read('lib/order-preparation-catalog.ts');
 
-assert.ok(header.includes('Preparar pedidos'), 'falta el acceso a Preparar pedidos');
-assert.ok(header.indexOf('Preparar pedidos') > header.indexOf('KPIs'), 'Preparar pedidos debe estar junto a KPIs');
-assert.ok(home.includes("window.location.assign('/preparar-pedidos')"), 'la portada no abre el módulo');
-assert.ok(page.includes('Pedidos con pago aceptado'), 'falta la pantalla de preparación');
-assert.ok(page.includes('fetchSessionUser'), 'la pantalla debe exigir una sesión de PaddyTools');
-assert.ok(page.includes('kpi-timer-slot'), 'el contador debe mantenerse visible');
-assert.ok(page.includes("fetch('/api/order-preparation'"), 'la pantalla debe cargar los pedidos automáticamente');
-assert.ok(page.includes('Abrir pedido'), 'cada pedido debe abrir su ficha individual');
-assert.ok(page.includes('Volver al listado'), 'la ficha individual debe volver al listado');
-assert.ok(page.includes('preparation-order-detail'), 'los productos deben mostrarse en una vista individual');
-assert.ok(route.includes('getSessionUser(request)'), 'la API debe exigir sesión');
-assert.ok(woo.includes('acceptedPaymentStatusSlug'), 'debe localizar el estado Pago aceptado');
-assert.ok(woo.includes('x-wp-totalpages'), 'debe cargar todas las páginas de pedidos');
+assert.ok(
+  header.includes('Preparar pedidos'),
+  'falta el acceso a Preparar pedidos',
+);
+assert.ok(
+  header.indexOf('Preparar pedidos') > header.indexOf('KPIs'),
+  'Preparar pedidos debe estar junto a KPIs',
+);
+assert.ok(
+  home.includes("window.location.assign('/preparar-pedidos')"),
+  'la portada no abre el módulo',
+);
+assert.ok(
+  page.includes('Pedidos con pago aceptado'),
+  'falta la pantalla de preparación',
+);
+assert.ok(
+  page.includes('fetchSessionUser'),
+  'la pantalla debe exigir una sesión de PaddyTools',
+);
+assert.ok(
+  page.includes('kpi-timer-slot'),
+  'el contador debe mantenerse visible',
+);
+assert.ok(
+  page.includes("fetch('/api/order-preparation'"),
+  'la pantalla debe cargar los pedidos automáticamente',
+);
+assert.ok(
+  page.includes('Abrir pedido'),
+  'cada pedido debe abrir su ficha individual',
+);
+assert.ok(
+  page.includes('Volver al listado'),
+  'la ficha individual debe volver al listado',
+);
+assert.ok(
+  page.includes('preparation-order-detail'),
+  'los productos deben mostrarse en una vista individual',
+);
+assert.ok(
+  page.includes('PRODUCTO ERRONEO'),
+  'debe avisar si el producto no pertenece al pedido',
+);
+assert.ok(
+  page.includes("event.key !== 'Enter' && event.key !== 'Tab'"),
+  'la PDA debe admitir Enter y Tab',
+);
+assert.ok(
+  page.includes("remaining === 0 ? 'complete' : 'incomplete'"),
+  'debe distinguir productos completos e incompletos',
+);
+assert.ok(
+  page.includes('localStorage.setItem'),
+  'el conteo debe sobrevivir a una recarga en la PDA',
+);
+assert.ok(
+  route.includes('getSessionUser(request)'),
+  'la API debe exigir sesión',
+);
+assert.ok(
+  route.includes('inventoryCatalog'),
+  'la API debe asociar los códigos del catálogo STM',
+);
+assert.ok(
+  catalog.includes('barcodesForPreparationItem'),
+  'la asociación de códigos debe estar en un módulo propio',
+);
+assert.ok(
+  woo.includes('acceptedPaymentStatusSlug'),
+  'debe localizar el estado Pago aceptado',
+);
+assert.ok(
+  woo.includes('x-wp-totalpages'),
+  'debe cargar todas las páginas de pedidos',
+);
 assert.ok(woo.includes('line_items'), 'la consulta debe incluir los productos');
 
 console.log('Módulo Preparar pedidos verificado.');
