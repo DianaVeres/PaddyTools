@@ -3,6 +3,7 @@ export type PreparationTreatment =
   | 'store-ready'
   | 'manual-reservation'
   | 'manual-home-delivery'
+  | 'manual-home-reservation'
   | 'manual-review';
 
 export type PreparationRoute = {
@@ -24,6 +25,20 @@ export function preparationRoute(
   shippingMethod: string,
   hasReservation: boolean,
 ): PreparationRoute {
+  const method = folded(shippingMethod).replace(/^via\s+/, '');
+  const isHomeDelivery =
+    method.includes('envio valencia y comunidad valenciana') ||
+    method.includes('envio peninsula');
+
+  if (hasReservation && isHomeDelivery)
+    return {
+      treatment: 'manual-home-reservation',
+      targetStatusName: '',
+      message:
+        'Pendiente de tratamiento manual: envío a domicilio con reserva.',
+      automatic: false,
+    };
+
   if (hasReservation)
     return {
       treatment: 'manual-reservation',
@@ -32,7 +47,6 @@ export function preparationRoute(
       automatic: false,
     };
 
-  const method = folded(shippingMethod).replace(/^via\s+/, '');
   if (method.includes('recogida en tienda paddy'))
     return {
       treatment: 'store-ready',
@@ -41,10 +55,7 @@ export function preparationRoute(
       automatic: true,
     };
 
-  if (
-    method.includes('envio valencia y comunidad valenciana') ||
-    method.includes('envio peninsula')
-  )
+  if (isHomeDelivery)
     return {
       treatment: 'manual-home-delivery',
       targetStatusName: '',

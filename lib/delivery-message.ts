@@ -80,7 +80,10 @@ export function deliveryEmailBody(draft: DeliveryEmailDraft) {
     draft.carrier === 'dhl'
       ? 'https://www.dhl.com/'
       : 'https://viaxpress.es/envios/';
-  return `Su ${record.lower} ${draft.reference} está ${record.prepared} para ser ${record.sent}. El número de envío es ${draft.trackingNumber || '[Nº ENVÍO]'}. Podrá hacer el seguimiento en el siguiente enlace: ${trackingUrl}`;
+  const reservationText = draft.reservationSummary?.trim()
+    ? ` Queda pendiente en reserva: ${draft.reservationSummary.trim()}. Le avisaremos cuando recibamos el artículo pendiente.`
+    : '';
+  return `Su ${record.lower} ${draft.reference} está ${record.prepared} para ser ${record.sent}. El número de envío es ${draft.trackingNumber || '[Nº ENVÍO]'}. Podrá hacer el seguimiento en el siguiente enlace: ${trackingUrl}.${reservationText}`;
 }
 
 export function createDeliveryEmailDraft(
@@ -96,7 +99,10 @@ export function createDeliveryEmailDraft(
     subject: `${recordKindLabel(input.recordKind).title} ${input.reference} ${recordKindLabel(input.recordKind).prepared}`,
     body: '',
   };
-  if (input.delivery === 'reserva-pendiente')
+  if (
+    input.delivery === 'reserva-pendiente' ||
+    input.reservationSummary?.trim()
+  )
     draft.subject = `${recordKindLabel(input.recordKind).title} ${input.reference} preparado con reserva pendiente`;
   return { ...draft, body: deliveryEmailBody(draft) };
 }

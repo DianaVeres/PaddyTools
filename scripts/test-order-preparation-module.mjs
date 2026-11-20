@@ -138,6 +138,12 @@ assert.ok(
   'los pedidos preparados con reserva deben generar su aviso con el artículo pendiente',
 );
 assert.ok(
+  page.includes('Gestionar envío y reserva') &&
+    page.includes("order.treatment === 'manual-home-reservation'") &&
+    page.includes("shippingDraft?.delivery === 'domicilio'"),
+  'los pedidos con reserva y envío deben conservar seguimiento y cambio a Enviado',
+);
+assert.ok(
   messageDialog.includes('Marcar enviado') &&
     messageDialog.includes('onMarkSent'),
   'el aviso al cliente debe permitir confirmar el cambio a Enviado',
@@ -209,7 +215,8 @@ assert.ok(
 assert.ok(
   route.includes("wooStatusSlugByName(statuses, 'Enviado')") &&
     route.includes("treatment: 'sent'") &&
-    route.includes('trackingNumber'),
+    route.includes('trackingNumber') &&
+    route.includes("'manual-home-reservation'"),
   'la API debe cambiar a Enviado y conservar el seguimiento',
 );
 assert.ok(

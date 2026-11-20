@@ -374,7 +374,10 @@ export default function PrepararPedidosPage() {
         recordKind: 'pedido',
         reference: order.orderNumber,
         school: '',
-        delivery: 'reserva-pendiente',
+        delivery:
+          order.treatment === 'manual-home-reservation'
+            ? 'domicilio'
+            : 'reserva-pendiente',
         reservationSummary:
           order.reservationSummary || 'artículo pendiente en reserva',
       }),
@@ -393,7 +396,10 @@ export default function PrepararPedidosPage() {
 
   function launchShippingEmail() {
     if (!shippingDraft) return;
-    if (!shippingDraft.trackingNumber.trim()) {
+    if (
+      shippingDraft.delivery === 'domicilio' &&
+      !shippingDraft.trackingNumber.trim()
+    ) {
       setFinishMessage('Escanea primero el número de seguimiento.');
       return;
     }
@@ -411,7 +417,10 @@ export default function PrepararPedidosPage() {
 
   function launchShippingWhatsApp() {
     if (!shippingDraft) return;
-    if (!shippingDraft.trackingNumber.trim()) {
+    if (
+      shippingDraft.delivery === 'domicilio' &&
+      !shippingDraft.trackingNumber.trim()
+    ) {
       setFinishMessage('Escanea primero el número de seguimiento.');
       return;
     }
@@ -816,9 +825,11 @@ export default function PrepararPedidosPage() {
                         ? 'Disponible en tienda'
                         : order.treatment === 'sent'
                           ? 'Enviado'
-                          : order.hasReservation
-                            ? 'Reserva · revisión manual'
-                            : 'Revisión manual'}
+                          : order.treatment === 'manual-home-reservation'
+                            ? 'Envío + reserva'
+                            : order.hasReservation
+                              ? 'Reserva · revisión manual'
+                              : 'Revisión manual'}
                   </strong>
                   {order.treatment === 'manual-home-delivery' && (
                     <Button type="button" onClick={() => openShipping(order)}>
@@ -831,6 +842,14 @@ export default function PrepararPedidosPage() {
                       onClick={() => openReservationNotice(order)}
                     >
                       Avisar reserva
+                    </Button>
+                  )}
+                  {order.treatment === 'manual-home-reservation' && (
+                    <Button
+                      type="button"
+                      onClick={() => openReservationNotice(order)}
+                    >
+                      Gestionar envío y reserva
                     </Button>
                   )}
                   <Button
@@ -894,7 +913,11 @@ export default function PrepararPedidosPage() {
         onCopy={() => void copyShippingMessage()}
         onWhatsApp={launchShippingWhatsApp}
         onEmail={launchShippingEmail}
-        onMarkSent={() => void markShippingSent()}
+        onMarkSent={
+          shippingDraft?.delivery === 'domicilio'
+            ? () => void markShippingSent()
+            : undefined
+        }
         markingSent={markingSent}
       />
     </main>

@@ -246,7 +246,11 @@ export async function PUT(request: NextRequest) {
         { error: 'El pedido preparado no existe.' },
         { status: 404 },
       );
-    if (existing[0].treatment !== 'manual-home-delivery')
+    if (
+      !['manual-home-delivery', 'manual-home-reservation'].includes(
+        existing[0].treatment,
+      )
+    )
       return NextResponse.json(
         { error: 'Este pedido no está pendiente de envío a domicilio.' },
         { status: 409 },

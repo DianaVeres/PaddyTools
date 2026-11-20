@@ -23,6 +23,11 @@ assert.equal(
   'manual-home-delivery',
 );
 assert.equal(
+  preparationRoute('Envío Península', true).treatment,
+  'manual-home-reservation',
+  'un envío a domicilio con reserva debe conservar ambas gestiones',
+);
+assert.equal(
   preparationRoute('Envío a Colegio', true).treatment,
   'manual-reservation',
   'una reserva debe impedir el cambio automático aunque sea envío a colegio',

@@ -53,6 +53,21 @@ assert.match(pendingReservationDraft.body, /talla T\.8/);
 assert.match(pendingReservationDraft.body, /1 uds\./);
 assert.match(pendingReservationDraft.body, /Le avisaremos/);
 
+const homeReservationDraft = createDeliveryEmailDraft({
+  ...base,
+  recordKind: 'pedido',
+  reference: 'PA51549',
+  delivery: 'domicilio',
+  reservationSummary: 'CAMISETA, talla T.10, 1 uds.',
+});
+const trackedHomeReservationDraft = updateDeliveryEmailDraft(
+  homeReservationDraft,
+  { trackingNumber: 'VIA123' },
+);
+assert.match(trackedHomeReservationDraft.body, /VIA123/);
+assert.match(trackedHomeReservationDraft.body, /CAMISETA/);
+assert.match(trackedHomeReservationDraft.body, /Queda pendiente en reserva/);
+
 const incidentDraft = updateDeliveryEmailDraft(homeDraft, {
   recordKind: 'incidencia',
 });
