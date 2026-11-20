@@ -180,18 +180,6 @@ export default function PrepararPedidosPage() {
       </header>
 
       <section className="order-preparation-hero">
-        <div>
-          <span>PREPARACIÓN</span>
-          <h1>Pedidos con pago aceptado</h1>
-          <p>
-            La lista se carga automáticamente desde WooCommerce. Pulsa sobre un
-            pedido para consultar todos los productos que contiene.
-          </p>
-        </div>
-        <PackageCheck />
-      </section>
-
-      <section className="order-preparation-shell">
         <form className="order-preparation-search" onSubmit={showOrder}>
           <div>
             <span>LOCALIZAR PEDIDO</span>
@@ -211,14 +199,15 @@ export default function PrepararPedidosPage() {
             <ScanLine /> Mostrar productos
           </Button>
         </form>
+      </section>
 
+      <section className="order-preparation-shell">
         <div className="order-preparation-columns">
           <article>
             <ClipboardList />
             <div>
               <span>POR PREPARAR</span>
               <strong>{orders.length} pedidos pendientes</strong>
-              <p>Cargados automáticamente desde Pago aceptado.</p>
             </div>
           </article>
           <article>
@@ -226,9 +215,6 @@ export default function PrepararPedidosPage() {
             <div>
               <span>EN PREPARACIÓN</span>
               <strong>Trabajo en curso</strong>
-              <p>
-                En el siguiente paso registraremos quién empieza cada pedido.
-              </p>
             </div>
           </article>
           <article>
@@ -236,7 +222,6 @@ export default function PrepararPedidosPage() {
             <div>
               <span>PREPARADOS</span>
               <strong>Finalizados hoy</strong>
-              <p>Quedará registrado cuándo se terminó y quién lo hizo.</p>
             </div>
           </article>
         </div>

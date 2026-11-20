@@ -24,8 +24,13 @@ assert.ok(
   'la portada no abre el módulo',
 );
 assert.ok(
-  page.includes('Pedidos con pago aceptado'),
+  page.includes('Filtra o escanea el número del pedido'),
   'falta la pantalla de preparación',
+);
+assert.ok(
+  page.indexOf('order-preparation-search') <
+    page.indexOf('order-preparation-shell'),
+  'el buscador debe ocupar la cabecera compacta',
 );
 assert.ok(
   page.includes('fetchSessionUser'),
