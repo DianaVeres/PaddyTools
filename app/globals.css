@@ -2616,6 +2616,38 @@ a {
     padding-right: 14px;
   }
 }
+@media (min-width: 681px) and (max-width: 1200px) {
+  .topbar {
+    height: auto;
+    min-height: 120px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 18px;
+    padding: 8px 18px;
+  }
+  .topbar .kpi-timer-slot {
+    justify-self: end;
+    margin: 0;
+  }
+  .top-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    width: 100%;
+    gap: 7px;
+  }
+  .top-actions .action-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .top-actions .divider,
+  .top-actions .user-chip {
+    display: none;
+  }
+}
 @media print {
   body * {
     visibility: hidden !important;
