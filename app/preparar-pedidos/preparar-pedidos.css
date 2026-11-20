@@ -421,7 +421,7 @@
 }
 .preparation-scanner {
   display: grid;
-  grid-template-columns: 1fr minmax(220px, 0.7fr) auto;
+  grid-template-columns: 1fr minmax(200px, 0.7fr) auto auto;
   align-items: center;
   gap: 12px;
   margin-top: 18px;
@@ -476,6 +476,84 @@
 .preparation-scanner button {
   background: #0f766e;
   color: #fff;
+}
+.preparation-scanner .camera-scan-button {
+  border-color: #80b8c3;
+  background: #fff;
+  color: #145c75;
+}
+.barcode-camera-overlay {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 20, 38, 0.84);
+}
+.barcode-camera-dialog {
+  width: min(100%, 460px);
+  padding: 18px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+.barcode-camera-dialog header,
+.barcode-camera-dialog header > div,
+.barcode-camera-dialog header span {
+  display: flex;
+  align-items: center;
+}
+.barcode-camera-dialog header {
+  justify-content: space-between;
+  gap: 12px;
+}
+.barcode-camera-dialog header > div {
+  gap: 10px;
+}
+.barcode-camera-dialog header span {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
+}
+.barcode-camera-dialog header small {
+  color: #68788a;
+  font-size: 12px;
+  font-weight: 500;
+}
+.barcode-camera-dialog header button {
+  border: 0;
+  background: transparent;
+  padding: 8px;
+}
+.barcode-camera-preview {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin: 16px 0 12px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #07192c;
+}
+.barcode-camera-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.barcode-camera-preview span {
+  position: absolute;
+  inset: 35% 8%;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.2);
+}
+.barcode-camera-dialog > p {
+  min-height: 20px;
+  margin: 0 0 12px;
+  color: #34516d;
+  font-size: 13px;
+}
+.barcode-camera-dialog > [data-slot='button'] {
+  width: 100%;
 }
 .preparation-product-list {
   margin-top: 12px;

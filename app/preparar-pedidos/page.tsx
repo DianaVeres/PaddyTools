@@ -16,9 +16,11 @@ import {
   PackageCheck,
   RefreshCw,
   ScanLine,
+  ScanBarcode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { BarcodeCameraScanner } from '@/components/order-preparation/barcode-camera-scanner';
 import { fetchSessionUser } from '@/lib/dashboard-api';
 import {
   beginAutomaticWork,
@@ -76,6 +78,7 @@ export default function PrepararPedidosPage() {
   const [finishing, setFinishing] = useState(false);
   const [finalizedToday, setFinalizedToday] = useState(0);
   const [finishMessage, setFinishMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef({ code: '', at: 0 });
 
@@ -168,6 +171,11 @@ export default function PrepararPedidosPage() {
       `paddytools:preparation:${selectedOrder.id}`,
       JSON.stringify(counts),
     );
+  }
+
+  function registerCameraScan(code: string) {
+    setCameraOpen(false);
+    registerScan(code);
   }
 
   function handleScanKey(event: KeyboardEvent<HTMLInputElement>) {
@@ -377,6 +385,14 @@ export default function PrepararPedidosPage() {
               >
                 Añadir
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="camera-scan-button"
+                onClick={() => setCameraOpen(true)}
+              >
+                <ScanBarcode /> Escanear con cámara
+              </Button>
             </div>
             <div className="preparation-product-list">
               {selectedOrder.items.map((item) => {
@@ -510,6 +526,12 @@ export default function PrepararPedidosPage() {
             </Button>
           </div>
         </div>
+      )}
+      {cameraOpen && (
+        <BarcodeCameraScanner
+          onScan={registerCameraScan}
+          onClose={() => setCameraOpen(false)}
+        />
       )}
     </main>
   );

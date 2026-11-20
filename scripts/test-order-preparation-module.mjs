@@ -11,6 +11,7 @@ const route = read('app/api/order-preparation/route.ts');
 const woo = read('lib/woo-order-preparation.ts');
 const catalog = read('lib/order-preparation-catalog.ts');
 const prefill = read('lib/reservation-prefill.ts');
+const camera = read('components/order-preparation/barcode-camera-scanner.tsx');
 
 assert.ok(
   header.includes('Preparar pedidos'),
@@ -92,6 +93,15 @@ assert.ok(
 assert.ok(
   page.includes('Finalizar pedido'),
   'falta el botón para finalizar el pedido',
+);
+assert.ok(page.includes('Escanear con cámara'), 'falta el lector para móviles');
+assert.ok(
+  camera.includes('BrowserMultiFormatReader'),
+  'la cámara debe leer códigos de barras, no solo QR',
+);
+assert.ok(
+  camera.includes("facingMode: { ideal: 'environment' }"),
+  'debe abrir la cámara trasera del móvil',
 );
 assert.ok(
   home.includes("initialParams.get('createReservation')"),
