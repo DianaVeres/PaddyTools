@@ -12,6 +12,10 @@ const woo = read('lib/woo-order-preparation.ts');
 const catalog = read('lib/order-preparation-catalog.ts');
 const prefill = read('lib/reservation-prefill.ts');
 const camera = read('components/order-preparation/barcode-camera-scanner.tsx');
+const schema = read('db/schema.ts');
+const completionMigration = read(
+  'drizzle/0014_order_preparation_completions.sql',
+);
 
 assert.ok(
   header.includes('Preparar pedidos'),
@@ -94,6 +98,23 @@ assert.ok(
   page.includes('Finalizar pedido'),
   'falta el botón para finalizar el pedido',
 );
+assert.ok(
+  page.includes('updatePreparedUnits(item, completed + 1)') &&
+    page.includes('updatePreparedUnits(item, completed - 1)'),
+  'debe permitir sumar y restar manualmente unidades preparadas',
+);
+assert.ok(
+  page.includes('Sumar una unidad de') && page.includes('Restar una unidad de'),
+  'los controles manuales deben ser accesibles',
+);
+assert.ok(
+  page.includes('<small>preparadas</small>'),
+  'el conteo debe representar unidades preparadas, escaneadas o manuales',
+);
+assert.ok(
+  page.includes("method: 'POST'") && page.includes('preparedToday.map'),
+  'los pedidos finalizados deben guardarse y aparecer en Preparados',
+);
 assert.ok(page.includes('Escanear con cámara'), 'falta el lector para móviles');
 assert.ok(
   camera.includes('BrowserMultiFormatReader'),
@@ -118,6 +139,16 @@ assert.ok(
 assert.ok(
   route.includes('inventoryCatalog'),
   'la API debe asociar los códigos del catálogo STM',
+);
+assert.ok(
+  route.includes('orderPreparationCompletions') &&
+    route.includes('!completedIds.has(order.id)'),
+  'los pedidos finalizados deben quedar fuera de pendientes',
+);
+assert.ok(
+  schema.includes('orderPreparationCompletions') &&
+    completionMigration.includes('order_preparation_completions'),
+  'falta el almacenamiento persistente de pedidos preparados',
 );
 assert.ok(
   catalog.includes('barcodesForPreparationItem'),

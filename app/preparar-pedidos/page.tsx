@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   ClipboardList,
   PackageCheck,
+  Minus,
+  Plus,
   RefreshCw,
   ScanLine,
   ScanBarcode,
@@ -56,6 +58,15 @@ type PreparationOrder = {
   total: string;
   items: PreparationItem[];
 };
+type PreparedOrder = {
+  orderId: number;
+  orderNumber: string;
+  customerName: string;
+  units: number;
+  products: number;
+  completedByName: string;
+  completedAt: string;
+};
 
 async function responseJson<T>(response: Response) {
   const data = (await response.json()) as T & { error?: string };
@@ -78,6 +89,7 @@ export default function PrepararPedidosPage() {
   const [timerStarted, setTimerStarted] = useState('');
   const [finishing, setFinishing] = useState(false);
   const [finalizedToday, setFinalizedToday] = useState(0);
+  const [preparedToday, setPreparedToday] = useState<PreparedOrder[]>([]);
   const [finishMessage, setFinishMessage] = useState('');
   const [cameraOpen, setCameraOpen] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
@@ -87,10 +99,13 @@ export default function PrepararPedidosPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await responseJson<{ orders: PreparationOrder[] }>(
-        await fetch('/api/order-preparation', { cache: 'no-store' }),
-      );
+      const data = await responseJson<{
+        orders: PreparationOrder[];
+        preparedToday: PreparedOrder[];
+      }>(await fetch('/api/order-preparation', { cache: 'no-store' }));
       setOrders(data.orders);
+      setPreparedToday(data.preparedToday || []);
+      setFinalizedToday(data.preparedToday?.length || 0);
     } catch (loadError) {
       setOrders([]);
       setError(
@@ -166,7 +181,13 @@ export default function PrepararPedidosPage() {
       setScanAlert('PRODUCTO YA COMPLETO');
       return;
     }
-    const counts = { ...selectedCounts, [item.id]: current + 1 };
+    updatePreparedUnits(item, current + 1);
+  }
+
+  function updatePreparedUnits(item: PreparationItem, nextValue: number) {
+    if (!selectedOrder) return;
+    const quantity = Math.min(item.quantity, Math.max(0, nextValue));
+    const counts = { ...selectedCounts, [item.id]: quantity };
     setScanned((all) => ({ ...all, [selectedOrder.id]: counts }));
     window.localStorage.setItem(
       `paddytools:preparation:${selectedOrder.id}`,
@@ -234,19 +255,41 @@ export default function PrepararPedidosPage() {
         (sum, item) => sum + item.quantity,
         0,
       );
-      await completeAutomaticWork(PREPARATION_TIMER_KEY, {
-        orders: 1,
-        products: units,
-        notes: `Pedido #${selectedOrder.number} finalizado`,
-      });
+      const { completion } = await responseJson<{ completion: PreparedOrder }>(
+        await fetch('/api/order-preparation', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            orderId: selectedOrder.id,
+            orderNumber: selectedOrder.number,
+            customerName: selectedOrder.customer,
+            units,
+            products: selectedOrder.items.length,
+          }),
+        }),
+      );
+      let timeWarning = '';
+      try {
+        await completeAutomaticWork(PREPARATION_TIMER_KEY, {
+          orders: 1,
+          products: units,
+          notes: `Pedido #${selectedOrder.number} finalizado`,
+        });
+      } catch {
+        timeWarning = ' No se pudo guardar la medición KPI.';
+      }
       setOrders((current) =>
         current.filter((order) => order.id !== selectedOrder.id),
       );
+      setPreparedToday((current) => [completion, ...current]);
       setFinalizedToday((current) => current + 1);
+      window.localStorage.removeItem(
+        `paddytools:preparation:${selectedOrder.id}`,
+      );
       setTimerStarted('');
       setSelectedOrderId(null);
       setFinishMessage(
-        `Pedido #${selectedOrder.number} finalizado y tiempo guardado.`,
+        `Pedido #${selectedOrder.number} trasladado a Preparados.${timeWarning}`,
       );
     } catch (finishError) {
       setFinishMessage(
@@ -420,8 +463,38 @@ export default function PrepararPedidosPage() {
                           <b>
                             {completed}/{item.quantity}
                           </b>
-                          <small>escaneadas</small>
+                          <small>preparadas</small>
                         </span>
+                      </div>
+                      <div
+                        className="manual-preparation-controls"
+                        aria-label={`Ajustar unidades preparadas de ${item.name}`}
+                      >
+                        <Button
+                          type="button"
+                          variant="outline"
+                          aria-label={`Restar una unidad de ${item.name}`}
+                          title="Restar una unidad preparada"
+                          disabled={completed === 0}
+                          onClick={() =>
+                            updatePreparedUnits(item, completed - 1)
+                          }
+                        >
+                          <Minus />
+                        </Button>
+                        <b>{completed}</b>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          aria-label={`Sumar una unidad de ${item.name}`}
+                          title="Sumar una unidad preparada"
+                          disabled={completed >= item.quantity}
+                          onClick={() =>
+                            updatePreparedUnits(item, completed + 1)
+                          }
+                        >
+                          <Plus />
+                        </Button>
                       </div>
                       {remaining > 0 && (
                         <Button
@@ -500,6 +573,41 @@ export default function PrepararPedidosPage() {
                   </article>
                 );
               })}
+            </div>
+          </section>
+        )}
+        {preparedToday.length > 0 && (
+          <section className="prepared-orders">
+            <header>
+              <div>
+                <span>PREPARADOS HOY</span>
+                <h2>Pedidos finalizados</h2>
+              </div>
+              <strong>{preparedToday.length}</strong>
+            </header>
+            <div className="prepared-order-list">
+              {preparedToday.map((order) => (
+                <article key={order.orderId}>
+                  <span>
+                    <b>#{order.orderNumber}</b>
+                    <small>{order.customerName || 'Cliente sin nombre'}</small>
+                  </span>
+                  <span>
+                    <b>{order.units} uds.</b>
+                    <small>{order.products} productos</small>
+                  </span>
+                  <span>
+                    <b>{order.completedByName || 'PaddyTools'}</b>
+                    <small>
+                      {new Date(order.completedAt).toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </small>
+                  </span>
+                  <strong>Preparado</strong>
+                </article>
+              ))}
             </div>
           </section>
         )}

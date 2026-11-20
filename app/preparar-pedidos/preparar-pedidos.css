@@ -582,6 +582,100 @@
   background: #fff;
   white-space: nowrap;
 }
+.manual-preparation-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid #cbd8e3;
+  border-radius: 12px;
+  background: #fff;
+}
+.manual-preparation-controls > button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  color: #103b5c;
+  border-color: #cbd8e3;
+}
+.manual-preparation-controls > button:disabled {
+  opacity: 0.35;
+}
+.manual-preparation-controls > b {
+  min-width: 24px;
+  color: #102d4c;
+  font-size: 18px;
+  text-align: center;
+}
+.manual-preparation-controls svg {
+  width: 18px;
+  height: 18px;
+}
+.prepared-orders {
+  margin-top: 22px;
+  padding: 24px;
+  border: 1px solid #b9ddc6;
+  border-radius: 20px;
+  background: #f4fbf6;
+  box-shadow: 0 14px 36px rgba(16, 45, 76, 0.07);
+}
+.prepared-orders > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.prepared-orders > header span {
+  color: #17824b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.prepared-orders > header h2 {
+  margin: 4px 0 0;
+  color: #102d4c;
+  font:
+    700 28px Georgia,
+    serif;
+}
+.prepared-orders > header > strong {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #16844c;
+  color: #fff;
+}
+.prepared-order-list {
+  display: grid;
+  gap: 10px;
+}
+.prepared-order-list article {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 0.9fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 18px;
+  border: 1px solid #cfe6d7;
+  border-radius: 14px;
+  background: #fff;
+}
+.prepared-order-list span {
+  display: grid;
+  gap: 3px;
+}
+.prepared-order-list b {
+  color: #102d4c;
+}
+.prepared-order-list small {
+  color: #667b8d;
+}
+.prepared-order-list article > strong {
+  color: #16844c;
+}
 .preparation-quantity span {
   min-width: 72px;
   display: grid;
@@ -665,5 +759,21 @@
   }
   .preparation-product-progress > button {
     width: 100%;
+  }
+  .manual-preparation-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .manual-preparation-controls > button {
+    width: 46px;
+  }
+  .prepared-orders {
+    padding: 18px;
+  }
+  .prepared-order-list article {
+    grid-template-columns: 1fr 1fr;
+  }
+  .prepared-order-list article > strong {
+    text-align: right;
   }
 }

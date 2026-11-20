@@ -332,8 +332,12 @@ export const inventoryItems = sqliteTable(
       .references(() => inventorySessions.id, { onDelete: 'cascade' }),
     barcode: text('barcode').notNull(),
     quantity: integer('quantity').notNull().default(1),
-    firstScannedAt: integer('first_scanned_at', { mode: 'timestamp_ms' }).notNull(),
-    lastScannedAt: integer('last_scanned_at', { mode: 'timestamp_ms' }).notNull(),
+    firstScannedAt: integer('first_scanned_at', {
+      mode: 'timestamp_ms',
+    }).notNull(),
+    lastScannedAt: integer('last_scanned_at', {
+      mode: 'timestamp_ms',
+    }).notNull(),
   },
   (table) => [
     index('idx_inventory_items_session').on(table.sessionId),
@@ -354,4 +358,25 @@ export const inventoryCatalog = sqliteTable(
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   },
   (table) => [index('idx_inventory_catalog_article').on(table.article)],
+);
+
+export const orderPreparationCompletions = sqliteTable(
+  'order_preparation_completions',
+  {
+    orderId: integer('order_id').primaryKey(),
+    orderNumber: text('order_number').notNull(),
+    customerName: text('customer_name').notNull().default(''),
+    units: integer('units').notNull().default(0),
+    products: integer('products').notNull().default(0),
+    completedByEmail: text('completed_by_email').notNull(),
+    completedByName: text('completed_by_name').notNull(),
+    completionDate: text('completion_date').notNull(),
+    completedAt: integer('completed_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [
+    index('idx_order_preparation_completion_date').on(
+      table.completionDate,
+      table.completedAt,
+    ),
+  ],
 );
