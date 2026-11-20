@@ -88,6 +88,8 @@ $kpiInitialStatusCountCheck = Join-Path $officialRoot 'scripts\test-kpi-initial-
 $kpiAutoTimerCheck = Join-Path $officialRoot 'scripts\test-kpi-auto-timer.mjs'
 $hotlineModuleCheck = Join-Path $officialRoot 'scripts\test-hotline-module.mjs'
 $inventoryModuleCheck = Join-Path $officialRoot 'scripts\test-inventory-module.mjs'
+$orderPreparationModuleCheck = Join-Path $officialRoot 'scripts\test-order-preparation-module.mjs'
+$orderPreparationRoutingCheck = Join-Path $officialRoot 'scripts\test-order-preparation-routing.mjs'
 $qualityErrorsCheck = Join-Path $officialRoot 'scripts\test-quality-errors.mjs'
 $documentationCheck = Join-Path $officialRoot 'scripts\test-documentation.mjs'
 $orderNoteCheck = Join-Path $officialRoot 'scripts\test-order-note.mjs'
@@ -114,6 +116,12 @@ foreach ($required in @($config, $compiler, $wrangler, $typeScript, $integration
 
 if (-not (Test-Path -LiteralPath $inventoryModuleCheck -PathType Leaf)) {
   throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $inventoryModuleCheck"
+}
+
+foreach ($required in @($orderPreparationModuleCheck, $orderPreparationRoutingCheck)) {
+  if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
+    throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
+  }
 }
 
 if ($ValidateOnly) {
@@ -391,6 +399,14 @@ try {
   & $node $inventoryModuleCheck
   if ($LASTEXITCODE -ne 0) {
     throw "El módulo de inventarios ha fallado. No se desplegará nada."
+  }
+  & $node $orderPreparationModuleCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El módulo Preparar pedidos ha fallado. No se desplegará nada."
+  }
+  & $node $orderPreparationRoutingCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "El cambio automático de estados ha fallado. No se desplegará nada."
   }
   & $node $qualityErrorsCheck
   if ($LASTEXITCODE -ne 0) {

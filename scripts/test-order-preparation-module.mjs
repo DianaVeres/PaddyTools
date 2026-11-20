@@ -16,6 +16,7 @@ const schema = read('db/schema.ts');
 const completionMigration = read(
   'drizzle/0014_order_preparation_completions.sql',
 );
+const routingMigration = read('drizzle/0015_order_preparation_routing.sql');
 
 assert.ok(
   header.includes('Preparar pedidos'),
@@ -146,8 +147,16 @@ assert.ok(
   'los pedidos finalizados deben quedar fuera de pendientes',
 );
 assert.ok(
+  route.includes('lookupMondayRecords') &&
+    route.includes("method: 'PUT'") &&
+    route.includes('preparationRoute'),
+  'al finalizar debe comprobar reservas y enrutar el estado en WooCommerce',
+);
+assert.ok(
   schema.includes('orderPreparationCompletions') &&
-    completionMigration.includes('order_preparation_completions'),
+    completionMigration.includes('order_preparation_completions') &&
+    routingMigration.includes('shipping_method') &&
+    routingMigration.includes('treatment'),
   'falta el almacenamiento persistente de pedidos preparados',
 );
 assert.ok(

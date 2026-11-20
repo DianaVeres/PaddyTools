@@ -370,6 +370,12 @@ export const orderPreparationCompletions = sqliteTable(
     products: integer('products').notNull().default(0),
     completedByEmail: text('completed_by_email').notNull(),
     completedByName: text('completed_by_name').notNull(),
+    shippingMethod: text('shipping_method').notNull().default(''),
+    hasReservation: integer('has_reservation', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    treatment: text('treatment').notNull().default('manual-review'),
+    wooStatus: text('woo_status').notNull().default(''),
     completionDate: text('completion_date').notNull(),
     completedAt: integer('completed_at', { mode: 'timestamp_ms' }).notNull(),
   },

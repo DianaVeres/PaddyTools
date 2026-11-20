@@ -9,7 +9,13 @@ import {
   preparationSkuParts,
 } from '@/lib/order-preparation-catalog';
 import { loadAcceptedPaymentOrders } from '@/lib/woo-order-preparation';
-import { wooIsConfigured } from '@/lib/woocommerce';
+import { loadPreparationOrder } from '@/lib/woo-order-preparation';
+import { lookupMondayRecords } from '@/lib/monday-lookup';
+import {
+  preparationRoute,
+  wooStatusSlugByName,
+} from '@/lib/order-preparation-routing';
+import { wooFetch, wooIsConfigured, wooResponseJson } from '@/lib/woocommerce';
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser(request);
@@ -98,6 +104,51 @@ export async function POST(request: NextRequest) {
         { error: 'No se pudo identificar el pedido finalizado.' },
         { status: 400 },
       );
+    const config = env as unknown as Record<string, string>;
+    if (!wooIsConfigured(config))
+      return NextResponse.json(
+        { error: 'WooCommerce todavía no está configurado.' },
+        { status: 503 },
+      );
+    const order = await loadPreparationOrder(orderId, config);
+    const mondayToken = config.MONDAY_API_TOKEN;
+    const linkedRecords = mondayToken
+      ? await lookupMondayRecords(orderNumber, mondayToken)
+      : [];
+    const hasReservation = linkedRecords.some(
+      (record) => record.kind === 'reserva',
+    );
+    const route = preparationRoute(order.shippingMethod, hasReservation);
+    let wooStatus = '';
+    if (route.automatic) {
+      const totalsResponse = await wooFetch('reports/orders/totals', config);
+      if (!totalsResponse.ok)
+        throw new Error(
+          `No se pudieron consultar los estados de WooCommerce (${totalsResponse.status}).`,
+        );
+      const statuses =
+        await wooResponseJson<Array<{ slug?: string; name?: string }>>(
+          totalsResponse,
+        );
+      wooStatus = wooStatusSlugByName(statuses, route.targetStatusName);
+      if (!wooStatus)
+        throw new Error(
+          `No se encontró el estado “${route.targetStatusName}” en WooCommerce.`,
+        );
+      const updateResponse = await wooFetch(`orders/${orderId}`, config, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status: wooStatus }),
+      });
+      const updated = await wooResponseJson<{ message?: string }>(
+        updateResponse,
+      );
+      if (!updateResponse.ok)
+        throw new Error(
+          updated.message ||
+            `WooCommerce no pudo cambiar el estado (${updateResponse.status}).`,
+        );
+    }
     const now = new Date();
     const completion = {
       orderId,
@@ -109,6 +160,10 @@ export async function POST(request: NextRequest) {
       products: Math.max(0, Number(body.products) || 0),
       completedByEmail: user.email,
       completedByName: user.displayName,
+      shippingMethod: order.shippingMethod,
+      hasReservation,
+      treatment: route.treatment,
+      wooStatus,
       completionDate: new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Madrid',
       }).format(now),
@@ -121,7 +176,10 @@ export async function POST(request: NextRequest) {
         target: orderPreparationCompletions.orderId,
         set: completion,
       });
-    return NextResponse.json({ completion }, { status: 201 });
+    return NextResponse.json(
+      { completion, routingMessage: route.message },
+      { status: 201 },
+    );
   } catch (error) {
     return NextResponse.json(
       {

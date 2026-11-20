@@ -28,6 +28,7 @@ type WooPreparationOrder = {
   };
   meta_data?: Array<{ key?: string; value?: unknown }>;
   line_items?: WooPreparationLine[];
+  shipping_lines?: Array<{ method_title?: string }>;
 };
 
 const clean = (value: unknown) =>
@@ -66,6 +67,10 @@ function formatOrder(order: WooPreparationOrder) {
     school: preparationSchool(order),
     dateCreated: clean(order.date_created),
     total: `${clean(order.total)} ${clean(order.currency_symbol) || '€'}`,
+    shippingMethod: (order.shipping_lines || [])
+      .map((line) => clean(line.method_title))
+      .filter(Boolean)
+      .join(' · '),
     items: (order.line_items || []).map((item) => {
       const size = item.meta_data?.find((meta) =>
         /talla|size/i.test(`${meta.key || ''} ${meta.display_key || ''}`),
@@ -79,6 +84,21 @@ function formatOrder(order: WooPreparationOrder) {
       };
     }),
   };
+}
+
+export async function loadPreparationOrder(
+  orderId: number,
+  config: Record<string, string>,
+) {
+  const response = await wooFetch(`orders/${orderId}?context=edit`, config);
+  const order = await wooResponseJson<
+    WooPreparationOrder & { message?: string }
+  >(response);
+  if (!response.ok)
+    throw new Error(
+      order.message || `WooCommerce respondió ${response.status}.`,
+    );
+  return formatOrder(order);
 }
 
 export async function loadAcceptedPaymentOrders(

@@ -56,6 +56,7 @@ type PreparationOrder = {
   school: string;
   dateCreated: string;
   total: string;
+  shippingMethod: string;
   items: PreparationItem[];
 };
 type PreparedOrder = {
@@ -66,6 +67,10 @@ type PreparedOrder = {
   products: number;
   completedByName: string;
   completedAt: string;
+  shippingMethod: string;
+  hasReservation: boolean;
+  treatment: string;
+  wooStatus: string;
 };
 
 async function responseJson<T>(response: Response) {
@@ -255,7 +260,10 @@ export default function PrepararPedidosPage() {
         (sum, item) => sum + item.quantity,
         0,
       );
-      const { completion } = await responseJson<{ completion: PreparedOrder }>(
+      const { completion, routingMessage } = await responseJson<{
+        completion: PreparedOrder;
+        routingMessage: string;
+      }>(
         await fetch('/api/order-preparation', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -289,7 +297,7 @@ export default function PrepararPedidosPage() {
       setTimerStarted('');
       setSelectedOrderId(null);
       setFinishMessage(
-        `Pedido #${selectedOrder.number} trasladado a Preparados.${timeWarning}`,
+        `Pedido #${selectedOrder.number} trasladado a Preparados. ${routingMessage}${timeWarning}`,
       );
     } catch (finishError) {
       setFinishMessage(
@@ -381,6 +389,10 @@ export default function PrepararPedidosPage() {
                   {selectedOrder.customer || 'Cliente sin nombre'} ·{' '}
                   {selectedOrder.total}
                 </p>
+                <small>
+                  {selectedOrder.shippingMethod ||
+                    'Método de entrega no indicado'}
+                </small>
               </div>
               <div className="preparation-order-totals">
                 <b>
@@ -605,7 +617,15 @@ export default function PrepararPedidosPage() {
                       })}
                     </small>
                   </span>
-                  <strong>Preparado</strong>
+                  <strong>
+                    {order.treatment === 'school-ready'
+                      ? 'Pedido preparado'
+                      : order.treatment === 'store-ready'
+                        ? 'Disponible en tienda'
+                        : order.hasReservation
+                          ? 'Reserva · revisión manual'
+                          : 'Revisión manual'}
+                  </strong>
                 </article>
               ))}
             </div>
