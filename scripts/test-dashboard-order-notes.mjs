@@ -40,7 +40,6 @@ for (const prop of [
   'contacts={hotlineContacts}',
   'loading={hotlineLoading}',
   'error={hotlineError}',
-  'orderNotes.length + hotlineContacts.length',
   '<MondayUpdatesCard',
   'updates={mondayUpdates}',
   'loading={mondayUpdatesLoading}',
@@ -49,6 +48,8 @@ for (const prop of [
   if (!page.includes(prop))
     throw new Error(`La pantalla no entrega a las notas: ${prop}`);
 }
+if (!/orderNotes\.length\s*\+\s*hotlineContacts\.length/.test(page))
+  throw new Error('La pantalla no suma las notas y contactos de Hotline.');
 for (const fragment of ['Mensaje recibido', 'Respuesta enviada', 'contact.consulta', 'contact.respuesta']) {
   if (!hotlineCard.includes(fragment))
     throw new Error(`Los emails de Hotline han perdido: ${fragment}`);
