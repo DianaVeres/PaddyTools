@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   RefreshCw,
+  RotateCcw,
   ScanLine,
   ScanBarcode,
 } from 'lucide-react';
@@ -113,6 +114,7 @@ export default function PrepararPedidosPage() {
     null,
   );
   const [markingSent, setMarkingSent] = useState(false);
+  const [reopeningOrderId, setReopeningOrderId] = useState<number | null>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef({ code: '', at: 0 });
 
@@ -428,6 +430,41 @@ export default function PrepararPedidosPage() {
       );
     } finally {
       setMarkingSent(false);
+    }
+  }
+
+  async function reopenPreparedOrder(order: PreparedOrder) {
+    if (reopeningOrderId) return;
+    if (
+      !window.confirm(
+        `¿Volver a abrir el pedido #${order.orderNumber}? Regresará a Pago aceptado y aparecerá otra vez en pendientes.`,
+      )
+    )
+      return;
+    setReopeningOrderId(order.orderId);
+    setFinishMessage('');
+    try {
+      const data = await responseJson<{ message: string }>(
+        await fetch('/api/order-preparation', {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ orderId: order.orderId }),
+        }),
+      );
+      setPreparedToday((current) =>
+        current.filter((item) => item.orderId !== order.orderId),
+      );
+      setFinalizedToday((current) => Math.max(0, current - 1));
+      await loadOrders();
+      setFinishMessage(data.message);
+    } catch (reopenError) {
+      setFinishMessage(
+        reopenError instanceof Error
+          ? reopenError.message
+          : 'No se pudo volver a abrir el pedido.',
+      );
+    } finally {
+      setReopeningOrderId(null);
     }
   }
 
@@ -754,6 +791,18 @@ export default function PrepararPedidosPage() {
                       Gestionar envío
                     </Button>
                   )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="reopen-prepared-button"
+                    disabled={reopeningOrderId === order.orderId}
+                    onClick={() => void reopenPreparedOrder(order)}
+                  >
+                    <RotateCcw />
+                    {reopeningOrderId === order.orderId
+                      ? 'Reabriendo…'
+                      : 'Volver a abrir'}
+                  </Button>
                 </article>
               ))}
             </div>

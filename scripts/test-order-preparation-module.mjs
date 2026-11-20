@@ -117,6 +117,12 @@ assert.ok(
   'los envíos a domicilio deben pedir seguimiento antes de marcarlos enviados',
 );
 assert.ok(
+  page.includes('Volver a abrir') &&
+    page.includes('reopenPreparedOrder') &&
+    page.includes("method: 'DELETE'"),
+  'los pedidos preparados deben poder volver a abrirse',
+);
+assert.ok(
   messageDialog.includes('Marcar enviado') &&
     messageDialog.includes('onMarkSent'),
   'el aviso al cliente debe permitir confirmar el cambio a Enviado',
@@ -179,6 +185,11 @@ assert.ok(
     route.includes("treatment: 'sent'") &&
     route.includes('trackingNumber'),
   'la API debe cambiar a Enviado y conservar el seguimiento',
+);
+assert.ok(
+  route.includes('acceptedPaymentStatusSlug(statuses)') &&
+    route.includes('.delete(orderPreparationCompletions)'),
+  'reabrir debe restaurar Pago aceptado y retirar el pedido de preparados',
 );
 assert.ok(
   catalog.includes('barcodesForPreparationItem'),

@@ -11,6 +11,7 @@ import {
 import { loadAcceptedPaymentOrders } from '@/lib/woo-order-preparation';
 import { loadPreparationOrder } from '@/lib/woo-order-preparation';
 import { lookupMondayRecords } from '@/lib/monday-lookup';
+import { acceptedPaymentStatusSlug } from '@/lib/woo-initial-status-count';
 import {
   preparationRoute,
   wooStatusSlugByName,
@@ -287,6 +288,81 @@ export async function PUT(request: NextRequest) {
           error instanceof Error
             ? error.message
             : 'No se pudo marcar el pedido como enviado.',
+      },
+      { status: 400 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await getSessionUser(request);
+  if (!user)
+    return NextResponse.json(
+      { error: 'Debes iniciar sesión.' },
+      { status: 401 },
+    );
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const orderId = Number(body.orderId);
+    if (!Number.isSafeInteger(orderId) || orderId < 1)
+      return NextResponse.json(
+        { error: 'No se pudo identificar el pedido.' },
+        { status: 400 },
+      );
+    const existing = await getDb()
+      .select()
+      .from(orderPreparationCompletions)
+      .where(eq(orderPreparationCompletions.orderId, orderId))
+      .limit(1);
+    if (!existing[0])
+      return NextResponse.json(
+        { error: 'El pedido ya no está en preparados.' },
+        { status: 404 },
+      );
+    const config = env as unknown as Record<string, string>;
+    if (!wooIsConfigured(config))
+      return NextResponse.json(
+        { error: 'WooCommerce todavía no está configurado.' },
+        { status: 503 },
+      );
+    const totalsResponse = await wooFetch('reports/orders/totals', config);
+    if (!totalsResponse.ok)
+      throw new Error(
+        `No se pudieron consultar los estados de WooCommerce (${totalsResponse.status}).`,
+      );
+    const statuses =
+      await wooResponseJson<Array<{ slug?: string; name?: string }>>(
+        totalsResponse,
+      );
+    const acceptedStatus = acceptedPaymentStatusSlug(statuses);
+    const updateResponse = await wooFetch(`orders/${orderId}`, config, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: acceptedStatus }),
+    });
+    const updatedWoo = await wooResponseJson<{ message?: string }>(
+      updateResponse,
+    );
+    if (!updateResponse.ok)
+      throw new Error(
+        updatedWoo.message ||
+          `WooCommerce no pudo reabrir el pedido (${updateResponse.status}).`,
+      );
+    await getDb()
+      .delete(orderPreparationCompletions)
+      .where(eq(orderPreparationCompletions.orderId, orderId));
+    return NextResponse.json({
+      ok: true,
+      orderId,
+      message: `Pedido #${existing[0].orderNumber} reabierto y devuelto a Pago aceptado.`,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'No se pudo volver a abrir el pedido.',
       },
       { status: 400 },
     );
