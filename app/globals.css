@@ -379,8 +379,12 @@ a {
   background: rgba(255, 255, 255, 0.11);
   outline: none;
 }
-.order-search-results small { color: #b8cadb; }
-.incident-search-results { border-color: rgba(234, 88, 12, 0.55); }
+.order-search-results small {
+  color: #b8cadb;
+}
+.incident-search-results {
+  border-color: rgba(234, 88, 12, 0.55);
+}
 .source-row {
   display: flex;
   flex-wrap: wrap;
@@ -823,14 +827,52 @@ a {
   background: #e3f3ed;
   color: #1f6b54;
 }
-.hotline-linked .linked-type { color: #1f6b54; }
-.hotline-contact-list { display: grid; gap: 8px; margin-top: 12px; }
-.hotline-contact-list details { overflow: hidden; border: 1px solid #d5e6df; border-radius: 10px; background: #fff; }
-.hotline-contact-list summary { padding: 10px 12px; display: grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; cursor:pointer; }
-.hotline-contact-list summary span,.hotline-contact-list summary small { color:#60756e; font-size:11px; }
-.hotline-contact-list details > div { padding: 0 12px 12px; border-top: 1px solid #e6efeb; }
-.hotline-contact-list details > div > b { display:block; margin-top:12px; color:#1f6b54; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
-.hotline-contact-list details p { margin:5px 0 0; white-space:pre-wrap; color:#394f48; font-size:12px; line-height:1.5; }
+.hotline-linked .linked-type {
+  color: #1f6b54;
+}
+.hotline-contact-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.hotline-contact-list details {
+  overflow: hidden;
+  border: 1px solid #d5e6df;
+  border-radius: 10px;
+  background: #fff;
+}
+.hotline-contact-list summary {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.hotline-contact-list summary span,
+.hotline-contact-list summary small {
+  color: #60756e;
+  font-size: 11px;
+}
+.hotline-contact-list details > div {
+  padding: 0 12px 12px;
+  border-top: 1px solid #e6efeb;
+}
+.hotline-contact-list details > div > b {
+  display: block;
+  margin-top: 12px;
+  color: #1f6b54;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.hotline-contact-list details p {
+  margin: 5px 0 0;
+  white-space: pre-wrap;
+  color: #394f48;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .meta-line {
   display: flex;
   flex-wrap: wrap;
@@ -1076,8 +1118,7 @@ a {
 .reservation-dialog {
   /* El componente ya usa `translate` para centrarse. Lo sustituimos una sola
      vez y sumamos únicamente el desplazamiento elegido por el usuario. */
-  translate:
-    calc(-50% + var(--reservation-drag-x, 0px))
+  translate: calc(-50% + var(--reservation-drag-x, 0px))
     calc(-50% + var(--reservation-drag-y, 0px)) !important;
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
@@ -1783,7 +1824,11 @@ a {
   border-radius: 8px;
   padding: 14px;
 }
-.field-error { margin: 8px 0 0; color: #a12c24; font-size: 13px; }
+.field-error {
+  margin: 8px 0 0;
+  color: #a12c24;
+  font-size: 13px;
+}
 .incident-document-images > div {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2529,23 +2574,57 @@ a {
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
-  .reservation-table td:nth-child(1)::before { content: 'Nº reserva'; }
-  .reservation-table td:nth-child(2)::before { content: 'Cliente'; }
-  .reservation-table td:nth-child(3)::before { content: 'Teléfono'; }
-  .reservation-table td:nth-child(4)::before { content: 'Colegio'; }
-  .reservation-table td:nth-child(5)::before { content: 'Fecha'; }
-  .reservation-table td:nth-child(6)::before { content: 'Código'; }
-  .reservation-table td:nth-child(7)::before { content: 'Descripción del artículo'; }
-  .reservation-table td:nth-child(8)::before { content: 'Talla'; }
-  .reservation-table td:nth-child(9)::before { content: 'Unidades'; }
-  .reservation-table td:nth-child(10)::before { content: 'Enviadas'; }
-  .reservation-table td:nth-child(11)::before { content: 'Pendientes'; }
-  .reservation-table td:nth-child(12)::before { content: 'Pagada'; }
-  .reservation-table td:nth-child(13)::before { content: 'Observaciones'; }
-  .reservation-table td:nth-child(14)::before { content: 'Estado'; }
-  .reservation-table td:nth-child(15)::before { content: 'Fecha fin'; }
-  .reservation-table td:nth-child(16)::before { content: 'Entrega estimada'; }
-  .reservation-table td:nth-child(17)::before { content: 'Fórmula'; }
+  .reservation-table td:nth-child(1)::before {
+    content: 'Nº reserva';
+  }
+  .reservation-table td:nth-child(2)::before {
+    content: 'Cliente';
+  }
+  .reservation-table td:nth-child(3)::before {
+    content: 'Teléfono';
+  }
+  .reservation-table td:nth-child(4)::before {
+    content: 'Colegio';
+  }
+  .reservation-table td:nth-child(5)::before {
+    content: 'Fecha';
+  }
+  .reservation-table td:nth-child(6)::before {
+    content: 'Código';
+  }
+  .reservation-table td:nth-child(7)::before {
+    content: 'Descripción del artículo';
+  }
+  .reservation-table td:nth-child(8)::before {
+    content: 'Talla';
+  }
+  .reservation-table td:nth-child(9)::before {
+    content: 'Unidades';
+  }
+  .reservation-table td:nth-child(10)::before {
+    content: 'Enviadas';
+  }
+  .reservation-table td:nth-child(11)::before {
+    content: 'Pendientes';
+  }
+  .reservation-table td:nth-child(12)::before {
+    content: 'Pagada';
+  }
+  .reservation-table td:nth-child(13)::before {
+    content: 'Observaciones';
+  }
+  .reservation-table td:nth-child(14)::before {
+    content: 'Estado';
+  }
+  .reservation-table td:nth-child(15)::before {
+    content: 'Fecha fin';
+  }
+  .reservation-table td:nth-child(16)::before {
+    content: 'Entrega estimada';
+  }
+  .reservation-table td:nth-child(17)::before {
+    content: 'Fórmula';
+  }
   .reservation-table td:nth-child(18),
   .reservation-table td:nth-child(19) {
     grid-template-columns: 1fr;
@@ -2614,6 +2693,25 @@ a {
   .side-card {
     padding-left: 14px;
     padding-right: 14px;
+  }
+}
+/* Los iPhone usan un ancho lógico mayor que la PDA. En ese intervalo cuatro
+   accesos por fila dejaban los textos fuera de sus botones. */
+@media (min-width: 391px) and (max-width: 520px) {
+  .top-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-inline: 12px;
+  }
+  .top-actions .action-button {
+    min-height: 46px;
+    justify-content: center;
+    gap: 7px;
+    padding-inline: 10px;
+    font-size: 12px;
+    overflow: hidden;
+  }
+  .top-actions .action-button svg {
+    flex: 0 0 auto;
   }
 }
 @media (min-width: 681px) and (max-width: 1200px) {
@@ -2760,20 +2858,103 @@ a {
   }
 }
 /* Secure team access */
-.auth-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #fff 0, #f7f0f2 48%, #eadde1 100%); }
-.auth-card { width: min(100%, 460px); padding: 38px; border: 1px solid #e7d8dc; border-radius: 24px; background: rgba(255,255,255,.96); box-shadow: 0 24px 70px rgba(81,16,35,.14); }
-.auth-card > img { width: 58px; height: 58px; object-fit: contain; margin-bottom: 20px; }
-.auth-card h1 { margin: 5px 0 10px; font-size: clamp(1.8rem, 6vw, 2.5rem); color: #511023; }
-.auth-intro { margin: 0 0 24px; color: #6e5d62; line-height: 1.55; }
-.auth-card form, .auth-card label { display: grid; gap: 9px; }
-.auth-card form { gap: 18px; }
-.auth-card label > span { font-weight: 700; color: #392d30; }
-.auth-input { display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 14px; border: 1px solid #d9cbd0; border-radius: 12px; background: #fff; }
-.auth-input:focus-within { border-color: #7f1d3a; box-shadow: 0 0 0 3px rgba(127,29,58,.12); }
-.auth-input svg { width: 19px; color: #7f1d3a; }
-.auth-input input { width: 100%; border: 0; outline: 0; font: inherit; background: transparent; }
-.auth-card button { min-height: 50px; border: 0; border-radius: 12px; background: #7f1d3a; color: #fff; font-weight: 800; cursor: pointer; }
-.auth-card button:disabled { opacity: .65; cursor: wait; }
-.auth-error { margin: 0; padding: 11px 13px; border-radius: 10px; background: #fff0f0; color: #a11717; }
-.auth-card > small { display: block; margin-top: 20px; color: #806f74; line-height: 1.45; }
-@media (max-width: 520px) { .auth-card { padding: 26px 20px; border-radius: 18px; } }
+.auth-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #fff 0, #f7f0f2 48%, #eadde1 100%);
+}
+.auth-card {
+  width: min(100%, 460px);
+  padding: 38px;
+  border: 1px solid #e7d8dc;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 70px rgba(81, 16, 35, 0.14);
+}
+.auth-card > img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+.auth-card h1 {
+  margin: 5px 0 10px;
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
+  color: #511023;
+}
+.auth-intro {
+  margin: 0 0 24px;
+  color: #6e5d62;
+  line-height: 1.55;
+}
+.auth-card form,
+.auth-card label {
+  display: grid;
+  gap: 9px;
+}
+.auth-card form {
+  gap: 18px;
+}
+.auth-card label > span {
+  font-weight: 700;
+  color: #392d30;
+}
+.auth-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 1px solid #d9cbd0;
+  border-radius: 12px;
+  background: #fff;
+}
+.auth-input:focus-within {
+  border-color: #7f1d3a;
+  box-shadow: 0 0 0 3px rgba(127, 29, 58, 0.12);
+}
+.auth-input svg {
+  width: 19px;
+  color: #7f1d3a;
+}
+.auth-input input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  background: transparent;
+}
+.auth-card button {
+  min-height: 50px;
+  border: 0;
+  border-radius: 12px;
+  background: #7f1d3a;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+.auth-card button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.auth-error {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #fff0f0;
+  color: #a11717;
+}
+.auth-card > small {
+  display: block;
+  margin-top: 20px;
+  color: #806f74;
+  line-height: 1.45;
+}
+@media (max-width: 520px) {
+  .auth-card {
+    padding: 26px 20px;
+    border-radius: 18px;
+  }
+}

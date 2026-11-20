@@ -7,6 +7,7 @@ const component = readFileSync(
   'utf8',
 );
 const page = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
+const css = readFileSync(resolve(root, 'app/globals.css'), 'utf8');
 const wooAdminRoute = readFileSync(
   resolve(root, 'app/api/woocommerce-admin/route.ts'),
   'utf8',
@@ -30,7 +31,7 @@ for (const fragment of [
   if (!component.includes(fragment))
     throw new Error(`La cabecera principal ha perdido: ${fragment}`);
 }
-if (!page.includes("@/components/dashboard/dashboard-header"))
+if (!page.includes('@/components/dashboard/dashboard-header'))
   throw new Error('La pantalla no usa la cabecera principal compartida.');
 for (const prop of [
   'sessionUser={sessionUser}',
@@ -46,5 +47,7 @@ for (const prop of [
 }
 if (!wooAdminRoute.includes("'https://paddy.es/wp-admin/'"))
   throw new Error('El acceso de WooCommerce no abre el escritorio de Paddy.');
+if (!css.includes('@media (min-width: 391px) and (max-width: 520px)'))
+  throw new Error('Falta la distribución específica para móviles tipo iPhone.');
 
 console.log('Cabecera principal verificada.');
