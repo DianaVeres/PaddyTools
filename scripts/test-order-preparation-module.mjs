@@ -17,7 +17,9 @@ assert.ok(page.includes('Pedidos con pago aceptado'), 'falta la pantalla de prep
 assert.ok(page.includes('fetchSessionUser'), 'la pantalla debe exigir una sesión de PaddyTools');
 assert.ok(page.includes('kpi-timer-slot'), 'el contador debe mantenerse visible');
 assert.ok(page.includes("fetch('/api/order-preparation'"), 'la pantalla debe cargar los pedidos automáticamente');
-assert.ok(page.includes('Ver productos'), 'cada pedido debe permitir mostrar sus productos');
+assert.ok(page.includes('Abrir pedido'), 'cada pedido debe abrir su ficha individual');
+assert.ok(page.includes('Volver al listado'), 'la ficha individual debe volver al listado');
+assert.ok(page.includes('preparation-order-detail'), 'los productos deben mostrarse en una vista individual');
 assert.ok(route.includes('getSessionUser(request)'), 'la API debe exigir sesión');
 assert.ok(woo.includes('acceptedPaymentStatusSlug'), 'debe localizar el estado Pago aceptado');
 assert.ok(woo.includes('x-wp-totalpages'), 'debe cargar todas las páginas de pedidos');

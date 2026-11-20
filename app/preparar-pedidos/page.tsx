@@ -19,7 +19,7 @@ async function responseJson<T>(response: Response) {
 export default function PrepararPedidosPage() {
   const [reference, setReference] = useState('');
   const [orders, setOrders] = useState<PreparationOrder[]>([]);
-  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -48,12 +48,16 @@ export default function PrepararPedidosPage() {
     if (!term) return orders;
     return orders.filter((order) => order.number.toLowerCase().includes(term) || order.customer.toLowerCase().includes(term));
   }, [orders, reference]);
+  const selectedOrder = useMemo(
+    () => orders.find((order) => order.id === selectedOrderId) || null,
+    [orders, selectedOrderId],
+  );
 
   function showOrder(event: FormEvent) {
     event.preventDefault();
     const value = reference.trim().toUpperCase();
     const match = orders.find((order) => order.number.toUpperCase() === value);
-    if (match) setExpandedOrder(match.id);
+    if (match) setSelectedOrderId(match.id);
   }
 
   return (
@@ -82,6 +86,34 @@ export default function PrepararPedidosPage() {
           <article><CheckCircle2 /><div><span>PREPARADOS</span><strong>Finalizados hoy</strong><p>Quedará registrado cuándo se terminó y quién lo hizo.</p></div></article>
         </div>
 
+        {selectedOrder ? (
+          <section className="preparation-order-detail">
+            <header>
+              <Button variant="outline" onClick={() => setSelectedOrderId(null)}>
+                <ArrowLeft /> Volver al listado
+              </Button>
+              <div>
+                <span>PEDIDO EN PAGO ACEPTADO</span>
+                <h2>#{selectedOrder.number}</h2>
+                <p>{selectedOrder.customer || 'Cliente sin nombre'} · {selectedOrder.total}</p>
+              </div>
+              <div className="preparation-order-totals">
+                <b>{selectedOrder.items.reduce((sum, item) => sum + item.quantity, 0)}</b>
+                <small>unidades</small>
+                <b>{selectedOrder.items.length}</b>
+                <small>productos</small>
+              </div>
+            </header>
+            <div className="preparation-product-list">
+              {selectedOrder.items.map((item) => (
+                <article key={item.id}>
+                  <div><b>{item.name}</b><small>{item.sku} · Talla {item.size}</small></div>
+                  <strong>{item.quantity} uds.</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : (
         <section className="accepted-orders">
           <header><div><span>WOOCOMMERCE · PAGO ACEPTADO</span><h2>Pedidos para preparar</h2></div><Button variant="outline" onClick={() => void loadOrders()} disabled={loading}><RefreshCw className={loading ? 'spin' : ''} /> Actualizar</Button></header>
           {error && <p className="order-preparation-error">{error}</p>}
@@ -89,22 +121,21 @@ export default function PrepararPedidosPage() {
           {!loading && !error && !visibleOrders.length && <p className="order-preparation-empty">{reference.trim() ? 'No hay coincidencias con ese pedido o cliente.' : 'No hay pedidos en Pago aceptado.'}</p>}
           <div className="accepted-order-list">
             {visibleOrders.map((order) => {
-              const open = expandedOrder === order.id;
               const units = order.items.reduce((sum, item) => sum + item.quantity, 0);
               return (
-                <article key={order.id} className={open ? 'open' : ''}>
-                  <button className="accepted-order-summary" onClick={() => setExpandedOrder(open ? null : order.id)} aria-expanded={open}>
+                <article key={order.id}>
+                  <button className="accepted-order-summary" onClick={() => setSelectedOrderId(order.id)}>
                     <span><b>#{order.number}</b><small>{order.customer || 'Cliente sin nombre'}</small></span>
                     <span><b>{units} uds.</b><small>{order.items.length} productos</small></span>
                     <span><b>{order.total}</b><small>{order.dateCreated ? new Date(order.dateCreated).toLocaleString('es-ES') : 'Sin fecha'}</small></span>
-                    <strong>{open ? 'Ocultar productos' : 'Ver productos'}</strong>
+                    <strong>Abrir pedido</strong>
                   </button>
-                  {open && <div className="accepted-order-products">{order.items.map((item) => <div key={item.id}><span><b>{item.name}</b><small>{item.sku} · Talla {item.size}</small></span><strong>{item.quantity} uds.</strong></div>)}</div>}
                 </article>
               );
             })}
           </div>
         </section>
+        )}
       </section>
     </main>
   );
