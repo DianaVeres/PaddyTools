@@ -76,6 +76,7 @@ import {
 import { validateReservationDraft } from '@/lib/dashboard-form-rules';
 import {
   reservationArticleIdForCode,
+  reservationSchoolOption,
   reservationPrefillStorageKey,
   type ReservationPrefill,
 } from '@/lib/reservation-prefill';
@@ -740,12 +741,18 @@ export default function Home() {
     );
     const phone = sourcePhone || knownCustomer?.phone || '';
     const customerEmail = sourceCustomerEmail || knownCustomer?.email || '';
-    const school =
+    const rawSchool =
       existing?.school ||
       prefill?.school ||
       mondayRecords[0]?.school ||
       knownCustomer?.school ||
       '';
+    const school = reservationOptions
+      ? reservationSchoolOption(reservationOptions.schools, rawSchool)
+      : rawSchool;
+    setNewReservationCustomer(
+      Boolean(prefill && customerName && !knownCustomer),
+    );
     setReservationDraft((current) => ({
       ...current,
       reference:
@@ -772,8 +779,9 @@ export default function Home() {
       sentUnits: Number(existing?.sentUnits) || 0,
       pending: Number(existing?.pending || prefill?.units) || 0,
       paid: existing?.paid || 'SÍ',
-      observations: existing?.observations || 'ENTREGA COLEGIO',
-      status: existing?.status || '',
+      observations:
+        existing?.observations || prefill?.observations || 'ENTREGA COLEGIO',
+      status: existing?.status || prefill?.status || 'PARA PREPARAR',
       endDate: existing?.endDate || '',
       productionDate: existing?.productionDate || '',
       estimatedProduction: existing?.estimatedProduction || '',
@@ -808,18 +816,24 @@ export default function Home() {
       const customer = data.customers.find(
         (item) => folded(item.name) === folded(customerName),
       );
+      const loadedRawSchool =
+        existing?.school ||
+        prefill?.school ||
+        mondayRecords[0]?.school ||
+        customer?.school ||
+        '';
+      const loadedSchool = reservationSchoolOption(
+        data.schools,
+        loadedRawSchool,
+      );
+      setNewReservationCustomer(Boolean(prefill && customerName && !customer));
       setReservationDraft((current) => ({
         ...current,
         customerId: customer?.id || '',
         customerName,
         phone: sourcePhone || customer?.phone || '',
         customerEmail: sourceCustomerEmail || customer?.email || '',
-        school:
-          existing?.school ||
-          prefill?.school ||
-          mondayRecords[0]?.school ||
-          customer?.school ||
-          '',
+        school: loadedSchool,
         date: existing?.date || today,
         articleId:
           existing?.articleIds?.[0] ||

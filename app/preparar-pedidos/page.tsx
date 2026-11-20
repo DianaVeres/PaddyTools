@@ -40,6 +40,7 @@ import {
 } from '@/lib/kpi-auto-timer';
 import {
   reservationArticleCodeFromSku,
+  reservationObservationFromShippingMethod,
   reservationPrefillStorageKey,
 } from '@/lib/reservation-prefill';
 import './preparar-pedidos.css';
@@ -239,6 +240,10 @@ export default function PrepararPedidosPage() {
         articleCode: reservationArticleCodeFromSku(item.sku),
         size: item.size === '—' ? '' : item.size,
         units,
+        observations: reservationObservationFromShippingMethod(
+          selectedOrder.shippingMethod,
+        ),
+        status: 'PARA PREPARAR',
       }),
     );
     window.location.assign('/?createReservation=1');

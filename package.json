@@ -79,6 +79,7 @@
     "test:inventory-module": "node scripts/test-inventory-module.mjs",
     "test:order-preparation-module": "node scripts/test-order-preparation-module.mjs",
     "test:order-preparation-routing": "node scripts/test-order-preparation-routing.mjs",
+    "test:reservation-prefill": "node scripts/test-reservation-prefill.mjs",
     "inventory:catalog": "node scripts/import-stm-catalog.mjs",
     "test:quality-errors": "node scripts/test-quality-errors.mjs",
     "test:documentation": "node scripts/test-documentation.mjs",
