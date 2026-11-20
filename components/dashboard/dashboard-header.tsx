@@ -4,6 +4,7 @@ import {
   ChevronDown,
   LogOut,
   Mail,
+  PackageCheck,
   ScanBarcode,
   Store,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ function userInitials(user: SessionUser | null) {
 export function DashboardHeader({
   sessionUser,
   onOpenKpis,
+  onOpenOrderPreparation,
   onOpenWooCommerce,
   onOpenHotline,
   onOpenInventories,
@@ -39,6 +41,7 @@ export function DashboardHeader({
 }: {
   sessionUser: SessionUser | null;
   onOpenKpis: () => void;
+  onOpenOrderPreparation: () => void;
   onOpenWooCommerce: () => void;
   onOpenHotline: () => void;
   onOpenInventories: () => void;
@@ -63,6 +66,13 @@ export function DashboardHeader({
           onClick={onOpenKpis}
         >
           <BarChart3 /> KPIs
+        </Button>
+        <Button
+          className="action-button order-preparation"
+          variant="outline"
+          onClick={onOpenOrderPreparation}
+        >
+          <PackageCheck /> Preparar pedidos
         </Button>
         <Button
           className="action-button woocommerce"

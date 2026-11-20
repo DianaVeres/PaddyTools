@@ -1145,6 +1145,9 @@ export default function Home() {
       <DashboardHeader
         sessionUser={sessionUser}
         onOpenKpis={() => window.location.assign('/kpis')}
+        onOpenOrderPreparation={() =>
+          window.location.assign('/preparar-pedidos')
+        }
         onOpenWooCommerce={() =>
           window.open('/api/woocommerce-admin', '_blank', 'noopener,noreferrer')
         }
