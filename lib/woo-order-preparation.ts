@@ -49,10 +49,21 @@ function preparationSchool(order: WooPreparationOrder) {
       })),
     ),
   ];
-  return clean(
+  const metadataSchool = clean(
     values.find((entry) => /colegio|college|school|centro/i.test(entry.label))
       ?.value,
   );
+  if (metadataSchool) return metadataSchool;
+  const shippingMethod = preparationShippingMethod(order);
+  const schoolMatch = shippingMethod.match(/^envío a\s+(.+)$/i);
+  return clean(schoolMatch?.[1]);
+}
+
+function preparationShippingMethod(order: WooPreparationOrder) {
+  return (order.shipping_lines || [])
+    .map((line) => clean(line.method_title))
+    .filter(Boolean)
+    .join(' · ');
 }
 
 function formatOrder(order: WooPreparationOrder) {
@@ -67,10 +78,7 @@ function formatOrder(order: WooPreparationOrder) {
     school: preparationSchool(order),
     dateCreated: clean(order.date_created),
     total: `${clean(order.total)} ${clean(order.currency_symbol) || '€'}`,
-    shippingMethod: (order.shipping_lines || [])
-      .map((line) => clean(line.method_title))
-      .filter(Boolean)
-      .join(' · '),
+    shippingMethod: preparationShippingMethod(order),
     items: (order.line_items || []).map((item) => {
       const size = item.meta_data?.find((meta) =>
         /talla|size/i.test(`${meta.key || ''} ${meta.display_key || ''}`),

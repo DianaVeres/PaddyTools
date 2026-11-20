@@ -4,9 +4,12 @@ import {
   reservationArticleIdForCode,
   reservationObservationFromShippingMethod,
   reservationSchoolOption,
+  reservationSize,
 } from '../lib/reservation-prefill.ts';
 
 assert.equal(reservationArticleCodeFromSku('3/9508/AZUL MARINO/8'), '9508');
+assert.equal(reservationSize('8'), 'T.8');
+assert.equal(reservationSize('T.XL'), 'T.XL');
 assert.equal(
   reservationArticleIdForCode(
     [

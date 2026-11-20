@@ -42,6 +42,7 @@ import {
 import {
   reservationArticleCodeFromSku,
   reservationObservationFromShippingMethod,
+  reservationSize,
   reservationPrefillStorageKey,
 } from '@/lib/reservation-prefill';
 import './preparar-pedidos.css';
@@ -129,6 +130,18 @@ export default function PrepararPedidosPage() {
       setOrders(data.orders);
       setPreparedToday(data.preparedToday || []);
       setFinalizedToday(data.preparedToday?.length || 0);
+      const requestedOrder = new URLSearchParams(window.location.search)
+        .get('order')
+        ?.trim()
+        .toUpperCase();
+      if (requestedOrder) {
+        setReference(requestedOrder);
+        const match = data.orders.find(
+          (order) => order.number.toUpperCase() === requestedOrder,
+        );
+        if (match) openOrder(match);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     } catch (loadError) {
       setOrders([]);
       setError(
@@ -240,12 +253,13 @@ export default function PrepararPedidosPage() {
         customerEmail: selectedOrder.customerEmail,
         school: selectedOrder.school,
         articleCode: reservationArticleCodeFromSku(item.sku),
-        size: item.size === '—' ? '' : item.size,
+        size: item.size === '—' ? '' : reservationSize(item.size),
         units,
         observations: reservationObservationFromShippingMethod(
           selectedOrder.shippingMethod,
         ),
         status: 'PARA PREPARAR',
+        returnTo: `/preparar-pedidos?order=${encodeURIComponent(selectedOrder.number)}`,
       }),
     );
     window.location.assign('/?createReservation=1');

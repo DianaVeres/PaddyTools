@@ -11,6 +11,7 @@ export type ReservationPrefill = {
   units: number;
   observations: 'ENTREGA COLEGIO' | 'RECOGIDA EN TIENDA' | 'ENVÍO A DOMICILIO';
   status: 'PARA PREPARAR';
+  returnTo: string;
 };
 
 const comparableCode = (value: unknown) =>
@@ -29,6 +30,14 @@ const codeCandidates = (value: unknown) => {
 export function reservationArticleCodeFromSku(sku: string) {
   const parts = String(sku || '').split('/');
   return comparableCode(parts[1] || parts[0]);
+}
+
+export function reservationSize(value: string) {
+  const size = String(value || '')
+    .trim()
+    .replace(/^T(?:ALLA)?\.?\s*/i, '')
+    .toUpperCase();
+  return size ? `T.${size}` : '';
 }
 
 export function reservationArticleIdForCode(

@@ -90,6 +90,11 @@ assert.ok(
   'debe transferir los datos al formulario oficial',
 );
 assert.ok(
+  page.includes('reservationSize(item.size)') &&
+    page.includes('/preparar-pedidos?order='),
+  'la reserva debe normalizar la talla y volver al pedido de origen',
+);
+assert.ok(
   page.includes("'preparacion'"),
   'debe iniciar la medición automática de preparación',
 );

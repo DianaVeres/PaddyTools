@@ -304,6 +304,7 @@ export default function Home() {
   const [newReservationCustomer, setNewReservationCustomer] = useState(false);
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationSaving, setReservationSaving] = useState(false);
+  const [reservationReturnTo, setReservationReturnTo] = useState('');
   const [reservationRows, setReservationRows] = useState<MondayRecord[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(false);
   const [editingReservationId, setEditingReservationId] = useState('');
@@ -344,8 +345,17 @@ export default function Home() {
   );
   const reservationArticles = useMemo(() => {
     const articles = reservationOptions?.articles || [];
-    return reservationArticlesForSchool(articles, reservationDraft.school);
-  }, [reservationDraft.school, reservationOptions]);
+    const filtered = reservationArticlesForSchool(
+      articles,
+      reservationDraft.school,
+    );
+    const selected = articles.find(
+      (article) => article.id === reservationDraft.articleId,
+    );
+    return selected && !filtered.some((article) => article.id === selected.id)
+      ? [selected, ...filtered]
+      : filtered;
+  }, [reservationDraft.articleId, reservationDraft.school, reservationOptions]);
 
   function openEmailComposer(
     input: Omit<EmailDraft, 'subject' | 'body' | 'carrier' | 'trackingNumber'>,
@@ -714,6 +724,7 @@ export default function Home() {
     else cancelAutomaticWork('reservation-create');
     reservationDialog.reset();
     setModal('reserva');
+    setReservationReturnTo(existing ? '' : prefill?.returnTo || '');
     setEditingReservationId(existing?.id || '');
     setNewReservationCustomer(false);
     const customerName =
@@ -964,6 +975,11 @@ export default function Home() {
         setEditingReservationId('');
         setModal('reservas');
       } else {
+        if (reservationReturnTo) {
+          setModal(null);
+          window.location.assign(reservationReturnTo);
+          return;
+        }
         setModal('reserva-creada');
       }
     } catch (error) {
