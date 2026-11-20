@@ -124,6 +124,18 @@ assert.ok(
   'la asociación de códigos debe estar en un módulo propio',
 );
 assert.ok(
+  catalog.includes('barcodeMatchesPreparationItem'),
+  'la lectura debe comparar equivalencias de códigos de barras',
+);
+assert.ok(
+  catalog.includes('exactColorRows'),
+  'debe priorizar el color exacto antes de aceptar equivalencias',
+);
+assert.ok(
+  page.includes('barcodeMatchesPreparationItem'),
+  'la pantalla debe aplicar las equivalencias del catálogo',
+);
+assert.ok(
   woo.includes('acceptedPaymentStatusSlug'),
   'debe localizar el estado Pago aceptado',
 );

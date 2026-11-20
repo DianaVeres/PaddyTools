@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { NextRequest, NextResponse } from 'next/server';
-import { inArray } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { inventoryCatalog } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
@@ -39,7 +39,12 @@ export async function GET(request: NextRequest) {
       ? await getDb()
           .select()
           .from(inventoryCatalog)
-          .where(inArray(inventoryCatalog.article, articles))
+          .where(
+            inArray(
+              sql<string>`upper(replace(replace(replace(${inventoryCatalog.article}, ' ', ''), '-', ''), '.', ''))`,
+              articles,
+            ),
+          )
       : [];
     return NextResponse.json({
       ...result,

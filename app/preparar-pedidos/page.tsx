@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BarcodeCameraScanner } from '@/components/order-preparation/barcode-camera-scanner';
+import { barcodeMatchesPreparationItem } from '@/lib/order-preparation-catalog';
 import { fetchSessionUser } from '@/lib/dashboard-api';
 import {
   beginAutomaticWork,
@@ -154,7 +155,7 @@ export default function PrepararPedidosPage() {
       return;
     lastScanRef.current = { code, at: now };
     const item = selectedOrder.items.find((candidate) =>
-      candidate.barcodes.includes(code),
+      barcodeMatchesPreparationItem(candidate.barcodes, code),
     );
     if (!item) {
       setScanAlert('PRODUCTO ERRONEO');

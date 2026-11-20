@@ -1,5 +1,10 @@
 export function normalizeInventoryCode(value: unknown) {
-  return String(value || '').trim().replace(/\s+/g, '').toUpperCase().slice(0, 40);
+  return String(value || '')
+    .trim()
+    .replace(/^\][A-Z]\d/i, '')
+    .replace(/\s+/g, '')
+    .toUpperCase()
+    .slice(0, 40);
 }
 
 export function inventoryCodeCandidates(value: unknown) {
