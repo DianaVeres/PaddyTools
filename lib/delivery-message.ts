@@ -1,6 +1,10 @@
 import { foldSearchText } from './global-search.ts';
 
-export type DeliveryEmailKind = 'colegio' | 'domicilio' | 'tienda';
+export type DeliveryEmailKind =
+  | 'colegio'
+  | 'domicilio'
+  | 'tienda'
+  | 'reserva-pendiente';
 export type DeliveryRecordKind = 'pedido' | 'reserva' | 'prenda' | 'incidencia';
 export type DeliveryEmailDraft = {
   to: string;
@@ -14,15 +18,31 @@ export type DeliveryEmailDraft = {
   recordKind: DeliveryRecordKind;
   reference: string;
   school: string;
+  reservationSummary?: string;
 };
 
 function recordKindLabel(kind: DeliveryRecordKind) {
   return kind === 'pedido'
-    ? { lower: 'pedido', title: 'Pedido', prepared: 'preparado', sent: 'enviado' }
+    ? {
+        lower: 'pedido',
+        title: 'Pedido',
+        prepared: 'preparado',
+        sent: 'enviado',
+      }
     : kind === 'reserva' || kind === 'prenda'
       ? kind === 'reserva'
-        ? { lower: 'reserva', title: 'Reserva', prepared: 'preparada', sent: 'enviada' }
-        : { lower: 'prenda especial', title: 'Prenda especial', prepared: 'preparada', sent: 'enviada' }
+        ? {
+            lower: 'reserva',
+            title: 'Reserva',
+            prepared: 'preparada',
+            sent: 'enviada',
+          }
+        : {
+            lower: 'prenda especial',
+            title: 'Prenda especial',
+            prepared: 'preparada',
+            sent: 'enviada',
+          }
       : {
           lower: 'incidencia',
           title: 'Incidencia',
@@ -46,6 +66,10 @@ export function deliveryKindFromText(
 
 export function deliveryEmailBody(draft: DeliveryEmailDraft) {
   const record = recordKindLabel(draft.recordKind);
+  if (draft.delivery === 'reserva-pendiente') {
+    const pending = draft.reservationSummary?.trim() || 'artículo pendiente';
+    return `Hola ${draft.customerName}, su ${record.lower} ${draft.reference} está ${record.prepared}, pero queda pendiente en reserva: ${pending}. Le avisaremos cuando recibamos el artículo pendiente. Gracias, un saludo.`;
+  }
   if (draft.delivery === 'colegio') {
     return `Hola ${draft.customerName}. IMPORTANTE: su ${record.lower} ${draft.reference} YA ESTÁ EN EL COLEGIO ${draft.school}. YA PUEDE IR AL COLEGIO A RECOGERLO. Gracias, un saludo.`;
   }
@@ -72,6 +96,8 @@ export function createDeliveryEmailDraft(
     subject: `${recordKindLabel(input.recordKind).title} ${input.reference} ${recordKindLabel(input.recordKind).prepared}`,
     body: '',
   };
+  if (input.delivery === 'reserva-pendiente')
+    draft.subject = `${recordKindLabel(input.recordKind).title} ${input.reference} preparado con reserva pendiente`;
   return { ...draft, body: deliveryEmailBody(draft) };
 }
 

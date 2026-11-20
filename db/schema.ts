@@ -380,6 +380,7 @@ export const orderPreparationCompletions = sqliteTable(
     wooStatus: text('woo_status').notNull().default(''),
     carrier: text('carrier').notNull().default(''),
     trackingNumber: text('tracking_number').notNull().default(''),
+    reservationSummary: text('reservation_summary').notNull().default(''),
     completionDate: text('completion_date').notNull(),
     completedAt: integer('completed_at', { mode: 'timestamp_ms' }).notNull(),
   },

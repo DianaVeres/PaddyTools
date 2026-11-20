@@ -85,6 +85,9 @@ export function CustomerMessageDialog({
                 <option value="colegio">Entrega en colegio</option>
                 <option value="domicilio">Envío a domicilio</option>
                 <option value="tienda">Recogida en tienda</option>
+                <option value="reserva-pendiente">
+                  Pedido con reserva pendiente
+                </option>
               </select>
             </Field>
             <Field label="Email del cliente">

@@ -18,6 +18,9 @@ const completionMigration = read(
 );
 const routingMigration = read('drizzle/0015_order_preparation_routing.sql');
 const shippingMigration = read('drizzle/0016_order_preparation_shipping.sql');
+const reservationMessageMigration = read(
+  'drizzle/0017_order_preparation_reservation_message.sql',
+);
 const messageDialog = read('components/dashboard/customer-message-dialog.tsx');
 
 assert.ok(
@@ -129,6 +132,12 @@ assert.ok(
   'los pedidos preparados deben poder volver a abrirse',
 );
 assert.ok(
+  page.includes('Avisar reserva') &&
+    page.includes('openReservationNotice') &&
+    page.includes('reservationSummary'),
+  'los pedidos preparados con reserva deben generar su aviso con el artículo pendiente',
+);
+assert.ok(
   messageDialog.includes('Marcar enviado') &&
     messageDialog.includes('onMarkSent'),
   'el aviso al cliente debe permitir confirmar el cambio a Enviado',
@@ -183,8 +192,19 @@ assert.ok(
     routingMigration.includes('shipping_method') &&
     routingMigration.includes('treatment') &&
     shippingMigration.includes('tracking_number') &&
-    shippingMigration.includes('customer_email'),
+    shippingMigration.includes('customer_email') &&
+    reservationMessageMigration.includes('reservation_summary'),
   'falta el almacenamiento persistente de pedidos preparados',
+);
+assert.ok(
+  route.includes('pendingReservations') &&
+    route.includes('reservationSummary') &&
+    route.includes('record.articleDescription'),
+  'al finalizar debe guardar el detalle de los artículos pendientes en reserva',
+);
+assert.ok(
+  messageDialog.includes('Pedido con reserva pendiente'),
+  'el formulario debe permitir seleccionar el aviso de reserva pendiente',
 );
 assert.ok(
   route.includes("wooStatusSlugByName(statuses, 'Enviado')") &&

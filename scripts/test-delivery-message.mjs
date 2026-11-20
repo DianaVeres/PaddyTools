@@ -37,6 +37,22 @@ const storeDraft = updateDeliveryEmailDraft(schoolDraft, {
 });
 assert.match(storeDraft.body, /tienda de Paddy/);
 
+const pendingReservationDraft = createDeliveryEmailDraft({
+  ...base,
+  recordKind: 'pedido',
+  reference: 'PA51548',
+  delivery: 'reserva-pendiente',
+  reservationSummary: 'CARDIGAN BCLC, talla T.8, 1 uds.',
+});
+assert.equal(
+  pendingReservationDraft.subject,
+  'Pedido PA51548 preparado con reserva pendiente',
+);
+assert.match(pendingReservationDraft.body, /CARDIGAN BCLC/);
+assert.match(pendingReservationDraft.body, /talla T\.8/);
+assert.match(pendingReservationDraft.body, /1 uds\./);
+assert.match(pendingReservationDraft.body, /Le avisaremos/);
+
 const incidentDraft = updateDeliveryEmailDraft(homeDraft, {
   recordKind: 'incidencia',
 });

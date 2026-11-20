@@ -85,6 +85,7 @@ type PreparedOrder = {
   wooStatus: string;
   carrier: string;
   trackingNumber: string;
+  reservationSummary: string;
 };
 
 async function responseJson<T>(response: Response) {
@@ -359,6 +360,23 @@ export default function PrepararPedidosPage() {
         reference: order.orderNumber,
         school: '',
         delivery: 'domicilio',
+      }),
+    );
+  }
+
+  function openReservationNotice(order: PreparedOrder) {
+    setFinishMessage('');
+    setShippingDraft(
+      createDeliveryEmailDraft({
+        to: order.customerEmail,
+        phone: order.customerPhone,
+        customerName: order.customerName || 'cliente',
+        recordKind: 'pedido',
+        reference: order.orderNumber,
+        school: '',
+        delivery: 'reserva-pendiente',
+        reservationSummary:
+          order.reservationSummary || 'artículo pendiente en reserva',
       }),
     );
   }
@@ -805,6 +823,14 @@ export default function PrepararPedidosPage() {
                   {order.treatment === 'manual-home-delivery' && (
                     <Button type="button" onClick={() => openShipping(order)}>
                       Gestionar envío
+                    </Button>
+                  )}
+                  {order.treatment === 'manual-reservation' && (
+                    <Button
+                      type="button"
+                      onClick={() => openReservationNotice(order)}
+                    >
+                      Avisar reserva
                     </Button>
                   )}
                   <Button

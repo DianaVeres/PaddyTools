@@ -116,9 +116,27 @@ export async function POST(request: NextRequest) {
     const linkedRecords = mondayToken
       ? await lookupMondayRecords(orderNumber, mondayToken)
       : [];
-    const hasReservation = linkedRecords.some(
-      (record) => record.kind === 'reserva',
+    const pendingReservations = linkedRecords.filter(
+      (record) =>
+        record.kind === 'reserva' &&
+        (!String(record.pending || '').trim() || Number(record.pending) > 0),
     );
+    const hasReservation = pendingReservations.length > 0;
+    const reservationSummary = pendingReservations
+      .map((record) => {
+        const article =
+          record.articleDescription || record.article || record.code;
+        const units = String(record.pending || record.units || '').trim();
+        return [
+          article,
+          record.size ? `talla ${record.size}` : '',
+          units ? `${units} uds.` : '',
+        ]
+          .filter(Boolean)
+          .join(', ');
+      })
+      .filter(Boolean)
+      .join('; ');
     const route = preparationRoute(order.shippingMethod, hasReservation);
     let wooStatus = '';
     if (route.automatic) {
@@ -169,6 +187,7 @@ export async function POST(request: NextRequest) {
       wooStatus,
       carrier: '',
       trackingNumber: '',
+      reservationSummary,
       completionDate: new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Madrid',
       }).format(now),
