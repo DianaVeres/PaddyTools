@@ -4,6 +4,7 @@ import {
   reservationArticleIdForCode,
   reservationObservationFromShippingMethod,
   reservationSchoolOption,
+  reservationSchoolFromArticle,
   reservationSize,
 } from '../lib/reservation-prefill.ts';
 
@@ -30,6 +31,21 @@ assert.equal(
 );
 assert.equal(
   reservationSchoolOption(['TEATINAS PINTO'], 'Teatinas Pinto Web'),
+  'TEATINAS PINTO',
+);
+assert.equal(
+  reservationSchoolFromArticle(
+    ['BCLC', 'TEATINAS PINTO'],
+    'CARDIGAN UNISEX BCLC - AZUL MARINO',
+    '3/9508/AZUL MARINO/8',
+  ),
+  'BCLC',
+);
+assert.equal(
+  reservationSchoolFromArticle(
+    ['BCLC', 'TEATINAS PINTO'],
+    'CAMISETA MANGA CORTA TEATINAS - BLANCO',
+  ),
   'TEATINAS PINTO',
 );
 assert.equal(

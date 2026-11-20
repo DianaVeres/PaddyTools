@@ -253,6 +253,8 @@ export default function PrepararPedidosPage() {
         customerEmail: selectedOrder.customerEmail,
         school: selectedOrder.school,
         articleCode: reservationArticleCodeFromSku(item.sku),
+        articleName: item.name,
+        articleSku: item.sku,
         size: item.size === '—' ? '' : reservationSize(item.size),
         units,
         observations: reservationObservationFromShippingMethod(

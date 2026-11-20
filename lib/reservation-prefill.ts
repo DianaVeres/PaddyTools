@@ -7,6 +7,8 @@ export type ReservationPrefill = {
   customerEmail: string;
   school: string;
   articleCode: string;
+  articleName: string;
+  articleSku: string;
   size: string;
   units: number;
   observations: 'ENTREGA COLEGIO' | 'RECOGIDA EN TIENDA' | 'ENVÍO A DOMICILIO';
@@ -73,6 +75,40 @@ export function reservationSchoolOption(options: string[], school: string) {
     ) ||
     ''
   );
+}
+
+export function reservationSchoolFromArticle(
+  options: string[],
+  articleName: string,
+  articleSku = '',
+) {
+  const source = `${articleName} ${articleSku}`.trim();
+  if (!source) return '';
+  const exact = [...options]
+    .sort((left, right) => right.length - left.length)
+    .find((option) => sameSchool(option, source));
+  if (exact) return exact;
+  const foldedSource = comparableCode(source);
+  const ignored = new Set(['COLEGIO', 'COLLEGE', 'SCHOOL', 'CENTRO', 'SANTA']);
+  const ranked = options
+    .map((option) => ({
+      option,
+      score: option
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .split(/[^A-Z0-9]+/)
+        .filter((word) => word.length >= 4 && !ignored.has(word))
+        .filter((word) => foldedSource.includes(word)).length,
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort(
+      (left, right) =>
+        right.score - left.score || right.option.length - left.option.length,
+    );
+  if (!ranked.length) return '';
+  if (ranked[1] && ranked[0].score === ranked[1].score) return '';
+  return ranked[0].option;
 }
 
 export function reservationObservationFromShippingMethod(value: string) {

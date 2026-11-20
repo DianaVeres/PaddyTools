@@ -77,6 +77,7 @@ import { validateReservationDraft } from '@/lib/dashboard-form-rules';
 import {
   reservationArticleIdForCode,
   reservationSchoolOption,
+  reservationSchoolFromArticle,
   reservationPrefillStorageKey,
   type ReservationPrefill,
 } from '@/lib/reservation-prefill';
@@ -757,6 +758,13 @@ export default function Home() {
       prefill?.school ||
       mondayRecords[0]?.school ||
       knownCustomer?.school ||
+      (reservationOptions && prefill
+        ? reservationSchoolFromArticle(
+            reservationOptions.schools,
+            prefill.articleName,
+            prefill.articleSku,
+          )
+        : '') ||
       '';
     const school = reservationOptions
       ? reservationSchoolOption(reservationOptions.schools, rawSchool)
@@ -832,6 +840,13 @@ export default function Home() {
         prefill?.school ||
         mondayRecords[0]?.school ||
         customer?.school ||
+        (prefill
+          ? reservationSchoolFromArticle(
+              data.schools,
+              prefill.articleName,
+              prefill.articleSku,
+            )
+          : '') ||
         '';
       const loadedSchool = reservationSchoolOption(
         data.schools,

@@ -91,7 +91,8 @@ assert.ok(
 );
 assert.ok(
   page.includes('reservationSize(item.size)') &&
-    page.includes('/preparar-pedidos?order='),
+    page.includes('/preparar-pedidos?order=') &&
+    page.includes('articleName: item.name'),
   'la reserva debe normalizar la talla y volver al pedido de origen',
 );
 assert.ok(
