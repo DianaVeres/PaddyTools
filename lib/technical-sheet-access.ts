@@ -9,6 +9,8 @@ export function hasTechnicalOnlyAccess(email?: string) {
 }
 
 export function canReadTechnicalSheets(email?: string) {
-  return email?.trim().toLowerCase() === 'administracion@paddy.es'
+  const normalizedEmail = email?.trim().toLowerCase();
+  return normalizedEmail === 'administracion@paddy.es'
+    || normalizedEmail === 'rociosaez@paddy.es'
     || hasTechnicalOnlyAccess(email);
 }
