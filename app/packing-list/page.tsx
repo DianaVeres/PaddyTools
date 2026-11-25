@@ -92,7 +92,13 @@ type Order = {
   schoolMismatch: boolean;
 };
 type PackingList = RecordSummary & { orders: Array<Order & { id: string }> };
-type Activity = { id: string; action: 'creado' | 'modificado' | 'eliminado'; entityId: string; description: string; createdAt: string };
+type Activity = {
+  id: string;
+  action: 'creado' | 'modificado' | 'eliminado';
+  entityId: string;
+  description: string;
+  createdAt: string;
+};
 type PackingDraft = {
   id: string;
   school: string;
@@ -103,7 +109,13 @@ type PackingDraft = {
   createdByName: string;
   updatedAt: string;
 };
-type View = 'create' | 'records' | 'folder' | 'detail' | 'messages' | 'activity';
+type View =
+  | 'create'
+  | 'records'
+  | 'folder'
+  | 'detail'
+  | 'messages'
+  | 'activity';
 type SpeechResultEvent = {
   results: ArrayLike<{ 0: { transcript: string }; isFinal: boolean }>;
 };
@@ -189,6 +201,9 @@ export default function Home() {
   const [selected, setSelected] = useState<PackingList | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<PackingList | null>(null);
+  const [manualLookupIds, setManualLookupIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [packingTimerStarted, setPackingTimerStarted] = useState('');
@@ -204,7 +219,9 @@ export default function Home() {
 
   async function loadDrafts() {
     try {
-      const response = await fetch('/api/packing-drafts', { cache: 'no-store' });
+      const response = await fetch('/api/packing-drafts', {
+        cache: 'no-store',
+      });
       const data = await readResponseJson<{
         drafts?: PackingDraft[];
         error?: string;
@@ -241,16 +258,22 @@ export default function Home() {
           boxes,
         }),
       });
-      const data = await readResponseJson<{ id?: string; error?: string }>(response);
+      const data = await readResponseJson<{ id?: string; error?: string }>(
+        response,
+      );
       if (!response.ok || !data.id)
         throw new Error(data.error || 'No se pudo guardar el borrador.');
       setActiveDraftId(data.id);
       setDraftSelectionId(data.id);
       await loadDrafts();
-      setMessage('Borrador guardado. Podrás recuperarlo desde cualquier dispositivo.');
+      setMessage(
+        'Borrador guardado. Podrás recuperarlo desde cualquier dispositivo.',
+      );
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : 'No se pudo guardar el borrador.',
+        error instanceof Error
+          ? error.message
+          : 'No se pudo guardar el borrador.',
       );
     } finally {
       setLoading(false);
@@ -269,7 +292,9 @@ export default function Home() {
     setOrderMonth(draft.orderMonth);
     setBoxes(draft.boxes);
     setActiveDraftId(draft.id);
-    setMessage(`Borrador de ${draft.school || 'PackingList sin colegio'} recuperado.`);
+    setMessage(
+      `Borrador de ${draft.school || 'PackingList sin colegio'} recuperado.`,
+    );
   }
 
   async function deleteDraft(id: string, showMessage = true) {
@@ -352,7 +377,10 @@ export default function Home() {
         (result) => {
           if (!result || cancelled || scanHandledRef.current) return;
           const scannedValue = result.getText();
-          const added = appendScannedPackingReference(boxesValueRef.current, scannedValue);
+          const added = appendScannedPackingReference(
+            boxesValueRef.current,
+            scannedValue,
+          );
           if (added.error) {
             setScannerMessage(added.error);
             return;
@@ -375,7 +403,8 @@ export default function Home() {
       .catch((error: unknown) => {
         if (cancelled) return;
         setScannerMessage(
-          error instanceof Error && /permission|allowed|denied/i.test(error.message)
+          error instanceof Error &&
+            /permission|allowed|denied/i.test(error.message)
             ? 'No hay permiso para usar la cámara. Actívalo en los ajustes del navegador.'
             : 'No se pudo abrir la cámara. Comprueba que ninguna otra aplicación la esté usando.',
         );
@@ -427,27 +456,40 @@ export default function Home() {
         .join(' ');
       const merged = mergePackingDictation(boxes, transcript);
       if (!merged.count) {
-        setMessage(`No reconocí ningún código en: “${transcript}”. Vuelve a intentarlo diciendo PA, reserva o incidencia antes del número.`);
+        setMessage(
+          `No reconocí ningún código en: “${transcript}”. Vuelve a intentarlo diciendo PA, reserva o incidencia antes del número.`,
+        );
         return;
       }
       setBoxes(merged.text);
-      setMessage(`${merged.count} código${merged.count === 1 ? '' : 's'} añadido${merged.count === 1 ? '' : 's'} por voz. Revísalos antes de generar.`);
+      setMessage(
+        `${merged.count} código${merged.count === 1 ? '' : 's'} añadido${merged.count === 1 ? '' : 's'} por voz. Revísalos antes de generar.`,
+      );
     };
     recognition.onerror = (event) => {
       const messages: Record<string, string> = {
-        'not-allowed': 'Necesito permiso para usar el micrófono. Revisa el permiso del navegador.',
-        'service-not-allowed': 'El servicio de dictado está desactivado en este dispositivo.',
+        'not-allowed':
+          'Necesito permiso para usar el micrófono. Revisa el permiso del navegador.',
+        'service-not-allowed':
+          'El servicio de dictado está desactivado en este dispositivo.',
         'audio-capture': 'No se ha encontrado un micrófono disponible.',
-        'no-speech': 'No he oído ningún código. Pulsa Dictar códigos y vuelve a intentarlo.',
-        network: 'El servicio de voz no ha respondido. Revisa la conexión e inténtalo de nuevo.',
+        'no-speech':
+          'No he oído ningún código. Pulsa Dictar códigos y vuelve a intentarlo.',
+        network:
+          'El servicio de voz no ha respondido. Revisa la conexión e inténtalo de nuevo.',
       };
-      setMessage(messages[event.error] || 'No se pudo reconocer el dictado. Inténtalo de nuevo.');
+      setMessage(
+        messages[event.error] ||
+          'No se pudo reconocer el dictado. Inténtalo de nuevo.',
+      );
     };
     recognition.onend = () => {
       setListening(false);
       speechRef.current = null;
     };
-    setMessage('Escuchando… Di, por ejemplo: caja uno, PA cuatro seis nueve cero cuatro.');
+    setMessage(
+      'Escuchando… Di, por ejemplo: caja uno, PA cuatro seis nueve cero cuatro.',
+    );
     setListening(true);
     try {
       recognition.start();
@@ -540,11 +582,16 @@ export default function Home() {
     setMessage('');
     try {
       const query = new URLSearchParams({ from, to });
-      const response = await fetch(`/api/packing-lists?${query}`, { cache: 'no-store' });
-      const data = await readResponseJson<RecordSummary[] & {
-        error?: string;
-      }>(response);
-      if (!response.ok) throw new Error(data.error || 'No se pudieron cargar los registros.');
+      const response = await fetch(`/api/packing-lists?${query}`, {
+        cache: 'no-store',
+      });
+      const data = await readResponseJson<
+        RecordSummary[] & {
+          error?: string;
+        }
+      >(response);
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudieron cargar los registros.');
       setRecords(Array.isArray(data) ? data : []);
     } catch (error) {
       setMessage(
@@ -577,11 +624,18 @@ export default function Home() {
     setMessage('');
     try {
       const response = await fetch('/api/activity', { cache: 'no-store' });
-      const data = await readResponseJson<Activity[] & { error?: string }>(response);
-      if (!response.ok) throw new Error(data.error || 'No se pudo cargar la actividad.');
+      const data = await readResponseJson<Activity[] & { error?: string }>(
+        response,
+      );
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudo cargar la actividad.');
       setActivity(Array.isArray(data) ? data : []);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'No se pudo cargar la actividad.');
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo cargar la actividad.',
+      );
     } finally {
       setLoading(false);
     }
@@ -632,7 +686,9 @@ export default function Home() {
     }
 
     setSelected((current) =>
-      current?.id === data.id ? { ...current, orders: refreshedOrders } : current,
+      current?.id === data.id
+        ? { ...current, orders: refreshedOrders }
+        : current,
     );
   }
 
@@ -645,8 +701,11 @@ export default function Home() {
         `/api/packing-lists?id=${encodeURIComponent(id)}`,
         { cache: 'no-store' },
       );
-      const data = await readResponseJson<PackingList & { error?: string }>(response);
-      if (!response.ok) throw new Error(data.error || 'No se pudo abrir el PackingList.');
+      const data = await readResponseJson<PackingList & { error?: string }>(
+        response,
+      );
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudo abrir el PackingList.');
       setSelected(data);
       setDraft(structuredClone(data));
       setEditing(editAfter);
@@ -671,8 +730,11 @@ export default function Home() {
         `/api/packing-lists?id=${encodeURIComponent(id)}`,
         { cache: 'no-store' },
       );
-      const data = await readResponseJson<PackingList & { error?: string }>(response);
-      if (!response.ok) throw new Error(data.error || 'No se pudieron preparar los mensajes.');
+      const data = await readResponseJson<PackingList & { error?: string }>(
+        response,
+      );
+      if (!response.ok)
+        throw new Error(data.error || 'No se pudieron preparar los mensajes.');
       // Los pedidos online PA no necesitan aviso desde esta pantalla. Se
       // conservan en el Packing List, pero se excluyen de la generación de
       // mensajes. IPA, R, RPA y el resto de referencias sí continúan.
@@ -793,8 +855,14 @@ export default function Home() {
       setMessage('Añade al menos un pedido antes de guardar.');
       return;
     }
-    if (draft.orders.some((order) => !order.orderNumber.trim() || !order.customerName.trim())) {
-      setMessage('Completa el número y el nombre de todos los pedidos añadidos.');
+    if (
+      draft.orders.some(
+        (order) => !order.orderNumber.trim() || !order.customerName.trim(),
+      )
+    ) {
+      setMessage(
+        'Completa el número y el nombre de todos los pedidos añadidos.',
+      );
       return;
     }
     setLoading(true);
@@ -808,7 +876,9 @@ export default function Home() {
           body: JSON.stringify(draft),
         },
       );
-      const data = await readResponseJson<{ id?: string; error?: string }>(response);
+      const data = await readResponseJson<{ id?: string; error?: string }>(
+        response,
+      );
       if (!response.ok) throw new Error(data.error || 'No se pudo guardar.');
       await openPackingList(draft.id);
       setMessage('Cambios guardados correctamente.');
@@ -854,6 +924,151 @@ export default function Home() {
     }
   }
 
+  // Consulta una referencia en su origen y devuelve los datos normalizados que
+  // utiliza cualquier PackingList, tanto al crearlo como al editarlo.
+  async function lookupPackingOrder(
+    orderNumber: string,
+    box: string,
+    packingSchool: string,
+  ): Promise<Order> {
+    const reference = orderNumber.trim().toUpperCase();
+    if (!reference) throw new Error('Introduce un número de pedido.');
+
+    if (/^PA/i.test(reference)) {
+      const response = await fetch(
+        `/api/search?number=${encodeURIComponent(reference)}&summary=1`,
+        { cache: 'no-store' },
+      );
+      const data = await readResponseJson<{
+        number?: string;
+        dateCreated?: string;
+        customer?: { name?: string; phone?: string; address?: string };
+        schoolCandidates?: string[];
+        error?: string;
+      }>(response);
+      if (!response.ok)
+        throw new Error(`${reference}: ${data.error || 'no encontrado'}`);
+      return {
+        orderNumber: data.number ?? reference,
+        customerName: data.customer?.name ?? '',
+        orderDate: (data.dateCreated ?? '').slice(0, 10),
+        phone: data.customer?.phone ?? '',
+        box,
+        schoolMismatch: !matchesSchoolCandidates(
+          packingSchool,
+          data.schoolCandidates || [],
+          schoolOptions,
+        ),
+      };
+    }
+
+    if (/^I/i.test(reference)) {
+      const response = await fetch(
+        `/api/incidents?number=${encodeURIComponent(reference)}`,
+        { cache: 'no-store' },
+      );
+      const data = await readResponseJson<{
+        found?: boolean;
+        incident?: {
+          customerName?: string;
+          customerPhone?: string;
+          incidentDate?: string;
+          school?: string;
+          pickupSchoolName?: string;
+        };
+        error?: string;
+      }>(response);
+      if (!response.ok || !data.found || !data.incident)
+        throw new Error(
+          `${reference}: ${data.error || 'incidencia no encontrada'}`,
+        );
+      const incidentSchool =
+        data.incident.school || data.incident.pickupSchoolName || '';
+      return {
+        orderNumber: reference,
+        customerName: data.incident.customerName ?? '',
+        orderDate: (data.incident.incidentDate ?? '').slice(0, 10),
+        phone: data.incident.customerPhone ?? '',
+        box,
+        schoolMismatch: !sameSchool(packingSchool, incidentSchool),
+      };
+    }
+
+    const response = await fetch(
+      `/api/monday?number=${encodeURIComponent(reference)}`,
+      { cache: 'no-store' },
+    );
+    const data = await readResponseJson<{
+      found?: boolean;
+      records?: Array<{
+        customer?: string;
+        phone?: string;
+        date?: string;
+        school?: string;
+      }>;
+      error?: string;
+    }>(response);
+    const reservation = data.records?.[0];
+    if (!response.ok || !data.found || !reservation)
+      throw new Error(`${reference}: ${data.error || 'reserva no encontrada'}`);
+    return {
+      orderNumber: reference,
+      customerName: reservation.customer ?? '',
+      orderDate: (reservation.date ?? '').slice(0, 10),
+      phone: reservation.phone ?? '',
+      box,
+      schoolMismatch: !sameSchool(packingSchool, reservation.school ?? ''),
+    };
+  }
+
+  // Al escribir una referencia nueva durante la edición, completa nombre,
+  // fecha, teléfono y comprobación de colegio desde el origen correspondiente.
+  async function completeManualOrder(rowId: string) {
+    const currentDraft = draft;
+    const currentOrder = currentDraft?.orders.find(
+      (order) => order.id === rowId,
+    );
+    if (!currentDraft || !currentOrder?.orderNumber.trim()) return;
+    const storedOrder = selected?.orders.find((order) => order.id === rowId);
+    const referenceChanged =
+      currentOrder.orderNumber.trim().toUpperCase() !==
+      storedOrder?.orderNumber.trim().toUpperCase();
+    if (storedOrder && !referenceChanged) return;
+    setManualLookupIds((current) => new Set(current).add(rowId));
+    setMessage('');
+    try {
+      const found = await lookupPackingOrder(
+        currentOrder.orderNumber,
+        currentOrder.box,
+        currentDraft.school,
+      );
+      setDraft((latest) => {
+        if (!latest) return latest;
+        return {
+          ...latest,
+          orders: latest.orders.map((order) =>
+            order.id === rowId
+              ? { ...order, ...found, id: order.id, box: order.box }
+              : order,
+          ),
+        };
+      });
+      setMessage(`${found.orderNumber}: datos cargados automáticamente.`);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron cargar los datos del pedido.',
+      );
+    } finally {
+      setManualLookupIds((current) => {
+        const next = new Set(current);
+        next.delete(rowId);
+        return next;
+      });
+    }
+  }
+
   // Flujo principal: analiza cajas, consulta cada origen, valida el colegio y
   // archiva el PackingList generado.
   async function generate(event: FormEvent) {
@@ -880,95 +1095,9 @@ export default function Home() {
     }
     setLoading(true);
     try {
-      const found = await mapWithConcurrency(requested, 6, async (item) => {
-        if (/^PA/i.test(item.orderNumber)) {
-          const response = await fetch(
-            `/api/search?number=${encodeURIComponent(item.orderNumber)}&summary=1`,
-            { cache: 'no-store' },
-          );
-          const data = await readResponseJson<{
-            number?: string;
-            dateCreated?: string;
-            customer?: { name?: string; phone?: string; address?: string };
-            schoolCandidates?: string[];
-            error?: string;
-          }>(response);
-          if (!response.ok)
-            throw new Error(
-              `${item.orderNumber}: ${data.error || 'no encontrado'}`,
-            );
-          return {
-            orderNumber: data.number ?? item.orderNumber,
-            customerName: data.customer?.name ?? '',
-            orderDate: (data.dateCreated ?? '').slice(0, 10),
-            phone: data.customer?.phone ?? '',
-            box: item.box,
-            schoolMismatch: !matchesSchoolCandidates(
-              school,
-              data.schoolCandidates || [],
-              schoolOptions,
-            ),
-          };
-        }
-        if (/^I/i.test(item.orderNumber)) {
-          const response = await fetch(
-            `/api/incidents?number=${encodeURIComponent(item.orderNumber)}`,
-            { cache: 'no-store' },
-          );
-          const data = await readResponseJson<{
-            found?: boolean;
-            incident?: {
-              customerName?: string;
-              customerPhone?: string;
-              incidentDate?: string;
-              school?: string;
-              pickupSchoolName?: string;
-            };
-            error?: string;
-          }>(response);
-          if (!response.ok || !data.found || !data.incident)
-            throw new Error(
-              `${item.orderNumber}: ${data.error || 'incidencia no encontrada'}`,
-            );
-          const incidentSchool =
-            data.incident.school || data.incident.pickupSchoolName || '';
-          return {
-            orderNumber: item.orderNumber,
-            customerName: data.incident.customerName ?? '',
-            orderDate: (data.incident.incidentDate ?? '').slice(0, 10),
-            phone: data.incident.customerPhone ?? '',
-            box: item.box,
-            schoolMismatch: !sameSchool(school, incidentSchool),
-          };
-        }
-        const response = await fetch(
-          `/api/monday?number=${encodeURIComponent(item.orderNumber)}`,
-          { cache: 'no-store' },
-        );
-        const data = await readResponseJson<{
-          found?: boolean;
-          records?: Array<{
-            customer?: string;
-            phone?: string;
-            date?: string;
-            school?: string;
-          }>;
-          error?: string;
-        }>(response);
-        const reservation = data.records?.[0];
-        if (!response.ok || !data.found || !reservation)
-          throw new Error(
-            `${item.orderNumber}: ${data.error || 'reserva no encontrada'}`,
-          );
-        return {
-          orderNumber: item.orderNumber,
-          customerName: reservation.customer ?? '',
-          orderDate: (reservation.date ?? '').slice(0, 10),
-          phone: reservation.phone ?? '',
-          box: item.box,
-          schoolMismatch: !sameSchool(school, reservation.school ?? ''),
-        };
-      }) as Array<{
+      const found = (await mapWithConcurrency(requested, 6, (item) =>
+        lookupPackingOrder(item.orderNumber, item.box, school),
+      )) as Array<{
         orderNumber: string;
         customerName: string;
         orderDate: string;
@@ -987,7 +1116,9 @@ export default function Home() {
           orders: found,
         }),
       });
-      const saved = await readResponseJson<{ id?: string; error?: string }>(response);
+      const saved = await readResponseJson<{ id?: string; error?: string }>(
+        response,
+      );
       if (!response.ok || !saved.id)
         throw new Error(saved.error || 'No se pudo guardar.');
       await openPackingList(saved.id);
@@ -999,7 +1130,9 @@ export default function Home() {
           draftWarning = ' El borrador no pudo eliminarse automáticamente.';
         }
       }
-      setMessage(`PackingList generado y archivado automáticamente.${draftWarning}`);
+      setMessage(
+        `PackingList generado y archivado automáticamente.${draftWarning}`,
+      );
       try {
         await completeAutomaticWork('packing-list-create', {
           orders: found.length,
@@ -1099,7 +1232,10 @@ export default function Home() {
           <Button variant="outline" onClick={() => window.location.assign('/')}>
             <ArrowLeft /> PADDYTOOLS
           </Button>
-          <Button className="activity-button" onClick={() => void openActivity()}>
+          <Button
+            className="activity-button"
+            onClick={() => void openActivity()}
+          >
             <Clock3 /> ACTIVIDAD
           </Button>
           <Button
@@ -1135,8 +1271,8 @@ export default function Home() {
               <p>NUEVO ENVÍO</p>
               <h1>Generar packing list</h1>
               <span>
-                Pedidos PA, reservas R e incidencias I se consultan en su
-                origen y el resultado se archiva automáticamente.
+                Pedidos PA, reservas R e incidencias I se consultan en su origen
+                y el resultado se archiva automáticamente.
               </span>
             </div>
           </div>
@@ -1176,7 +1312,8 @@ export default function Home() {
                 onClick={() => void saveDraft()}
                 disabled={loading}
               >
-                <Save /> {activeDraftId ? 'Actualizar borrador' : 'Guardar borrador'}
+                <Save />{' '}
+                {activeDraftId ? 'Actualizar borrador' : 'Guardar borrador'}
               </Button>
               {activeDraftId && (
                 <Button
@@ -1184,7 +1321,9 @@ export default function Home() {
                   variant="outline"
                   className="discard-draft"
                   onClick={() => {
-                    if (window.confirm('¿Descartar este borrador de PackingList?'))
+                    if (
+                      window.confirm('¿Descartar este borrador de PackingList?')
+                    )
                       void deleteDraft(activeDraftId);
                   }}
                   disabled={loading}
@@ -1261,7 +1400,9 @@ export default function Home() {
                 <Button
                   type="button"
                   variant={listening ? 'default' : 'outline'}
-                  className={listening ? 'voice-button listening' : 'voice-button'}
+                  className={
+                    listening ? 'voice-button listening' : 'voice-button'
+                  }
                   onClick={toggleDictation}
                   aria-pressed={listening}
                 >
@@ -1317,17 +1458,47 @@ export default function Home() {
       {view === 'activity' && (
         <section className="page records-page">
           <div className="records-heading">
-            <div><p>HISTORIAL COMPARTIDO</p><h1>Actividad</h1><span>Registro común de altas, modificaciones y eliminaciones.</span></div>
+            <div>
+              <p>HISTORIAL COMPARTIDO</p>
+              <h1>Actividad</h1>
+              <span>
+                Registro común de altas, modificaciones y eliminaciones.
+              </span>
+            </div>
           </div>
           {message && <p className="message error">{message}</p>}
-          {loading ? <div className="loading"><LoaderCircle className="spin" /> Cargando actividad…</div> :
-            <div className="activity-list">{activity.map((item) => (
-              <article className={`activity-row activity-${item.action}`} key={item.id}>
-                <span className="activity-icon"><Clock3 /></span>
-                <span><b>{item.action.toUpperCase()}</b><p>{item.description}</p><small>{new Date(item.createdAt).toLocaleString('es-ES')}</small></span>
-              </article>
-            ))}</div>}
-          {!loading && activity.length === 0 && <div className="empty"><Clock3 /><h2>Todavía no hay actividad</h2><p>Los próximos cambios quedarán registrados aquí.</p></div>}
+          {loading ? (
+            <div className="loading">
+              <LoaderCircle className="spin" /> Cargando actividad…
+            </div>
+          ) : (
+            <div className="activity-list">
+              {activity.map((item) => (
+                <article
+                  className={`activity-row activity-${item.action}`}
+                  key={item.id}
+                >
+                  <span className="activity-icon">
+                    <Clock3 />
+                  </span>
+                  <span>
+                    <b>{item.action.toUpperCase()}</b>
+                    <p>{item.description}</p>
+                    <small>
+                      {new Date(item.createdAt).toLocaleString('es-ES')}
+                    </small>
+                  </span>
+                </article>
+              ))}
+            </div>
+          )}
+          {!loading && activity.length === 0 && (
+            <div className="empty">
+              <Clock3 />
+              <h2>Todavía no hay actividad</h2>
+              <p>Los próximos cambios quedarán registrados aquí.</p>
+            </div>
+          )}
         </section>
       )}
       {/* Archivo de registros agrupado en carpetas por colegio. */}
@@ -1346,16 +1517,29 @@ export default function Home() {
               <div className="record-date-filter">
                 <label>
                   <span>Desde</span>
-                  <Input type="date" value={archiveFrom} onChange={(e) => setArchiveFrom(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={archiveFrom}
+                    onChange={(e) => setArchiveFrom(e.target.value)}
+                  />
                 </label>
                 <label>
                   <span>Hasta</span>
-                  <Input type="date" value={archiveTo} onChange={(e) => setArchiveTo(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={archiveTo}
+                    onChange={(e) => setArchiveTo(e.target.value)}
+                  />
                 </label>
                 <Button
                   type="button"
                   onClick={() => void loadRecords()}
-                  disabled={loading || !archiveFrom || !archiveTo || archiveFrom > archiveTo}
+                  disabled={
+                    loading ||
+                    !archiveFrom ||
+                    !archiveTo ||
+                    archiveFrom > archiveTo
+                  }
                 >
                   <CalendarDays /> Aplicar fechas
                 </Button>
@@ -1432,19 +1616,29 @@ export default function Home() {
           {message && <p className="message success">{message}</p>}
           <div className="weekly-records">
             {recordsByWeek(
-              records.filter((item) => sameSchoolFolder(item.school, selectedSchool)),
+              records.filter((item) =>
+                sameSchoolFolder(item.school, selectedSchool),
+              ),
             ).map((week) => (
               <section className="week-group" key={week.start}>
                 <div className="week-heading">
                   <CalendarDays />
                   <b>{week.label}</b>
-                  <span>{week.rows.length} {week.rows.length === 1 ? 'PackingList' : 'PackingLists'}</span>
+                  <span>
+                    {week.rows.length}{' '}
+                    {week.rows.length === 1 ? 'PackingList' : 'PackingLists'}
+                  </span>
                 </div>
                 <div className="record-list">
                   {week.rows.map((item) => (
                     <div key={item.id} className="record-row-wrap">
-                      <button className="record-row" onClick={() => void openPackingList(item.id)}>
-                        <span className="date-badge"><CalendarDays /></span>
+                      <button
+                        className="record-row"
+                        onClick={() => void openPackingList(item.id)}
+                      >
+                        <span className="date-badge">
+                          <CalendarDays />
+                        </span>
                         <span>
                           <b>
                             PACKINGLIST_{item.school.replace(/\s+/g, '_')}_
@@ -1458,10 +1652,15 @@ export default function Home() {
                         <ChevronRight />
                       </button>
                       <div className="record-actions">
-                        <Button variant="outline" onClick={() => void openPackingList(item.id, true)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => void openPackingList(item.id, true)}
+                        >
                           <Pencil /> Editar
                         </Button>
-                        <DeleteButton onDelete={() => void deletePackingList(item.id)} />
+                        <DeleteButton
+                          onDelete={() => void deletePackingList(item.id)}
+                        />
                       </div>
                     </div>
                   ))}
@@ -1504,7 +1703,12 @@ export default function Home() {
                 <Button
                   type="button"
                   onClick={() => void loadRecords()}
-                  disabled={loading || !archiveFrom || !archiveTo || archiveFrom > archiveTo}
+                  disabled={
+                    loading ||
+                    !archiveFrom ||
+                    !archiveTo ||
+                    archiveFrom > archiveTo
+                  }
                 >
                   <CalendarDays /> Aplicar fechas
                 </Button>
@@ -1554,13 +1758,18 @@ export default function Home() {
                 <div className="school-safety-alert" role="alert">
                   <AlertTriangle />
                   <div>
-                    <b>ATENCIÓN: hay pedidos que no coinciden con {selected.school}</b>
+                    <b>
+                      ATENCIÓN: hay pedidos que no coinciden con{' '}
+                      {selected.school}
+                    </b>
                     <p>
-                      No envíes sus mensajes hasta corregir el PackingList. Revisa:{' '}
+                      No envíes sus mensajes hasta corregir el PackingList.
+                      Revisa:{' '}
                       {selected.orders
                         .filter((order) => order.schoolMismatch)
                         .map((order) => order.orderNumber)
-                        .join(', ')}.
+                        .join(', ')}
+                      .
                     </p>
                   </div>
                 </div>
@@ -1590,29 +1799,31 @@ export default function Home() {
                           <p>{text}</p>
                         )}
                       </div>
-                      {!order.schoolMismatch && <div className="message-actions">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(text);
-                            setMessage(
-                              `Mensaje de ${order.customerName} copiado.`,
-                            );
-                          }}
-                        >
-                          <Copy /> Copiar
-                        </Button>
-                        {phone && (
-                          <a
-                            className="whatsapp-button"
-                            href={`https://wa.me/${phone}?text=${encodeURIComponent(text)}`}
-                            target="_blank"
-                            rel="noreferrer"
+                      {!order.schoolMismatch && (
+                        <div className="message-actions">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(text);
+                              setMessage(
+                                `Mensaje de ${order.customerName} copiado.`,
+                              );
+                            }}
                           >
-                            <Send /> WhatsApp
-                          </a>
-                        )}
-                      </div>}
+                            <Copy /> Copiar
+                          </Button>
+                          {phone && (
+                            <a
+                              className="whatsapp-button"
+                              href={`https://wa.me/${phone}?text=${encodeURIComponent(text)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Send /> WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </article>
                   );
                 })}
@@ -1636,8 +1847,8 @@ export default function Home() {
                 <ArrowLeft /> Volver al PackingList
               </Button>
               <small>
-                Pulsa “Abrir impresión del iPhone” y elige tu impresora
-                AirPrint o guarda el documento como PDF.
+                Pulsa “Abrir impresión del iPhone” y elige tu impresora AirPrint
+                o guarda el documento como PDF.
               </small>
             </div>
           )}
@@ -1686,7 +1897,10 @@ export default function Home() {
                   <DeleteButton
                     onDelete={() => void deletePackingList(selected.id)}
                   />
-                  <Button variant="outline" onClick={() => downloadExcel(selected)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => downloadExcel(selected)}
+                  >
                     <FileSpreadsheet /> Descargar Excel
                   </Button>
                   <Button onClick={printSelectedPackingList}>
@@ -1808,6 +2022,12 @@ export default function Home() {
                         <td>
                           <Input
                             value={order.orderNumber}
+                            aria-busy={manualLookupIds.has(order.id)}
+                            placeholder={
+                              manualLookupIds.has(order.id)
+                                ? 'Buscando…'
+                                : 'PA, R o I'
+                            }
                             onChange={(e) => {
                               const orders = [...draft.orders];
                               orders[index] = {
@@ -1815,6 +2035,12 @@ export default function Home() {
                                 orderNumber: e.target.value.toUpperCase(),
                               };
                               setDraft({ ...draft, orders });
+                            }}
+                            onBlur={() => void completeManualOrder(order.id)}
+                            onKeyDown={(event) => {
+                              if (event.key !== 'Enter') return;
+                              event.preventDefault();
+                              event.currentTarget.blur();
                             }}
                           />
                         </td>
@@ -1880,7 +2106,9 @@ export default function Home() {
                             onClick={() =>
                               setDraft({
                                 ...draft,
-                                orders: draft.orders.filter((_, orderIndex) => orderIndex !== index),
+                                orders: draft.orders.filter(
+                                  (_, orderIndex) => orderIndex !== index,
+                                ),
                               })
                             }
                           >
@@ -1978,18 +2206,37 @@ export default function Home() {
         </section>
       )}
       {scannerOpen && (
-        <div className="qr-scanner-overlay no-print" role="dialog" aria-modal="true" aria-label="Escanear etiqueta">
+        <div
+          className="qr-scanner-overlay no-print"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Escanear etiqueta"
+        >
           <section className="qr-scanner-dialog">
             <header>
-              <div><QrCode /><span><b>Escanear etiqueta</b><small>La referencia se añadirá a la caja activa.</small></span></div>
-              <button type="button" onClick={closeQrScanner} aria-label="Cerrar lector"><X /></button>
+              <div>
+                <QrCode />
+                <span>
+                  <b>Escanear etiqueta</b>
+                  <small>La referencia se añadirá a la caja activa.</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={closeQrScanner}
+                aria-label="Cerrar lector"
+              >
+                <X />
+              </button>
             </header>
             <div className="qr-camera">
               <video ref={scannerVideoRef} muted playsInline />
               <span aria-hidden="true" />
             </div>
             <p>{scannerMessage}</p>
-            <Button type="button" variant="outline" onClick={closeQrScanner}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={closeQrScanner}>
+              Cancelar
+            </Button>
           </section>
         </div>
       )}
