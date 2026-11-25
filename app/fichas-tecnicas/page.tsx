@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import './technical-sheets.css';
 
+async function printTechnicalSheet() {
+  const photos = document.querySelectorAll<HTMLImageElement>('.technical-files img');
+  await Promise.allSettled(Array.from(photos, (photo) => photo.decode()));
+  window.print();
+}
+
 type SheetSummary = {
   id: string;
   season: string;
@@ -149,7 +155,11 @@ export default function TechnicalSheetsPage() {
   useEffect(() => { void search(''); }, []);
   const images = useMemo(() => {
     if (!sheet) return [];
-    try { return JSON.parse(sheet.imagesJson) as string[]; } catch { return []; }
+    const registered = sheet.sections
+      .filter((row) => row.section === 'imagenes')
+      .map((row) => String(parseObject(row.dataJson).IMAGEN ?? '').trim());
+    const original = JSON.parse(sheet.imagesJson) as string[];
+    return [...new Set([...registered, ...original].filter(Boolean))];
   }, [sheet]);
   const extraFields = useMemo(() => {
     if (!sheet) return [];
@@ -198,7 +208,7 @@ export default function TechnicalSheetsPage() {
       <form className="technical-search" onSubmit={submit}><Search /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej. 1009 o vestido invierno" autoFocus /><Button disabled={loading}>Buscar</Button></form>
       {notice && <p className="technical-notice">{notice}</p>}
       {sheet ? <section className="technical-detail print-sheet">
-        <div className="technical-detail-heading"><div><p>FICHA STM · TEMPORADA {sheet.season || '—'}</p><h2>{sheet.code} · {sheet.description}</h2></div><div className="technical-detail-actions"><Button variant="outline" onClick={() => window.print()}><Printer /> Imprimir completa</Button><Button onClick={downloadCompleteSheet}><Download /> Descargar todos los datos</Button><button onClick={() => setSheet(null)} aria-label="Cerrar ficha"><X /></button></div></div>
+        <div className="technical-detail-heading"><div><p>FICHA STM · TEMPORADA {sheet.season || '—'}</p><h2>{sheet.code} · {sheet.description}</h2></div><div className="technical-detail-actions"><Button variant="outline" onClick={printTechnicalSheet}><Printer /> Imprimir completa</Button><Button onClick={downloadCompleteSheet}><Download /> Descargar todos los datos</Button><button onClick={() => setSheet(null)} aria-label="Cerrar ficha"><X /></button></div></div>
         <div className="technical-grid">
           <article><h3>Artículo</h3><dl><div><dt>Descripción interna</dt><dd>{sheet.internalDescription || '—'}</dd></div><div><dt>Tipo</dt><dd>{sheet.articleType || '—'}</dd></div><div><dt>Tallas</dt><dd>{sheet.sizes || '—'}</dd></div><div><dt>Tipo de prenda</dt><dd>{sheet.garmentType || '—'}</dd></div><div><dt>Base código de barras</dt><dd>{sheet.barcodeBase || '—'}</dd></div></dl></article>
           <article><h3>Clasificación</h3><dl><div><dt>Familia</dt><dd>{[sheet.familyCode, sheet.familyDescription].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Colección</dt><dd>{[sheet.collectionCode, sheet.collectionDescription].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Composición</dt><dd>{[sheet.compositionCode, sheet.compositionDescription].filter(Boolean).join(' · ') || '—'}</dd></div><div><dt>Símbolos de lavado</dt><dd>{sheet.washSymbols || '—'}</dd></div></dl></article>
@@ -206,7 +216,14 @@ export default function TechnicalSheetsPage() {
           <article><h3>Notas</h3><p className="technical-notes">{sheet.notes || 'Sin observaciones.'}</p></article>
         </div>
         {!!sheet.colors.length && <article className="technical-table-card"><h3>Colores y tarifas</h3><div className="technical-table-wrap"><table><thead><tr><th>Código</th><th>Color</th><th>Impacto</th><th>Aplicación</th><th>Tarifa</th></tr></thead><tbody>{sheet.colors.map((color) => <tr key={color.id}><td>{color.colorCode || '—'}</td><td>{color.colorDescription || '—'}</td><td>{color.impactType || '—'}</td><td>{color.applicationType || '—'}</td><td>{color.rate || '—'}</td></tr>)}</tbody></table></div></article>}
-        {!!images.length && <article className="technical-files"><h3>Imágenes registradas en STM</h3>{images.map((name) => <span key={name}><FileImage /> {name}</span>)}</article>}
+        {!!images.length && <article className="technical-files">
+          <h3>Fotos del artículo</h3>
+          {images.map((name) => <figure key={name}>
+            <img src={`/api/technical-sheets?photo=${encodeURIComponent(name)}&season=${encodeURIComponent(sheet.season)}`}
+              alt={`${sheet.description} · ${name}`} onError={(event) => { event.currentTarget.hidden = true; }} />
+            <figcaption><span><FileImage /> {name}</span></figcaption>
+          </figure>)}
+        </article>}
         {!!extraFields.length && <article className="technical-extra"><h3>Resto de la información STM</h3><dl>{extraFields.map(([key, value]) => <div key={key}><dt>{fieldLabels[key] || key.replaceAll('_', ' ')}</dt><dd>{String(value)}</dd></div>)}</dl></article>}
         <nav className="technical-detail-actions" aria-label="Pestañas de STM">
           {sectionGroups.map(([section]) => <a key={section} href={`#stm-${section}`}>{sectionLabels[section]}</a>)}

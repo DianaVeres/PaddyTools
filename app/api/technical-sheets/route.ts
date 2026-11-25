@@ -7,11 +7,29 @@ import {
   stmTechnicalSheets,
 } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
+import { env } from 'cloudflare:workers';
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser(request);
   if (!user)
     return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
+
+  const photo = request.nextUrl.searchParams.get('photo');
+  if (photo !== null) {
+    const season = request.nextUrl.searchParams.get('season') ?? '';
+    const extension = photo.match(/^[^/\\]+\.(jpe?g|png|webp)$/i)?.[1].toLowerCase();
+    if (!extension || !/^\d+$/.test(season)) return new Response(null, { status: 404 });
+    const { results } = await env.DB.prepare(
+      'SELECT data FROM stm_photos WHERE photo_key = ? ORDER BY part',
+    ).bind(`${season}/${photo}`).all<{ data: string }>();
+    if (!results.length) return new Response(null, { status: 404 });
+    const bytes = Uint8Array.from(atob(results.map(({ data }) => data).join('')), (char) => char.charCodeAt(0));
+    return new Response(bytes, { headers: {
+      'Content-Type': `image/${extension.startsWith('jp') ? 'jpeg' : extension}`,
+      'Cache-Control': 'private, max-age=3600',
+      'X-Content-Type-Options': 'nosniff',
+    } });
+  }
 
   const db = getDb();
   const code = request.nextUrl.searchParams.get('code')?.trim();
