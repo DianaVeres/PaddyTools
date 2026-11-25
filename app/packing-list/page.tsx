@@ -43,6 +43,7 @@ import {
   appendScannedPackingReference,
   deduplicatePackingBoxText,
   mergePackingDictation,
+  normalizePackingScannerInput,
   packingListType,
   parsePackingBoxes,
 } from '@/lib/packing-references';
@@ -1423,7 +1424,10 @@ export default function Home() {
                 rows={9}
                 value={boxes}
                 onChange={(e) => {
-                  const result = deduplicatePackingBoxText(e.target.value);
+                  const scannerGrouped = normalizePackingScannerInput(
+                    e.target.value,
+                  );
+                  const result = deduplicatePackingBoxText(scannerGrouped);
                   boxesValueRef.current = result.text;
                   setBoxes(result.text);
                   if (result.duplicates.length) {

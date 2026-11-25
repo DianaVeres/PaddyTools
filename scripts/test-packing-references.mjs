@@ -4,6 +4,7 @@ import {
   deduplicatePackingBoxText,
   dictatedPackingReferences,
   mergePackingDictation,
+  normalizePackingScannerInput,
   normalizePackingReference,
   packingListType,
   parsePackingBoxes,
@@ -19,7 +20,26 @@ assert.equal(
 );
 assert.deepEqual(hardwareScan.duplicates, ['R12140', 'IPA51355']);
 
-const scanned = appendScannedPackingReference('CAJA 1: R1234', 'PADDY:IPA49547');
+assert.equal(
+  normalizePackingScannerInput(
+    'CAJA 1: PA50001\nPADDY:R12140\nIPA51355\nCAJA 2\nPADDY:PA50002\nR12141\n',
+  ),
+  'CAJA 1: PA50001, R12140, IPA51355\nCAJA 2: PA50002, R12141\n',
+  'el lector físico debe agrupar cada lectura en la caja activa',
+);
+assert.deepEqual(
+  parsePackingBoxes('CAJA 1: PA50001\nPADDY:R12140\nCAJA 2\nPADDY:PA50002'),
+  [
+    { box: 'CAJA 1', orderNumber: 'PA50001' },
+    { box: 'CAJA 1', orderNumber: 'R12140' },
+    { box: 'CAJA 2', orderNumber: 'PA50002' },
+  ],
+);
+
+const scanned = appendScannedPackingReference(
+  'CAJA 1: R1234',
+  'PADDY:IPA49547',
+);
 assert.equal(scanned.text, 'CAJA 1: R1234, IPA49547');
 assert.equal(scanned.error, '');
 assert.match(

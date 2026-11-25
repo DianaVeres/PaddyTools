@@ -23,20 +23,29 @@ export function packingReferenceFromQr(value: string) {
 
 export function parsePackingBoxes(text: string) {
   const parsed: ParsedPackingReference[] = [];
+  let activeBox = 'CAJA 1';
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
+    const scannedReference = packingReferenceFromQr(line);
+    if (scannedReference) {
+      parsed.push({ box: activeBox, orderNumber: scannedReference });
+      continue;
+    }
     const split = line.indexOf(':');
-    const box = (split >= 0 ? line.slice(0, split) : 'SIN CAJA')
-      .trim()
-      .toUpperCase();
+    if (split >= 0) {
+      activeBox = line.slice(0, split).trim().toUpperCase() || activeBox;
+    } else if (/^CAJA\s+\d+(?:\s+RESERVAS?)?$/i.test(line)) {
+      activeBox = line.toUpperCase();
+      continue;
+    }
     const numbers =
       (split >= 0 ? line.slice(split + 1) : line).match(
         /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z-]*\s*\d[A-Z0-9-]*)\b/gi,
       ) ?? [];
     for (const number of numbers)
       parsed.push({
-        box,
+        box: activeBox,
         orderNumber: normalizePackingReference(number),
       });
   }
@@ -45,6 +54,74 @@ export function parsePackingBoxes(text: string) {
 
 const packingReferencePattern =
   /\b(?:RPA\s*\d+|PA\s*\d+|R\s*\d+|I[A-Z-]*\s*\d[A-Z0-9-]*)\b/gi;
+
+/**
+ * Datalogic readers act like a keyboard and normally press Enter after every
+ * scan. Once a line is finished, this groups a reference-only line into the
+ * latest box instead of leaving it as a new unboxed row. Writing "CAJA 2" and
+ * pressing Enter starts the next active box.
+ */
+export function normalizePackingScannerInput(text: string) {
+  const rawLines = text.split(/\r?\n/);
+  const endsWithNewline = /\r?\n$/.test(text);
+  const pendingLine = endsWithNewline ? '' : (rawLines.pop() ?? '');
+  if (endsWithNewline) rawLines.pop();
+
+  const lines: string[] = [];
+  let activeIndex = -1;
+  for (const rawLine of rawLines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const boxWithColon = line.match(
+      /^(CAJA\s+\d+(?:\s+RESERVAS?)?)\s*:\s*(.*)$/i,
+    );
+    if (boxWithColon) {
+      const label = boxWithColon[1].toUpperCase();
+      const content = boxWithColon[2].trim();
+      lines.push(`${label}:${content ? ` ${content}` : ''}`);
+      activeIndex = lines.length - 1;
+      continue;
+    }
+
+    if (/^CAJA\s+\d+(?:\s+RESERVAS?)?$/i.test(line)) {
+      lines.push(`${line.toUpperCase()}:`);
+      activeIndex = lines.length - 1;
+      continue;
+    }
+
+    const scannedReference = packingReferenceFromQr(line);
+    if (scannedReference) {
+      if (activeIndex < 0) {
+        lines.push('CAJA 1:');
+        activeIndex = 0;
+      }
+      const separator = lines[activeIndex].endsWith(':') ? ' ' : ', ';
+      lines[activeIndex] += `${separator}${scannedReference}`;
+      continue;
+    }
+
+    const references = line.match(packingReferencePattern) ?? [];
+    const remaining = line
+      .replace(packingReferencePattern, '')
+      .replace(/[\s,;.-]/g, '');
+    if (references.length && !remaining) {
+      if (activeIndex < 0) {
+        lines.push('CAJA 1:');
+        activeIndex = 0;
+      }
+      const normalized = references.map(normalizePackingReference).join(', ');
+      const separator = lines[activeIndex].endsWith(':') ? ' ' : ', ';
+      lines[activeIndex] += `${separator}${normalized}`;
+      continue;
+    }
+
+    lines.push(rawLine);
+  }
+
+  if (!endsWithNewline) lines.push(pendingLine);
+  return `${lines.join('\n')}${endsWithNewline ? '\n' : ''}`;
+}
 
 /**
  * Removes repeated references while preserving the boxes and their order.
@@ -81,16 +158,25 @@ export function deduplicatePackingBoxText(text: string) {
 export function appendScannedPackingReference(current: string, raw: string) {
   const reference = packingReferenceFromQr(raw);
   if (!reference)
-    return { text: current, reference: '', error: 'El QR no contiene una referencia válida.' };
+    return {
+      text: current,
+      reference: '',
+      error: 'El QR no contiene una referencia válida.',
+    };
   if (parsePackingBoxes(current).some((item) => item.orderNumber === reference))
-    return { text: current, reference, error: `${reference} ya está incluido en el PackingList.` };
+    return {
+      text: current,
+      reference,
+      error: `${reference} ya está incluido en el PackingList.`,
+    };
   const lines = current.split(/\r?\n/);
   let index = lines.findLastIndex((line) => line.trim());
   if (index < 0) {
     lines.push('CAJA 1:');
     index = lines.length - 1;
   }
-  if (!lines[index].includes(':')) lines[index] = `CAJA 1: ${lines[index].trim()}`;
+  if (!lines[index].includes(':'))
+    lines[index] = `CAJA 1: ${lines[index].trim()}`;
   const separator = lines[index].trimEnd().endsWith(':') ? ' ' : ', ';
   lines[index] = `${lines[index].trimEnd()}${separator}${reference}`;
   return { text: lines.join('\n'), reference, error: '' };
@@ -132,9 +218,7 @@ export function dictatedPackingReferences(value: string) {
   const references = (segment: string) =>
     [...segment.matchAll(/\b(RPA|IPA|IN|PA|R|I)\s*((?:\d[\s-]*)+)/g)].map(
       (match) =>
-        normalizePackingReference(
-          `${match[1]}${match[2].replace(/\D/g, '')}`,
-        ),
+        normalizePackingReference(`${match[1]}${match[2].replace(/\D/g, '')}`),
     );
   const lines: string[] = [];
   for (const match of normalized.matchAll(
@@ -155,9 +239,7 @@ export function mergePackingDictation(current: string, transcript: string) {
   if (dictated.lines.length) {
     for (const dictatedLine of dictated.lines) {
       const label = dictatedLine.slice(0, dictatedLine.indexOf(':')).trim();
-      const newCodes = dictatedLine
-        .slice(dictatedLine.indexOf(':') + 1)
-        .trim();
+      const newCodes = dictatedLine.slice(dictatedLine.indexOf(':') + 1).trim();
       const existingIndex = lines.findIndex(
         (line) =>
           line.slice(0, line.indexOf(':')).trim().toUpperCase() === label,
