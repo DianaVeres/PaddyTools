@@ -78,6 +78,7 @@
     "test:hotline-module": "node scripts/test-hotline-module.mjs",
     "test:inventory-module": "node scripts/test-inventory-module.mjs",
     "test:stm-technical-sheets": "node scripts/test-stm-technical-sheets.mjs",
+    "test:technical-sheets-page": "node scripts/test-technical-sheets-page.mjs",
     "test:order-preparation-module": "node scripts/test-order-preparation-module.mjs",
     "test:order-preparation-routing": "node scripts/test-order-preparation-routing.mjs",
     "test:reservation-prefill": "node scripts/test-reservation-prefill.mjs",

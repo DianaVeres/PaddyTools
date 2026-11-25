@@ -89,6 +89,7 @@ $kpiAutoTimerCheck = Join-Path $officialRoot 'scripts\test-kpi-auto-timer.mjs'
 $hotlineModuleCheck = Join-Path $officialRoot 'scripts\test-hotline-module.mjs'
 $inventoryModuleCheck = Join-Path $officialRoot 'scripts\test-inventory-module.mjs'
 $stmTechnicalSheetsCheck = Join-Path $officialRoot 'scripts\test-stm-technical-sheets.mjs'
+$technicalSheetsPageCheck = Join-Path $officialRoot 'scripts\test-technical-sheets-page.mjs'
 $orderPreparationModuleCheck = Join-Path $officialRoot 'scripts\test-order-preparation-module.mjs'
 $orderPreparationRoutingCheck = Join-Path $officialRoot 'scripts\test-order-preparation-routing.mjs'
 $reservationPrefillCheck = Join-Path $officialRoot 'scripts\test-reservation-prefill.mjs'
@@ -120,7 +121,7 @@ if (-not (Test-Path -LiteralPath $inventoryModuleCheck -PathType Leaf)) {
   throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $inventoryModuleCheck"
 }
 
-foreach ($required in @($stmTechnicalSheetsCheck, $orderPreparationModuleCheck, $orderPreparationRoutingCheck, $reservationPrefillCheck)) {
+foreach ($required in @($stmTechnicalSheetsCheck, $technicalSheetsPageCheck, $orderPreparationModuleCheck, $orderPreparationRoutingCheck, $reservationPrefillCheck)) {
   if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
     throw "DESPLIEGUE BLOQUEADO: falta el archivo requerido $required"
   }
@@ -405,6 +406,10 @@ try {
   & $node $stmTechnicalSheetsCheck
   if ($LASTEXITCODE -ne 0) {
     throw "La base de fichas técnicas STM ha fallado. No se desplegará nada."
+  }
+  & $node $technicalSheetsPageCheck
+  if ($LASTEXITCODE -ne 0) {
+    throw "La pantalla de fichas técnicas STM ha fallado. No se desplegará nada."
   }
   & $node $orderPreparationModuleCheck
   if ($LASTEXITCODE -ne 0) {

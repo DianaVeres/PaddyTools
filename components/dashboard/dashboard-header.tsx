@@ -2,6 +2,7 @@ import {
   BarChart3,
   CalendarDays,
   ChevronDown,
+  ClipboardList,
   LogOut,
   Mail,
   PackageCheck,
@@ -35,6 +36,7 @@ export function DashboardHeader({
   onOpenWooCommerce,
   onOpenHotline,
   onOpenInventories,
+  onOpenTechnicalSheets,
   onOpenReservations,
   onCreateReservation,
   onLogout,
@@ -45,6 +47,7 @@ export function DashboardHeader({
   onOpenWooCommerce: () => void;
   onOpenHotline: () => void;
   onOpenInventories: () => void;
+  onOpenTechnicalSheets: () => void;
   onOpenReservations: () => void;
   onCreateReservation: () => void;
   onLogout: () => void;
@@ -94,6 +97,13 @@ export function DashboardHeader({
           onClick={onOpenInventories}
         >
           <ScanBarcode /> Inventarios
+        </Button>
+        <Button
+          className="action-button technical-sheets"
+          variant="outline"
+          onClick={onOpenTechnicalSheets}
+        >
+          <ClipboardList /> Fichas técnicas
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger

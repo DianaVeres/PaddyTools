@@ -1245,6 +1245,7 @@ export default function Home() {
         }
         onOpenHotline={() => window.location.assign('/hotline')}
         onOpenInventories={() => window.location.assign('/inventarios')}
+        onOpenTechnicalSheets={() => window.location.assign('/fichas-tecnicas')}
         onOpenReservations={() => void openReservations()}
         onCreateReservation={() => void openReservation()}
         onLogout={() => void logout()}
