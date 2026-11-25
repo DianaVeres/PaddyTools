@@ -40,3 +40,6 @@
   .technical-files { display: block; }
   .technical-files figure { display: inline-block; vertical-align: top; }
 }
+.technical-page .technical-detail.print-sheet {
+  display: block;
+}
