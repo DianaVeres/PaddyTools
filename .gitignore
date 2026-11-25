@@ -46,4 +46,5 @@ next-env.d.ts
 /app/api/packing-lists/route (1).ts
 /data/stm-articulos.xlsx
 /data/stm-catalog.sql
+/data/stm-technical-sheets.sql
 /data/~$stm-articulos.xlsx

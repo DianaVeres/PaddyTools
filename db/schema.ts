@@ -360,6 +360,69 @@ export const inventoryCatalog = sqliteTable(
   (table) => [index('idx_inventory_catalog_article').on(table.article)],
 );
 
+// Copia consultable de las fichas técnicas exportadas desde STM. Los campos
+// de uso habitual quedan normalizados y rawJson conserva todas las columnas
+// originales para que una futura ampliación no obligue a repetir la carga.
+export const stmTechnicalSheets = sqliteTable(
+  'stm_technical_sheets',
+  {
+    id: text('id').primaryKey(),
+    season: text('season').notNull().default(''),
+    code: text('code').notNull(),
+    description: text('description').notNull().default(''),
+    internalDescription: text('internal_description').notNull().default(''),
+    articleType: text('article_type').notNull().default(''),
+    sizes: text('sizes').notNull().default(''),
+    familyCode: text('family_code').notNull().default(''),
+    familyDescription: text('family_description').notNull().default(''),
+    compositionCode: text('composition_code').notNull().default(''),
+    compositionDescription: text('composition_description').notNull().default(''),
+    garmentType: text('garment_type').notNull().default(''),
+    collectionCode: text('collection_code').notNull().default(''),
+    collectionDescription: text('collection_description').notNull().default(''),
+    barcodeBase: text('barcode_base').notNull().default(''),
+    supplier1Code: text('supplier1_code').notNull().default(''),
+    supplier1Name: text('supplier1_name').notNull().default(''),
+    supplier1Reference: text('supplier1_reference').notNull().default(''),
+    supplier2Code: text('supplier2_code').notNull().default(''),
+    supplier2Name: text('supplier2_name').notNull().default(''),
+    supplier2Reference: text('supplier2_reference').notNull().default(''),
+    notes: text('notes').notNull().default(''),
+    imagesJson: text('images_json').notNull().default('[]'),
+    washSymbols: text('wash_symbols').notNull().default(''),
+    rawJson: text('raw_json').notNull(),
+    sourceFile: text('source_file').notNull().default(''),
+    sourceModifiedAt: integer('source_modified_at').notNull(),
+    importedAt: integer('imported_at').notNull(),
+  },
+  (table) => [
+    index('idx_stm_technical_code').on(table.code),
+    index('idx_stm_technical_description').on(table.description),
+    index('idx_stm_technical_family').on(table.familyCode),
+    index('idx_stm_technical_collection').on(table.collectionCode),
+  ],
+);
+
+export const stmTechnicalSheetColors = sqliteTable(
+  'stm_technical_sheet_colors',
+  {
+    id: text('id').primaryKey(),
+    technicalSheetId: text('technical_sheet_id')
+      .notNull()
+      .references(() => stmTechnicalSheets.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    colorCode: text('color_code').notNull().default(''),
+    colorDescription: text('color_description').notNull().default(''),
+    impactType: text('impact_type').notNull().default(''),
+    applicationType: text('application_type').notNull().default(''),
+    rate: text('rate').notNull().default(''),
+  },
+  (table) => [
+    index('idx_stm_technical_colors_sheet').on(table.technicalSheetId),
+    index('idx_stm_technical_colors_code').on(table.colorCode),
+  ],
+);
+
 export const orderPreparationCompletions = sqliteTable(
   'order_preparation_completions',
   {
