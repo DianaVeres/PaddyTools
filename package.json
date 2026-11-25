@@ -84,6 +84,7 @@
     "test:reservation-prefill": "node scripts/test-reservation-prefill.mjs",
     "inventory:catalog": "node scripts/import-stm-catalog.mjs",
     "stm:technical-sheets": "node scripts/import-stm-technical-sheets.mjs",
+    "stm:technical-sections": "node scripts/import-stm-technical-sections.mjs",
     "test:quality-errors": "node scripts/test-quality-errors.mjs",
     "test:documentation": "node scripts/test-documentation.mjs",
     "test:order-note": "node scripts/test-order-note.mjs",

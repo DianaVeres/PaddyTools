@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { asc, eq, like, or } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { stmTechnicalSheetColors, stmTechnicalSheets } from '@/db/schema';
+import {
+  stmTechnicalSheetColors,
+  stmTechnicalSheetSections,
+  stmTechnicalSheets,
+} from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -24,7 +28,16 @@ export async function GET(request: NextRequest) {
       .from(stmTechnicalSheetColors)
       .where(eq(stmTechnicalSheetColors.technicalSheetId, sheet.id))
       .orderBy(asc(stmTechnicalSheetColors.position));
-    return NextResponse.json({ sheet: { ...sheet, colors } });
+    const sections = await db
+      .select()
+      .from(stmTechnicalSheetSections)
+      .where(eq(stmTechnicalSheetSections.technicalSheetId, sheet.id))
+      .orderBy(
+        asc(stmTechnicalSheetSections.section),
+        asc(stmTechnicalSheetSections.sourceTable),
+        asc(stmTechnicalSheetSections.rowIndex),
+      );
+    return NextResponse.json({ sheet: { ...sheet, colors, sections } });
   }
 
   const query = request.nextUrl.searchParams.get('q')?.trim() || '';

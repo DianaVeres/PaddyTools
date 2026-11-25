@@ -423,6 +423,27 @@ export const stmTechnicalSheetColors = sqliteTable(
   ],
 );
 
+// Filas de las pestañas secundarias de la ficha técnica. Se conserva el JSON
+// completo de STM porque cada pestaña tiene una estructura distinta.
+export const stmTechnicalSheetSections = sqliteTable(
+  'stm_technical_sheet_sections',
+  {
+    id: text('id').primaryKey(),
+    technicalSheetId: text('technical_sheet_id')
+      .notNull()
+      .references(() => stmTechnicalSheets.id, { onDelete: 'cascade' }),
+    section: text('section').notNull(),
+    sourceTable: text('source_table').notNull(),
+    rowIndex: integer('row_index').notNull(),
+    dataJson: text('data_json').notNull(),
+    importedAt: integer('imported_at').notNull(),
+  },
+  (table) => [
+    index('idx_stm_sections_sheet').on(table.technicalSheetId, table.section),
+    index('idx_stm_sections_source').on(table.sourceTable),
+  ],
+);
+
 export const orderPreparationCompletions = sqliteTable(
   'order_preparation_completions',
   {
