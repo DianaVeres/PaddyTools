@@ -97,6 +97,7 @@ async function responseJson<T>(response: Response) {
 
 export default function PrepararPedidosPage() {
   const [reference, setReference] = useState('');
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const [orders, setOrders] = useState<PreparationOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -521,10 +522,26 @@ export default function PrepararPedidosPage() {
             <small>Control de preparación</small>
           </span>
         </a>
-        <div id="kpi-timer-slot" className="kpi-timer-slot" />
-        <Button variant="outline" onClick={() => window.location.assign('/')}>
-          <ArrowLeft /> Gestión unificada
+        <Button
+          type="button"
+          variant="outline"
+          className="order-preparation-header-toggle"
+          aria-expanded={headerExpanded}
+          aria-controls="order-preparation-header-actions"
+          onClick={() => setHeaderExpanded((expanded) => !expanded)}
+        >
+          {headerExpanded ? 'Ocultar' : 'Menú'}
         </Button>
+        <div
+          id="order-preparation-header-actions"
+          className="order-preparation-header-actions"
+          data-expanded={headerExpanded}
+        >
+          <div id="kpi-timer-slot" className="kpi-timer-slot" />
+          <Button variant="outline" onClick={() => window.location.assign('/')}>
+            <ArrowLeft /> Gestión unificada
+          </Button>
+        </div>
       </header>
 
       <section className="order-preparation-hero">

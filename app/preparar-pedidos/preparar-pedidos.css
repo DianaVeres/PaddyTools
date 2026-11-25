@@ -40,6 +40,16 @@
 .order-preparation-topbar .kpi-timer-slot {
   margin-inline: auto;
 }
+.order-preparation-topbar .order-preparation-header-toggle {
+  display: none;
+}
+.order-preparation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
 .order-preparation-hero {
   padding: 26px clamp(16px, 9vw, 150px);
   background: linear-gradient(110deg, #102d4c, #12636c);
@@ -146,35 +156,83 @@
 }
 @media (max-width: 620px) {
   .order-preparation-topbar {
-    align-items: stretch;
-    flex-direction: column;
-    padding: 10px 14px;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .order-preparation-topbar > a {
+    gap: 6px;
+    min-width: 0;
+  }
+  .order-preparation-topbar img {
+    width: 30px;
+    height: 30px;
+  }
+  .order-preparation-topbar strong {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .order-preparation-topbar .order-preparation-header-toggle {
+    display: inline-flex;
+    min-height: 44px;
+  }
+  .order-preparation-header-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 6px;
+  }
+  .order-preparation-header-actions[data-expanded='false'] {
+    display: none;
   }
   .order-preparation-topbar .kpi-timer-slot {
     width: 100%;
     margin: 0;
   }
-  .order-preparation-topbar > button {
-    width: 100%;
-  }
   .order-preparation-topbar small {
     display: none;
   }
   .order-preparation-hero {
-    padding: 14px 10px;
+    padding: 8px;
   }
   .order-preparation-search {
-    grid-template-columns: 1fr;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
   }
   .order-preparation-search > div {
     grid-column: auto;
   }
+  .order-preparation-search > div > span {
+    display: none;
+  }
+  .order-preparation-search h2 {
+    margin: 0;
+    font-size: 17px;
+  }
   .order-preparation-search button {
     width: 100%;
+    min-height: 44px;
   }
   .order-preparation-shell {
     width: min(100% - 20px, 1120px);
+    margin-top: 12px;
+  }
+  .order-preparation-columns {
+    gap: 6px;
+  }
+  .order-preparation-columns article {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .order-preparation-columns article > svg {
+    width: 18px;
+    height: 18px;
+    padding: 6px;
+  }
+  .order-preparation-columns article strong {
+    font-size: 14px;
   }
 }
 .accepted-orders {
