@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { SessionUser } from '@/lib/dashboard-types';
+import { canReadTechnicalSheets } from '@/lib/technical-sheet-access';
 
 function userInitials(user: SessionUser | null) {
   return (
@@ -98,13 +99,13 @@ export function DashboardHeader({
         >
           <ScanBarcode /> Inventarios
         </Button>
-        <Button
+        {canReadTechnicalSheets(sessionUser?.email) && <Button
           className="action-button technical-sheets"
           variant="outline"
           onClick={onOpenTechnicalSheets}
         >
           <ClipboardList /> Fichas técnicas
-        </Button>
+        </Button>}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

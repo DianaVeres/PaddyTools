@@ -1,5 +1,7 @@
 'use client';
 
+import { hasTechnicalOnlyAccess } from '@/lib/technical-sheet-access';
+
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -68,6 +70,7 @@ export function KpiTimer() {
       const data = (await response.json()) as {
         user?: { email: string; displayName: string };
       };
+      if (hasTechnicalOnlyAccess(data.user?.email)) return;
       setMaintenanceAllowed(canManageMaintenance(data.user));
       setAvailable(true);
       const stored = localStorage.getItem(storageKey);

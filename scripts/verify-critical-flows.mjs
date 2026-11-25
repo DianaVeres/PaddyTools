@@ -182,7 +182,7 @@ for (const path of ['app/page.tsx', 'app/api/incidents/route.ts']) {
 }
 requireAll(
   'proxy.ts',
-  ['getSessionUser', 'isPublicApiRequest', "matcher: ['/api/:path*']"],
+  ['getSessionUser', 'isPublicApiRequest', "'/api/:path*'", 'hasTechnicalOnlyAccess', 'canReadTechnicalSheets'],
   'La barrera de sesión de las API',
 );
 

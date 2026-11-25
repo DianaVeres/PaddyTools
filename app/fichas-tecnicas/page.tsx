@@ -201,6 +201,13 @@ export default function TechnicalSheetsPage() {
   return <main className="technical-page">
     <header className="technical-header">
       <a href="/"><ArrowLeft /> PaddyTools</a>
+      <form action="/api/auth/logout" method="post" onSubmit={async (event) => {
+        event.preventDefault();
+        const response = await fetch('/api/auth/logout', { method: 'POST' });
+        if (response.ok) window.location.assign('/login');
+      }}>
+        <Button type="submit" variant="outline">Cerrar sesión</Button>
+      </form>
       <div><ClipboardList /><span><b>Fichas técnicas</b><small>Base de datos STM</small></span></div>
     </header>
     <section className="technical-shell">
