@@ -63,7 +63,7 @@ export function preparationRoute(
       automatic: false,
     };
 
-  if (/^envio a\b/.test(method))
+  if (/^envio (?:a|al)\b/.test(method))
     return {
       treatment: 'school-ready',
       targetStatusName: 'Pedido preparado',

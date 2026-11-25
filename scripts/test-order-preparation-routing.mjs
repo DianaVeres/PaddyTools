@@ -4,6 +4,14 @@ import {
   wooStatusSlugByName,
 } from '../lib/order-preparation-routing.ts';
 
+assert.equal(
+  preparationRoute('vía Envío al Colegio', false).targetStatusName,
+  'Pedido preparado',
+);
+assert.equal(
+  preparationRoute('vía Envío al Colegio', true).treatment,
+  'manual-reservation',
+);
 assert.deepEqual(preparationRoute('Envío a British College La Cañada', false), {
   treatment: 'school-ready',
   targetStatusName: 'Pedido preparado',
