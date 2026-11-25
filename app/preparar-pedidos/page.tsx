@@ -336,6 +336,7 @@ export default function PrepararPedidosPage() {
       );
       setTimerStarted('');
       setSelectedOrderId(null);
+      setReference('');
       setFinishMessage(
         `Pedido #${selectedOrder.number} trasladado a Preparados. ${routingMessage}${timeWarning}`,
       );
