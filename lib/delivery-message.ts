@@ -21,6 +21,22 @@ export type DeliveryEmailDraft = {
   reservationSummary?: string;
 };
 
+const trackingLinks: Record<DeliveryEmailDraft['carrier'], string> = {
+  viaxpress: 'https://viaxpress.es/envios/',
+  dhl: 'https://www.dhl.com/es-es/home/seguimiento.html',
+};
+
+export function buildPrivateShippingNote(
+  carrier: DeliveryEmailDraft['carrier'],
+  trackingNumber: string,
+) {
+  return [
+    `Su pedido está preparado para ser enviado. El número de envío es ${trackingNumber.trim()}.`,
+    'Podrá hacer el seguimiento en el siguiente enlace:',
+    trackingLinks[carrier],
+  ].join('\n');
+}
+
 function recordKindLabel(kind: DeliveryRecordKind) {
   return kind === 'pedido'
     ? {
@@ -76,10 +92,7 @@ export function deliveryEmailBody(draft: DeliveryEmailDraft) {
   if (draft.delivery === 'tienda') {
     return `Hola ${draft.customerName}, le comunicamos que ya tenemos su ${record.lower} ${draft.reference} disponible para recoger en nuestra tienda de Paddy. Recuerde que ya estamos en el horario habitual (Mañanas de Lunes a Viernes de 10.00 a 14.00 y Tardes sólo Martes y Jueves de 15.00 a 19.00). Puede pasar cuando quiera a recogerlo. Gracias, un saludo`;
   }
-  const trackingUrl =
-    draft.carrier === 'dhl'
-      ? 'https://www.dhl.com/'
-      : 'https://viaxpress.es/envios/';
+  const trackingUrl = trackingLinks[draft.carrier];
   const reservationText = draft.reservationSummary?.trim()
     ? ` Queda pendiente en reserva: ${draft.reservationSummary.trim()}. Le avisaremos cuando recibamos el artículo pendiente.`
     : '';

@@ -4,6 +4,7 @@ import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { inventoryCatalog, orderPreparationCompletions } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
+import { buildPrivateShippingNote } from '@/lib/delivery-message';
 import {
   barcodesForPreparationItem,
   preparationSkuParts,
@@ -273,6 +274,23 @@ export async function PUT(request: NextRequest) {
     const sentStatus = wooStatusSlugByName(statuses, 'Enviado');
     if (!sentStatus)
       throw new Error('No se encontró el estado “Enviado” en WooCommerce.');
+    const notePath = `orders/${orderId}/notes`;
+    const note = buildPrivateShippingNote(carrier, trackingNumber);
+    const notesResponse = await wooFetch(notePath, config);
+    if (!notesResponse.ok)
+      throw new Error(`WooCommerce no pudo consultar las notas del pedido (${notesResponse.status}).`);
+    const notes = await wooResponseJson<Array<{ note: string; customer_note: boolean }>>(notesResponse);
+    // Si el cambio de estado falla tras guardar la nota, un reintento la reutiliza.
+    const normalizeNote = (text: string) => text.trim().replace(/\s+/g, ' ');
+    if (!notes.some((item) => item.customer_note === false && normalizeNote(item.note) === normalizeNote(note))) {
+      const noteResponse = await wooFetch(notePath, config, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ note, customer_note: false }),
+      });
+      if (!noteResponse.ok)
+        throw new Error(`WooCommerce no pudo guardar la nota privada de seguimiento (${noteResponse.status}).`);
+    }
     const updateResponse = await wooFetch(`orders/${orderId}`, config, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -302,7 +320,7 @@ export async function PUT(request: NextRequest) {
       .limit(1);
     return NextResponse.json({
       completion: completion[0],
-      message: `Pedido #${existing[0].orderNumber} cambiado a Enviado.`,
+      message: `Pedido #${existing[0].orderNumber} cambiado a Enviado con nota privada de seguimiento.`,
     });
   } catch (error) {
     return NextResponse.json(
