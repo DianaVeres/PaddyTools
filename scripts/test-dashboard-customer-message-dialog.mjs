@@ -22,7 +22,9 @@ for (const fragment of [
   'Copiar texto',
   'Abrir WhatsApp',
   'Abrir correo',
-  '!nextOpen && onClose()',
+  '!nextOpen && closeDialog()',
+  'Escanear etiqueta',
+  'onGeneratedChange({ trackingNumber: code.trim() })',
 ]) {
   if (!component.includes(fragment))
     throw new Error(`El diálogo de avisos ha perdido: ${fragment}`);
