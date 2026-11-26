@@ -46,5 +46,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/', '/tic', '/fichas-tecnicas/:path*', '/preparar-pedidos/:path*', '/preparar-reservas/:path*', '/incidencias/:path*', '/incidencias-app.html', '/packing-list/:path*', '/hotline/:path*', '/kpis/:path*', '/inventarios/:path*'],
+  matcher: ['/api/:path*', '/', '/tic', '/fichas-tecnicas/:path*', '/preparar-pedidos/:path*', '/gestionar-devoluciones/:path*', '/preparar-reservas/:path*', '/incidencias/:path*', '/incidencias-app.html', '/packing-list/:path*', '/hotline/:path*', '/kpis/:path*', '/inventarios/:path*'],
 };

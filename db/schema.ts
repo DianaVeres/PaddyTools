@@ -63,6 +63,19 @@ export const orderNotes = sqliteTable(
   ],
 );
 
+export const orderReturns = sqliteTable(
+  'order_returns',
+  {
+    id: text('id').primaryKey(),
+    orderId: integer('order_id').notNull(),
+    orderNumber: text('order_number').notNull(),
+    itemName: text('item_name').notNull(),
+    size: text('size').notNull(),
+    receivedAt: integer('received_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [index('idx_order_returns_received').on(table.receivedAt, table.id)],
+);
+
 export const authUsers = sqliteTable('auth_users', {
   // El correo funciona como identificador único del usuario.
   email: text('email').primaryKey(),

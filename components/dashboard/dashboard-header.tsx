@@ -7,6 +7,7 @@ import {
   Mail,
   PackageCheck,
   ScanBarcode,
+  Undo2,
   ShieldCheck,
   Store,
 } from 'lucide-react';
@@ -79,6 +80,11 @@ export function DashboardHeader({
         >
           <PackageCheck /> Preparar pedidos
         </Button>}
+        {sessionUser?.permissions.includes('pedidos') && sessionUser.permissions.includes('detalle') && (
+          <Button className="action-button" variant="outline" render={<a href="/gestionar-devoluciones" />} nativeButton={false}>
+            <Undo2 /> Gestionar devoluciones
+          </Button>
+        )}
         {sessionUser?.permissions.includes('woocommerce') && <Button
           className="action-button woocommerce"
           variant="outline"

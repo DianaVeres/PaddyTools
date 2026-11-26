@@ -114,7 +114,7 @@ export function wooOrderSchoolCandidates(order: WooOrder) {
 export async function loadWooOrderDetail(
   exactNumber: string,
   config: Record<string, string>,
-  options: { summaryOnly?: boolean } = {},
+  options: { summaryOnly?: boolean; exactMatch?: boolean } = {},
 ) {
   let order: WooOrder | undefined;
   if (/^\d+$/.test(exactNumber)) {
@@ -131,14 +131,19 @@ export async function loadWooOrderDetail(
     if (!search.ok) throw new Error(`WooCommerce respondió ${search.status}`);
     const matches = (await search.json()) as WooOrder[];
     order =
-      matches.find((item) => String(item.number) === exactNumber) ?? matches[0];
+      matches.find((item) => String(item.number).toUpperCase() === exactNumber) ?? (options.exactMatch ? undefined : matches[0]);
   }
   if (!order) return null;
 
   // PackingList solo necesita cliente, fecha y colegio. Evitamos solicitar de
   // nuevo el pedido completo y sus notas para no sobrecargar WooCommerce al
   // generar listas con muchas referencias.
-  if (options.summaryOnly) return formatWooOrderDetail(order, [], config);
+  if (options.summaryOnly && !options.exactMatch) return formatWooOrderDetail(order, [], config);
+  if (options.summaryOnly) {
+    const response = await wooFetch(`orders/${order.id}?context=edit&_=${Date.now()}`, config);
+    if (!response.ok) throw new Error(`WooCommerce respondió ${response.status}`);
+    return formatWooOrderDetail((await response.json()) as WooOrder, [], config);
+  }
 
   // La colección puede omitir metadatos protegidos. La lectura completa con
   // context=edit mantiene sincronizado el check de devolución atendida.

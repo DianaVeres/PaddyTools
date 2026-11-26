@@ -40,7 +40,7 @@ export function findStoredIncident(
   );
 }
 
-export async function updateIncidentStatus(
+export async function incidentStatusUpdate(
   changes: IncidentStatusChanges,
   actor: AuthUser | null = null,
 ) {
@@ -104,11 +104,19 @@ export async function updateIncidentStatus(
     solved_at: solved ? incidentTextValue(stored.data.solved_at) || now : '',
     audit_log_json: auditLog,
   };
-  await getDb()
-    .update(incidentRecords)
-    .set(incidentFieldsFor(stored.id, data))
-    .where(eq(incidentRecords.id, stored.id));
-  return mapStoredIncident({ id: stored.id, data }, changes.orderNumber);
+  return {
+    statement: getDb().update(incidentRecords)
+      .set(incidentFieldsFor(stored.id, data))
+      .where(eq(incidentRecords.id, stored.id)),
+    incident: mapStoredIncident({ id: stored.id, data }, changes.orderNumber),
+  };
+}
+
+export async function updateIncidentStatus(changes: IncidentStatusChanges, actor: AuthUser | null = null) {
+  const update = await incidentStatusUpdate(changes, actor);
+  if (!update) return null;
+  await update.statement;
+  return update.incident;
 }
 
 export async function deleteStoredIncident(selector: IncidentSelector) {

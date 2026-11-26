@@ -47,7 +47,7 @@ export function moduleForPath(pathname: string): AppPermission | undefined {
     envios: ['/api/shipping'],
     incidencias: ['/incidencias', '/incidencias-app.html', '/api/incidents', '/api/records'],
     kpis: ['/kpis', '/api/kpis', '/api/kpi-order-count', '/api/kpi-work-logs', '/api/quality-errors'],
-    pedidos: ['/preparar-pedidos', '/api/order-preparation'],
+    pedidos: ['/preparar-pedidos', '/api/order-preparation', '/gestionar-devoluciones', '/api/order-returns'],
     fichas: ['/fichas-tecnicas', '/api/technical-sheets'],
     inventarios: ['/inventarios', '/api/inventories'],
     hotline: ['/hotline', '/api/hotline'],
