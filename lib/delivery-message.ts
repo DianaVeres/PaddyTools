@@ -26,7 +26,7 @@ const trackingLinks: Record<DeliveryEmailDraft['carrier'], string> = {
   dhl: 'https://www.dhl.com/es-es/home/seguimiento.html',
 };
 
-export function buildPrivateShippingNote(
+export function buildShippingNote(
   carrier: DeliveryEmailDraft['carrier'],
   trackingNumber: string,
 ) {
@@ -48,7 +48,7 @@ type ReservationDelivery =
   | { kind: 'school' | 'store' }
   | { kind: 'home'; carrier: DeliveryEmailDraft['carrier']; trackingNumber: string };
 
-export function buildPrivateReservationNote(
+export function buildReservationNote(
   reservations: ReservationLine[],
   delivery: ReservationDelivery,
 ) {

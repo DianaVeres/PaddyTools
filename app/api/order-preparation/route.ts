@@ -4,7 +4,7 @@ import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { inventoryCatalog, orderPreparationCompletions } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
-import { buildPrivateReservationNote, buildPrivateShippingNote } from '@/lib/delivery-message';
+import { buildReservationNote, buildShippingNote } from '@/lib/delivery-message';
 import {
   barcodesForPreparationItem,
   preparationSkuParts,
@@ -41,21 +41,21 @@ function reservationNoteLines(records: Awaited<ReturnType<typeof loadPendingRese
   return lines;
 }
 
-async function savePrivateOrderNote(orderId: number, config: Record<string, string>, note: string) {
+async function saveCustomerOrderNote(orderId: number, config: Record<string, string>, note: string) {
   const path = `orders/${orderId}/notes`;
   const response = await wooFetch(path, config);
   if (!response.ok)
     throw new Error(`WooCommerce no pudo consultar las notas del pedido (${response.status}).`);
   const notes = await wooResponseJson<Array<{ note: string; customer_note: boolean }>>(response);
   const normalize = (text: string) => text.trim().replace(/\s+/g, ' ');
-  if (notes.some((item) => item.customer_note === false && normalize(item.note) === normalize(note))) return;
+  if (notes.some((item) => item.customer_note === true && normalize(item.note) === normalize(note))) return;
   const saved = await wooFetch(path, config, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ note, customer_note: false }),
+    body: JSON.stringify({ note, customer_note: true }),
   });
   if (!saved.ok)
-    throw new Error(`WooCommerce no pudo guardar la nota privada del pedido (${saved.status}).`);
+    throw new Error(`WooCommerce no pudo guardar la nota al cliente (${saved.status}).`);
 }
 
 export async function GET(request: NextRequest) {
@@ -176,10 +176,10 @@ export async function POST(request: NextRequest) {
     if (route.treatment === 'manual-reservation') {
       const method = preparationRoute(order.shippingMethod, false).treatment;
       if (method === 'school-ready' || method === 'store-ready') {
-        const note = buildPrivateReservationNote(reservationNoteLines(pendingReservations), {
+        const note = buildReservationNote(reservationNoteLines(pendingReservations), {
           kind: method === 'school-ready' ? 'school' : 'store',
         });
-        await savePrivateOrderNote(orderId, config, note);
+        await saveCustomerOrderNote(orderId, config, note);
       }
     }
     let wooStatus = '';
@@ -317,15 +317,15 @@ export async function PUT(request: NextRequest) {
     const sentStatus = wooStatusSlugByName(statuses, 'Enviado');
     if (!sentStatus)
       throw new Error('No se encontró el estado “Enviado” en WooCommerce.');
-    let note = buildPrivateShippingNote(carrier, trackingNumber);
+    let note = buildShippingNote(carrier, trackingNumber);
     if (existing[0].treatment === 'manual-home-reservation') {
       if (!config.MONDAY_API_TOKEN) throw new Error('Monday no está configurado para consultar las reservas.');
       const reservations = await loadPendingReservations(existing[0].orderNumber, config.MONDAY_API_TOKEN);
-      note = buildPrivateReservationNote(reservationNoteLines(reservations), {
+      note = buildReservationNote(reservationNoteLines(reservations), {
         kind: 'home', carrier, trackingNumber,
       });
     }
-    await savePrivateOrderNote(orderId, config, note);
+    await saveCustomerOrderNote(orderId, config, note);
     const updateResponse = await wooFetch(`orders/${orderId}`, config, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -355,7 +355,7 @@ export async function PUT(request: NextRequest) {
       .limit(1);
     return NextResponse.json({
       completion: completion[0],
-      message: `Pedido #${existing[0].orderNumber} cambiado a Enviado con nota privada de seguimiento.`,
+      message: `Pedido #${existing[0].orderNumber} cambiado a Enviado con nota de seguimiento al cliente.`,
     });
   } catch (error) {
     return NextResponse.json(
