@@ -549,6 +549,22 @@
   padding: 18px;
   background: rgba(5, 20, 38, 0.84);
 }
+.email-scan-tracking {
+  grid-column: 1 / -1;
+  min-height: 44px;
+}
+.email-tracking-camera .barcode-camera-overlay {
+  position: static;
+  padding: 0;
+  background: transparent;
+}
+.email-tracking-camera .barcode-camera-dialog {
+  box-shadow: none;
+  padding: 8px;
+}
+.email-tracking-camera .barcode-camera-preview {
+  max-height: 40vh;
+}
 .barcode-camera-dialog {
   width: min(100%, 460px);
   padding: 18px;

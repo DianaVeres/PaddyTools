@@ -1,6 +1,8 @@
 'use client';
 
-import { Mail, Phone, Truck } from 'lucide-react';
+import { useState } from 'react';
+import { Mail, Phone, ScanBarcode, Truck } from 'lucide-react';
+import { BarcodeCameraScanner } from '@/components/order-preparation/barcode-camera-scanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,8 +46,14 @@ export function CustomerMessageDialog({
   onMarkSent,
   markingSent = false,
 }: CustomerMessageDialogProps) {
+  const [trackingCameraOpen, setTrackingCameraOpen] = useState(false);
+  const scanning = open && trackingCameraOpen && Boolean(onMarkSent);
+  function closeDialog() {
+    setTrackingCameraOpen(false);
+    onClose();
+  }
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && closeDialog()}>
       <DialogContent className={onMarkSent ? 'email-dialog email-dialog-with-shipping' : 'email-dialog'}>
         <DialogHeader>
           <div className="modal-icon blue">
@@ -57,7 +65,18 @@ export function CustomerMessageDialog({
             en WhatsApp.
           </DialogDescription>
         </DialogHeader>
-        {draft && (
+        {scanning ? (
+          <div className="email-form email-tracking-camera">
+            <BarcodeCameraScanner
+              target="shipment"
+              onScan={(code) => {
+                onGeneratedChange({ trackingNumber: code.trim() });
+                setTrackingCameraOpen(false);
+              }}
+              onClose={() => setTrackingCameraOpen(false)}
+            />
+          </div>
+        ) : draft && (
           <div className="email-form">
             <Field label="¿Qué estás enviando?">
               <select
@@ -146,6 +165,12 @@ export function CustomerMessageDialog({
                     placeholder="Introduce el nº de envío"
                   />
                 </Field>
+                {onMarkSent && (
+                  <Button type="button" variant="outline" className="email-scan-tracking"
+                    onClick={() => setTrackingCameraOpen(true)}>
+                    <ScanBarcode /> Escanear etiqueta
+                  </Button>
+                )}
               </div>
             )}
             <Field label="Asunto">
@@ -167,8 +192,8 @@ export function CustomerMessageDialog({
             </Field>
           </div>
         )}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        {!scanning && <DialogFooter>
+          <Button variant="outline" onClick={closeDialog}>
             Cancelar
           </Button>
           <Button variant="outline" onClick={onCopy}>
@@ -185,7 +210,7 @@ export function CustomerMessageDialog({
               <Truck /> {markingSent ? 'Cambiando…' : 'Marcar enviado'}
             </Button>
           )}
-        </DialogFooter>
+        </DialogFooter>}
       </DialogContent>
     </Dialog>
   );

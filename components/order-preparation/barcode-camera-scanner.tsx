@@ -11,15 +11,19 @@ import { Button } from '@/components/ui/button';
 export function BarcodeCameraScanner({
   onScan,
   onClose,
+  target = 'product',
 }: {
   onScan: (code: string) => void;
   onClose: () => void;
+  target?: 'product' | 'shipment';
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const handledRef = useRef(false);
   const [message, setMessage] = useState(
-    'Apunta la cámara al código de barras del producto.',
+    target === 'shipment'
+      ? 'Apunta la cámara al código de barras del número de seguimiento.'
+      : 'Apunta la cámara al código de barras del producto.',
   );
 
   useEffect(() => {
@@ -53,7 +57,7 @@ export function BarcodeCameraScanner({
         setMessage(
           error instanceof Error &&
             /permission|allowed|denied/i.test(error.message)
-            ? 'No hay permiso para usar la cámara. Actívalo en los ajustes de Safari para PaddyTools.'
+            ? 'No hay permiso para usar la cámara. Actívalo en los ajustes del navegador para PaddyTools.'
             : 'No se pudo abrir la cámara. Comprueba que ninguna otra aplicación la esté usando.',
         );
       });
@@ -76,7 +80,7 @@ export function BarcodeCameraScanner({
           <div>
             <ScanBarcode />
             <span>
-              <b>Escanear producto</b>
+              <b>{target === 'shipment' ? 'Escanear etiqueta de envío' : 'Escanear producto'}</b>
               <small>EAN, Code 128 y otros códigos habituales</small>
             </span>
           </div>
