@@ -66,6 +66,8 @@ export async function POST(request: Request) {
     const label = deliveredReservationLabel(Object.values(settings.labels ?? {}));
     if (!label) throw new Error('No se encontró el estado Reserva Entregada / Enviada en Monday.');
 
+    const endDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(new Date());
+    const values = JSON.stringify({ [column]: { label }, [MONDAY_RESERVATION_COLUMNS.endDate]: { date: endDate } });
     const updatedIds: string[] = [];
     const failedIds: string[] = [];
     for (const id of ids as string[]) {
@@ -75,7 +77,7 @@ export async function POST(request: Request) {
       try {
         const result = await mondayRequest(
           'mutation ($board:ID!, $item:ID!, $values:JSON!) { change_multiple_column_values(board_id:$board, item_id:$item, column_values:$values, create_labels_if_missing:false) { id } }',
-          { board, item: id, values: JSON.stringify({ [column]: { label } }) },
+          { board, item: id, values },
           token,
         ) as { change_multiple_column_values?: { id?: string } };
         if (result.change_multiple_column_values?.id !== id) throw new Error('Actualización no confirmada.');
