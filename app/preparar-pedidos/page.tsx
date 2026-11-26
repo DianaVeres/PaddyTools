@@ -568,6 +568,11 @@ export default function PrepararPedidosPage() {
       </section>
 
       <section className="order-preparation-shell">
+        {preparedToday.length > 0 && (
+          <a className="prepared-orders-jump" href="#pedidos-finalizados">
+            Ver finalizados y sus avisos
+          </a>
+        )}
         <div className="order-preparation-columns">
           <article>
             <ClipboardList />
@@ -808,7 +813,7 @@ export default function PrepararPedidosPage() {
           </section>
         )}
         {preparedToday.length > 0 && (
-          <section className="prepared-orders">
+          <section id="pedidos-finalizados" className="prepared-orders">
             <header>
               <div>
                 <span>PREPARADOS HOY</span>

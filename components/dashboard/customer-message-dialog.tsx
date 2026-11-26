@@ -46,7 +46,7 @@ export function CustomerMessageDialog({
 }: CustomerMessageDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="email-dialog">
+      <DialogContent className={onMarkSent ? 'email-dialog email-dialog-with-shipping' : 'email-dialog'}>
         <DialogHeader>
           <div className="modal-icon blue">
             <Mail />
@@ -181,7 +181,7 @@ export function CustomerMessageDialog({
             <Mail /> Abrir correo
           </Button>
           {onMarkSent && (
-            <Button onClick={onMarkSent} disabled={markingSent}>
+            <Button className="email-mark-sent" onClick={onMarkSent} disabled={markingSent}>
               <Truck /> {markingSent ? 'Cambiando…' : 'Marcar enviado'}
             </Button>
           )}
