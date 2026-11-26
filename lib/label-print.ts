@@ -30,7 +30,7 @@ function labelFontSize(text: string, hasQr: boolean) {
         : 17;
 }
 
-export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
+export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '', qrCaption = 'ESCANEAR EN PACKINGLIST') {
   const hasQr = Boolean(qrDataUrl);
   const rows = lines
     .slice(0, 4)
@@ -41,7 +41,7 @@ export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
     .join('');
 
   const qr = qrDataUrl
-    ? `<div class="qr"><img src="${escapeHtml(qrDataUrl)}" alt="Código QR de la referencia"><span>ESCANEAR EN PACKINGLIST</span></div>`
+    ? `<div class="qr"><img src="${escapeHtml(qrDataUrl)}" alt="Código QR de la referencia"><span>${escapeHtml(qrCaption)}</span></div>`
     : '';
 
   return `<!doctype html><html><head><meta charset="utf-8"><title></title><style>
@@ -75,7 +75,7 @@ export function buildStandaloneLabelHtml(lines: string[], qrDataUrl = '') {
   </style></head><body><article class="label">${rows}${qr}</article></body></html>`;
 }
 
-export async function printStandaloneLabel(lines: string[], reference = '') {
+export async function printStandaloneLabel(lines: string[], reference = '', qrCaption?: string) {
   const normalizedReference = reference.replace(/\s/g, '').toUpperCase();
   const qrDataUrl = normalizedReference
     ? await QRCode.toDataURL(normalizedReference, {
@@ -103,7 +103,7 @@ export async function printStandaloneLabel(lines: string[], reference = '') {
   }
 
   labelDocument.open();
-  labelDocument.write(buildStandaloneLabelHtml(lines, qrDataUrl));
+  labelDocument.write(buildStandaloneLabelHtml(lines, qrDataUrl, qrCaption));
   labelDocument.close();
 
   const cleanup = () => setTimeout(() => frame.remove(), 500);

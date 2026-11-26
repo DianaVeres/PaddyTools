@@ -119,6 +119,9 @@ export function DashboardHeader({
             <DropdownMenuItem onClick={onOpenReservations}>
               <CalendarDays /> Ver reservas
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.assign('/preparar-reservas')}>
+              <ScanBarcode /> Preparar reservas
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onCreateReservation}>
               <CalendarDays /> Generar reserva
             </DropdownMenuItem>

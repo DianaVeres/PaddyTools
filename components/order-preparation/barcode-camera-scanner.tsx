@@ -15,7 +15,7 @@ export function BarcodeCameraScanner({
 }: {
   onScan: (code: string) => void;
   onClose: () => void;
-  target?: 'product' | 'shipment';
+  target?: 'product' | 'shipment' | 'reservation';
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
@@ -23,7 +23,9 @@ export function BarcodeCameraScanner({
   const [message, setMessage] = useState(
     target === 'shipment'
       ? 'Apunta la cámara al código de barras del número de seguimiento.'
-      : 'Apunta la cámara al código de barras del producto.',
+      : target === 'reservation'
+        ? 'Apunta la cámara al QR de la etiqueta de reserva.'
+        : 'Apunta la cámara al código de barras del producto.',
   );
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export function BarcodeCameraScanner({
           <div>
             <ScanBarcode />
             <span>
-              <b>{target === 'shipment' ? 'Escanear etiqueta de envío' : 'Escanear producto'}</b>
+              <b>{target === 'shipment' ? 'Escanear etiqueta de envío' : target === 'reservation' ? 'Escanear reserva' : 'Escanear producto'}</b>
               <small>EAN, Code 128 y otros códigos habituales</small>
             </span>
           </div>

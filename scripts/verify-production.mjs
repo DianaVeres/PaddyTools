@@ -42,7 +42,7 @@ const hotline = await request('/hotline');
 const hotlineHtml = await hotline.text();
 if (!hotlineHtml.includes('Hotline'))
   throw new Error('La pantalla de Hotline no está disponible en producción.');
-for (const path of ['/preparar-pedidos', '/inventarios']) await request(path);
+for (const path of ['/preparar-pedidos', '/preparar-reservas', '/inventarios']) await request(path);
 for (const path of ['/tic', '/fichas-tecnicas']) {
   const response = await fetch(`${baseUrl}${path}`, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
   if (![302, 307, 308].includes(response.status) || !response.headers.get('location')?.includes('/login'))

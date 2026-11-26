@@ -42,7 +42,7 @@ export function moduleForPath(pathname: string): AppPermission | undefined {
   const groups: Record<AppPermission, string[]> = {
     detalle: ['/api/search', '/api/order-documents', '/api/order-notes', '/api/return-attended', '/api/tickets'],
     packing: ['/packing-list', '/api/packing-lists', '/api/packing-drafts', '/api/activity'],
-    reservas: ['/api/monday'],
+    reservas: ['/api/monday', '/preparar-reservas', '/api/reservation-preparation'],
     recogidas: ['/api/recogidas'],
     envios: ['/api/shipping'],
     incidencias: ['/incidencias', '/incidencias-app.html', '/api/incidents', '/api/records'],
