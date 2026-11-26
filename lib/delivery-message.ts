@@ -37,6 +37,54 @@ export function buildPrivateShippingNote(
   ].join('\n');
 }
 
+type ReservationLine = {
+  reference: string;
+  description: string;
+  size: string;
+  units: string;
+};
+
+type ReservationDelivery =
+  | { kind: 'school' | 'store' }
+  | { kind: 'home'; carrier: DeliveryEmailDraft['carrier']; trackingNumber: string };
+
+export function buildPrivateReservationNote(
+  reservations: ReservationLine[],
+  delivery: ReservationDelivery,
+) {
+  const rows = reservations.flatMap(({ reference, description, size, units }) => [
+    `- ${description} ${size} (${units} ${units === '1' ? 'unidad' : 'unidades'})`,
+    `- Nº RESERVA: ${reference}`,
+  ]);
+  const lines = [
+    delivery.kind === 'home' && rows.length === 2
+      ? 'Su pedido contiene un artículo reservado y pagado del que no tenemos stock actualmente:'
+      : 'Su pedido contiene artículos reservados y pagados de los que no tenemos stock actualmente:',
+    ...rows,
+  ];
+  if (delivery.kind === 'store') {
+    lines.unshift('Estimada cliente.');
+    lines.push(
+      'Procederemos a avisarle en cuanto la tengamos disponible.',
+      'El resto de prendas están preparadas para que pase por nuestra tienda a recogerlas.',
+      'No dude en consultarnos para cualquier aclaración de su pedido on-line.',
+    );
+  } else {
+    lines.push('Procederemos a enviárselo al colegio en cuanto esté disponible.');
+    if (delivery.kind === 'home') {
+      lines.push(
+        `El resto de las prendas están preparadas para ser enviadas. El número de envío es ${delivery.trackingNumber.trim()}.`,
+        `Podrá hacer el seguimiento en el siguiente enlace: ${trackingLinks[delivery.carrier]}`,
+      );
+    } else {
+      lines.push(
+        'El resto de prendas están preparadas para ser enviadas al colegio (les avisaremos mediante correo electrónico cuando pueda pasar a recogerlas).',
+      );
+    }
+  }
+  return [...lines, 'Gracias y disculpe las molestias'].join('\n');
+}
+
 function recordKindLabel(kind: DeliveryRecordKind) {
   return kind === 'pedido'
     ? {
