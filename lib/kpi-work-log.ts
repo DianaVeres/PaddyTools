@@ -30,7 +30,7 @@ export const AUTOMATIC_KPI_ACTIVITIES = [
   'reservas',
   'incidencias',
 ] as const;
-export const RETIRED_KPI_ACTIVITIES = ['comprobacion'] as const;
+export const RETIRED_KPI_ACTIVITIES = ['comprobacion', 'estado_inicial'] as const;
 export const ADMIN_ONLY_KPI_ACTIVITIES = ['mantenimiento'] as const;
 export const MANUAL_KPI_ACTIVITIES = KPI_ACTIVITIES.filter(
   ([value]) =>

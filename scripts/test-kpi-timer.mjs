@@ -50,7 +50,7 @@ for (const fragment of [
   "'mantenimiento'",
   "'Mantenimiento'",
   "ADMIN_ONLY_KPI_ACTIVITIES = ['mantenimiento']",
-  "RETIRED_KPI_ACTIVITIES = ['comprobacion']",
+  "RETIRED_KPI_ACTIVITIES = ['comprobacion', 'estado_inicial']",
 ])
   if (!workLog.includes(fragment))
     throw new Error(`El catálogo manual de KPI ha perdido: ${fragment}`);
