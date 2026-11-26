@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const note = db.insert(orderNotes).values({
       id, orderNumber: normalizeOrderNoteReference(detail.number), kind: 'nota',
-      content: returnReceivedNote(item.name, item.size, now),
+      content: returnReceivedNote(kind, item.name, item.size, now),
       authorEmail: user.email, authorName: user.displayName, createdAt: now,
     });
 
