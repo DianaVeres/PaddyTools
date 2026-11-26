@@ -37,6 +37,8 @@ for (const method of ['Península', 'vía Envío a Península', 'Envío a la Pen
   assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: false, treatment: 'sent' }), 'sent');
 }
 assert.equal(preparationRoute('Envío al Colegio Peninsular', false).treatment, 'school-ready');
+assert.equal(preparationRoute('vía Envío gratuito a Colegio San Pedro', false).targetStatusName, 'Pedido preparado');
+assert.equal(preparationRoute('Envío gratuito al Colegio San Pedro', true).treatment, 'manual-reservation');
 assert.equal(
   preparationRoute('Envío Península', true).treatment,
   'manual-home-reservation',
