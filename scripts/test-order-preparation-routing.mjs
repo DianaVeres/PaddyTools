@@ -31,7 +31,7 @@ assert.equal(
   preparationRoute('Envío Península', false).treatment,
   'manual-home-delivery',
 );
-for (const method of ['Península', 'vía Envío a Península', 'Envío a la Península', 'Envío - España peninsular']) {
+for (const method of ['Península', 'vía Envío a Península', 'Envío a la Península', 'Envío - España peninsular', 'Envío gratuito a Península']) {
   assert.equal(preparationRoute(method, false).treatment, 'manual-home-delivery');
   assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: true, treatment: 'manual-review' }), 'manual-home-reservation');
   assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: false, treatment: 'sent' }), 'sent');

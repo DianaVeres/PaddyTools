@@ -28,7 +28,7 @@ export function preparationRoute(
   const method = folded(shippingMethod).replace(/^via\s+/, '');
   const isHomeDelivery =
     method.includes('envio valencia y comunidad valenciana') ||
-    /^(?:envios?[\s:–—-]+(?:(?:a|al|a la|para)\s+)?)?(?:espana\s+)?peninsul(?:a|ar)\b/.test(method);
+    /^(?:envios?[\s:–—-]+(?:gratuitos?\s+)?(?:(?:a|al|a la|para)\s+)?)?(?:espana\s+)?peninsul(?:a|ar)\b/.test(method);
 
   if (hasReservation && isHomeDelivery)
     return {
