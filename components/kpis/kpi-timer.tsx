@@ -68,9 +68,9 @@ export function KpiTimer() {
     fetch('/api/auth/session', { cache: 'no-store' }).then(async (response) => {
       if (!response.ok) return;
       const data = (await response.json()) as {
-        user?: { email: string; displayName: string };
+        user?: { email: string; displayName: string; permissions: string[] };
       };
-      if (hasTechnicalOnlyAccess(data.user?.email)) return;
+      if (hasTechnicalOnlyAccess(data.user?.email) || !data.user?.permissions.includes('kpis')) return;
       setMaintenanceAllowed(canManageMaintenance(data.user));
       setAvailable(true);
       const stored = localStorage.getItem(storageKey);

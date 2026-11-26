@@ -1,4 +1,6 @@
 import { env } from 'cloudflare:workers';
+import { parsePermissions, type AppPermission } from './module-permissions';
+export { APP_PERMISSIONS, parsePermissions, serializePermissions, type AppPermission } from './module-permissions';
 
 /**
  * Servicio de autenticación de la aplicación.
@@ -13,7 +15,7 @@ import { env } from 'cloudflare:workers';
 export const SESSION_COOKIE = 'paddy_session';
 const SESSION_DAYS = 7;
 
-export type AuthUser = { email: string; displayName: string };
+export type AuthUser = { email: string; displayName: string; permissions: AppPermission[] };
 
 type UserRow = {
   email: string;
@@ -143,11 +145,11 @@ export async function getSessionUser(request: Request): Promise<AuthUser | null>
   const token = cookieValue(request, SESSION_COOKIE);
   if (!token) return null;
   const row = await database().prepare(
-    `SELECT u.email, u.display_name
+    `SELECT u.email, u.display_name, u.permissions
      FROM auth_sessions s JOIN auth_users u ON u.email = s.user_email
      WHERE s.token_hash = ? AND s.expires_at > ? AND u.active = 1 LIMIT 1`,
-  ).bind(await sha256(token), Date.now()).first<{ email: string; display_name: string }>();
-  return row ? { email: row.email, displayName: row.display_name } : null;
+  ).bind(await sha256(token), Date.now()).first<{ email: string; display_name: string; permissions: string }>();
+  return row ? { email: row.email, displayName: row.display_name, permissions: parsePermissions(row.permissions, row.email) } : null;
 }
 
 export async function deleteSession(request: Request) {

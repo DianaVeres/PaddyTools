@@ -31,7 +31,7 @@ async function json(path, expectedStatuses = [200]) {
 // La portada debe cargar el documento HTML real, no una pantalla de error.
 const home = await request('/');
 const homeHtml = await home.text();
-if (!homeHtml.includes('PaddyTools') && !homeHtml.includes('Gestión unificada')) {
+if (!homeHtml.includes('PaddyTools')) {
   throw new Error('La portada no contiene la identidad de PaddyTools.');
 }
 const kpis = await request('/kpis');
@@ -42,6 +42,12 @@ const hotline = await request('/hotline');
 const hotlineHtml = await hotline.text();
 if (!hotlineHtml.includes('Hotline'))
   throw new Error('La pantalla de Hotline no está disponible en producción.');
+for (const path of ['/preparar-pedidos', '/inventarios']) await request(path);
+for (const path of ['/tic', '/fichas-tecnicas']) {
+  const response = await fetch(`${baseUrl}${path}`, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
+  if (![302, 307, 308].includes(response.status) || !response.headers.get('location')?.includes('/login'))
+    throw new Error(`${path} no está disponible o no protege el acceso.`);
+}
 
 // La ruta pública de salud comprueba ambas bases sin exponer datos personales.
 const health = await json('/api/health');
@@ -65,6 +71,8 @@ for (const path of [
   '/api/kpis?from=2026-11-01&to=2026-11-30',
   '/api/kpi-work-logs?from=2026-11-01&to=2026-11-30',
   '/api/hotline/cases',
+  '/api/technical-sheets',
+  '/api/tic/users',
   '/api/quality-errors?from=2026-11-01&to=2026-11-30',
 ]) {
   const protectedResponse = await json(path, [401]);

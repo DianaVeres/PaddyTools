@@ -67,6 +67,7 @@ export const authUsers = sqliteTable('auth_users', {
   // El correo funciona como identificador único del usuario.
   email: text('email').primaryKey(),
   displayName: text('display_name').notNull(),
+  permissions: text('permissions').notNull().default('["detalle","packing","reservas","recogidas","envios","incidencias"]'),
   // Aquí solo existe una firma criptográfica, nunca la contraseña original.
   passwordHash: text('password_hash'),
   active: integer('active', { mode: 'boolean' }).notNull().default(false),

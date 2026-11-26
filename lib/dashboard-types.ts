@@ -134,4 +134,4 @@ export type OrderSearchMatch = {
   statusLabel: string;
 };
 
-export type SessionUser = { email: string; displayName: string };
+export type SessionUser = { email: string; displayName: string; permissions: import('./module-permissions').AppPermission[] };

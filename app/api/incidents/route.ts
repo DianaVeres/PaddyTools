@@ -53,6 +53,10 @@ export async function PATCH(request: NextRequest) {
       solved?: boolean;
       sent?: boolean;
     };
+    if (!user?.permissions.includes('incidencias') &&
+        (!user?.permissions.includes('recogidas') || typeof body.received !== 'boolean' ||
+          body.solved !== undefined || body.sent !== undefined))
+      return NextResponse.json({ error: 'No tienes permiso para este cambio.' }, { status: 403 });
     if (!body.id && !body.orderNumber)
       return NextResponse.json(
         { error: 'Falta la incidencia.' },

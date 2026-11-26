@@ -7,6 +7,7 @@ import {
   Mail,
   PackageCheck,
   ScanBarcode,
+  ShieldCheck,
   Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { SessionUser } from '@/lib/dashboard-types';
-import { canReadTechnicalSheets } from '@/lib/technical-sheet-access';
+import { isPermissionsAdmin } from '@/lib/module-permissions';
 
 function userInitials(user: SessionUser | null) {
   return (
@@ -64,49 +65,49 @@ export function DashboardHeader({
       </a>
       <div id="kpi-timer-slot" className="kpi-timer-slot" />
       <div className="top-actions">
-        <Button
+        {sessionUser?.permissions.includes('kpis') && <Button
           className="action-button kpis"
           variant="outline"
           onClick={onOpenKpis}
         >
           <BarChart3 /> KPIs
-        </Button>
-        <Button
+        </Button>}
+        {sessionUser?.permissions.includes('pedidos') && <Button
           className="action-button order-preparation"
           variant="outline"
           onClick={onOpenOrderPreparation}
         >
           <PackageCheck /> Preparar pedidos
-        </Button>
-        <Button
+        </Button>}
+        {sessionUser?.permissions.includes('woocommerce') && <Button
           className="action-button woocommerce"
           variant="outline"
           onClick={onOpenWooCommerce}
         >
           <Store /> WooCommerce
-        </Button>
-        <Button
+        </Button>}
+        {sessionUser?.permissions.includes('hotline') && <Button
           className="action-button hotline"
           variant="outline"
           onClick={onOpenHotline}
         >
           <Mail /> Hotline
-        </Button>
-        <Button
+        </Button>}
+        {sessionUser?.permissions.includes('inventarios') && <Button
           className="action-button inventories"
           variant="outline"
           onClick={onOpenInventories}
         >
           <ScanBarcode /> Inventarios
-        </Button>
-        {canReadTechnicalSheets(sessionUser?.email) && <Button
+        </Button>}
+        {sessionUser?.permissions.includes('fichas') && <Button
           className="action-button technical-sheets"
           variant="outline"
           onClick={onOpenTechnicalSheets}
         >
           <ClipboardList /> Fichas técnicas
         </Button>}
-        <DropdownMenu>
+        {sessionUser?.permissions.includes('reservas') && <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button className="action-button reservation" variant="outline" />
@@ -122,7 +123,12 @@ export function DashboardHeader({
               <CalendarDays /> Generar reserva
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu>}
+        {isPermissionsAdmin(sessionUser?.email) && (
+          <Button variant="outline" className="action-button" onClick={() => window.location.assign('/tic')}>
+            <ShieldCheck /> Permisos
+          </Button>
+        )}
         <span className="divider" />
         <button
           className="user-chip"

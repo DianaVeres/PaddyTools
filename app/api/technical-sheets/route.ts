@@ -7,14 +7,13 @@ import {
   stmTechnicalSheets,
 } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
-import { canReadTechnicalSheets } from '@/lib/technical-sheet-access';
 import { env } from 'cloudflare:workers';
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser(request);
   if (!user)
     return NextResponse.json({ error: 'Debes iniciar sesión.' }, { status: 401 });
-  if (!canReadTechnicalSheets(user.email))
+  if (!user.permissions.includes('fichas'))
     return NextResponse.json({ error: 'No tienes acceso a Fichas técnicas.' }, { status: 403 });
 
   const photo = request.nextUrl.searchParams.get('photo');
