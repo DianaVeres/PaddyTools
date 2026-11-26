@@ -12,9 +12,9 @@ export function returnOrderReference(value: string) {
   return /^(?:PA)?\d{1,15}$/.test(reference) ? reference : '';
 }
 
-export function returnReceivedNote(kind: 'return' | 'incident', name: string, size: string, date: Date) {
+export function returnReceivedNote(kind: 'return' | 'incident', name: string, size: string, date: Date, quantity = 1) {
   const day = new Intl.DateTimeFormat('es-ES', {
     timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', year: 'numeric',
   }).format(date);
-  return `${kind === 'incident' ? 'Incidencia' : 'Devolución'} de ${name} Talla ${size} recibida el ${day}`;
+  return `${kind === 'incident' ? 'Incidencia' : 'Devolución'} de ${name} Talla ${size} recibida el ${day} (${quantity} ${quantity === 1 ? 'unidad' : 'unidades'})`;
 }

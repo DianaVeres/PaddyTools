@@ -70,6 +70,8 @@ export const orderReturns = sqliteTable(
     orderId: integer('order_id').notNull(),
     orderNumber: text('order_number').notNull(),
     itemName: text('item_name').notNull(),
+    sku: text('sku'),
+    quantity: integer('quantity').notNull().default(1),
     size: text('size').notNull(),
     receivedAt: integer('received_at', { mode: 'timestamp_ms' }).notNull(),
   },

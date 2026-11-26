@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { setRemoteReturnAttended } from '@/lib/dashboard-api';
 
-type ReceivedReturn = { id: string; orderId: number; orderNumber: string; itemName: string; size: string; receivedAt: string };
+type ReceivedReturn = { id: string; orderId: number; orderNumber: string; itemName: string; sku: string | null; quantity: number; size: string; receivedAt: string };
 type Status = { orderId: number; attended: boolean };
 const receivedDate = new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeZone: 'Europe/Madrid' });
 
@@ -82,7 +82,7 @@ export default function ReceivedReturnsPage() {
           <a className="font-semibold underline underline-offset-4" href={'/?order=' + encodeURIComponent(row.orderNumber)}>
             Pedido {row.orderNumber}
           </a>
-          <p className="break-words">{row.itemName} · Talla {row.size} · {receivedDate.format(new Date(row.receivedAt))}</p>
+          <p className="break-words">{row.itemName}{row.sku && <> · {row.sku}</>} · Talla {row.size} · {row.quantity} uds. · {receivedDate.format(new Date(row.receivedAt))}</p>
           {selected?.orderId === row.orderId ? <label className="flex min-h-11 items-center gap-2">
             <input type="checkbox" checked={selected.attended} disabled={pendingOrder !== null}
               onChange={(event) => void changeStatus(row, event.target.checked)} /> Devolución atendida

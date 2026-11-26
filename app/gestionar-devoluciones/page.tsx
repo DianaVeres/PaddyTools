@@ -11,7 +11,7 @@ type OrderResult = {
   pickups: Array<{ id: string; incidentText: string; pickupDetails: string }>;
   canMarkIncident: boolean;
 };
-type Receipt = { itemId: number; kind: 'return' | 'incident'; pickupId: string; operationId: string };
+type Receipt = { itemId: number; kind: 'return' | 'incident'; pickupId: string; operationId: string; quantity: number };
 
 export default function ReturnsPage() {
   const input = useRef<HTMLInputElement>(null);
@@ -43,7 +43,7 @@ export default function ReturnsPage() {
 
   function select(itemId: number, kind: Receipt['kind']) {
     setNotice('');
-    setReceipt({ itemId, kind, pickupId: '', operationId: crypto.randomUUID() });
+    setReceipt({ itemId, kind, pickupId: '', quantity: 1, operationId: crypto.randomUUID() });
   }
 
   async function receive() {
@@ -101,6 +101,12 @@ export default function ReturnsPage() {
             onClick={() => select(item.id, 'incident')}>Incidencia</Button>}
         </div>
         {receipt?.itemId === item.id && <div className="grid min-w-0 gap-2 rounded-lg border bg-slate-50 p-2">
+          <label className="grid gap-1">
+            Unidades recibidas de {item.sku}
+            <Input type="number" inputMode="numeric" min={1} max={item.quantity} step={1}
+              value={receipt.quantity || ''} disabled={busy}
+              onChange={(event) => setReceipt({ ...receipt, quantity: Number(event.target.value), operationId: crypto.randomUUID() })} />
+          </label>
           {receipt.kind === 'incident' && (result.pickups.length > 1
             ? <label className="grid min-w-0 gap-1">Recogida pendiente
                 <select className="w-full min-w-0 rounded-lg border bg-white p-2" value={receipt.pickupId} disabled={busy}
@@ -113,7 +119,7 @@ export default function ReturnsPage() {
               </label>
             : <p>{result.pickups[0] ? 'Se marcará la recogida como recibida.' : 'Sin recogida pendiente. Se guardará la nota.'}</p>)}
           <div className="flex flex-wrap gap-2">
-            <Button type="button" className="min-h-11" disabled={busy || (receipt.kind === 'incident' && result.pickups.length > 1 && !receipt.pickupId)}
+            <Button type="button" className="min-h-11" disabled={busy || !Number.isSafeInteger(receipt.quantity) || receipt.quantity < 1 || receipt.quantity > item.quantity || (receipt.kind === 'incident' && result.pickups.length > 1 && !receipt.pickupId)}
               onClick={() => void receive()}>{receipt.kind === 'incident' ? 'Registrar incidencia' : 'Registrar devolución'}</Button>
             <Button type="button" className="min-h-11" variant="outline" disabled={busy} onClick={() => setReceipt(null)}>Cancelar</Button>
           </div>

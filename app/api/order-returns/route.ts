@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
   if (!user?.permissions.includes('detalle') || !user.permissions.includes('pedidos'))
     return error('Sin permiso para gestionar devoluciones.', 403);
   try {
-    const { reference, itemId, kind, pickupId, operationId } = await request.json() as {
-      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown;
+    const { reference, itemId, kind, pickupId, operationId, quantity } = await request.json() as {
+      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown; quantity?: unknown;
     };
     if (pickupId !== undefined && typeof pickupId !== 'string') return error('Recogida no válida.', 400);
     const number = typeof reference === 'string' ? returnOrderReference(reference) : '';
@@ -73,16 +73,19 @@ export async function POST(request: NextRequest) {
     const detail = await order(number);
     const item = detail?.items.find((line) => line.id === itemId);
     if (!detail || !item) return error('No se encontró el artículo en el pedido.', 404);
+    const units = quantity ?? 1;
+    if (typeof units !== 'number' || !Number.isSafeInteger(units) || units < 1 || units > item.quantity)
+      return error('Indica una cantidad entre 1 y las unidades de este artículo en el pedido.', 400);
     const now = new Date();
     const note = db.insert(orderNotes).values({
       id, orderNumber: normalizeOrderNoteReference(detail.number), kind: 'nota',
-      content: returnReceivedNote(kind, item.name, item.size, now),
+      content: returnReceivedNote(kind, item.name, item.size, now, units),
       authorEmail: user.email, authorName: user.displayName, createdAt: now,
     });
 
     if (kind === 'return') {
       await db.batch([note, db.insert(orderReturns).values({
-        id, orderId: detail.id, orderNumber: detail.number, itemName: item.name, size: item.size, receivedAt: now,
+        id, orderId: detail.id, orderNumber: detail.number, itemName: item.name, sku: item.sku, quantity: units, size: item.size, receivedAt: now,
       })]);
       return NextResponse.json({ ok: true });
     }
