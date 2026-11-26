@@ -15,6 +15,7 @@ import { lookupMondayRecords } from '@/lib/monday-lookup';
 import { acceptedPaymentStatusSlug } from '@/lib/woo-initial-status-count';
 import {
   preparationRoute,
+  preparedTreatment,
   wooStatusSlugByName,
 } from '@/lib/order-preparation-routing';
 import { wooFetch, wooIsConfigured, wooResponseJson } from '@/lib/woocommerce';
@@ -112,7 +113,9 @@ export async function GET(request: NextRequest) {
             barcodes: barcodesForPreparationItem(item, catalog),
           })),
         })),
-      preparedToday: completions.filter((row) => row.completionDate === today),
+      preparedToday: completions
+        .filter((row) => row.completionDate === today)
+        .map((row) => ({ ...row, treatment: preparedTreatment(row) })),
     });
   } catch (error) {
     return NextResponse.json(
@@ -290,9 +293,10 @@ export async function PUT(request: NextRequest) {
         { error: 'El pedido preparado no existe.' },
         { status: 404 },
       );
+    const treatment = preparedTreatment(existing[0]);
     if (
       !['manual-home-delivery', 'manual-home-reservation'].includes(
-        existing[0].treatment,
+        treatment,
       )
     )
       return NextResponse.json(
@@ -318,7 +322,7 @@ export async function PUT(request: NextRequest) {
     if (!sentStatus)
       throw new Error('No se encontró el estado “Enviado” en WooCommerce.');
     let note = buildShippingNote(carrier, trackingNumber);
-    if (existing[0].treatment === 'manual-home-reservation') {
+    if (treatment === 'manual-home-reservation') {
       if (!config.MONDAY_API_TOKEN) throw new Error('Monday no está configurado para consultar las reservas.');
       const reservations = await loadPendingReservations(existing[0].orderNumber, config.MONDAY_API_TOKEN);
       note = buildReservationNote(reservationNoteLines(reservations), {

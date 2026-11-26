@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   preparationRoute,
+  preparedTreatment,
   wooStatusSlugByName,
 } from '../lib/order-preparation-routing.ts';
 
@@ -30,6 +31,12 @@ assert.equal(
   preparationRoute('Envío Península', false).treatment,
   'manual-home-delivery',
 );
+for (const method of ['Península', 'vía Envío a Península', 'Envío a la Península', 'Envío - España peninsular']) {
+  assert.equal(preparationRoute(method, false).treatment, 'manual-home-delivery');
+  assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: true, treatment: 'manual-review' }), 'manual-home-reservation');
+  assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: false, treatment: 'sent' }), 'sent');
+}
+assert.equal(preparationRoute('Envío al Colegio Peninsular', false).treatment, 'school-ready');
 assert.equal(
   preparationRoute('Envío Península', true).treatment,
   'manual-home-reservation',

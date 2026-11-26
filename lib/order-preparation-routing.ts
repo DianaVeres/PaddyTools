@@ -28,7 +28,7 @@ export function preparationRoute(
   const method = folded(shippingMethod).replace(/^via\s+/, '');
   const isHomeDelivery =
     method.includes('envio valencia y comunidad valenciana') ||
-    method.includes('envio peninsula');
+    /^(?:envios?[\s:–—-]+(?:(?:a|al|a la|para)\s+)?)?(?:espana\s+)?peninsul(?:a|ar)\b/.test(method);
 
   if (hasReservation && isHomeDelivery)
     return {
@@ -78,6 +78,16 @@ export function preparationRoute(
       'Pendiente de tratamiento manual: método de entrega no reconocido.',
     automatic: false,
   };
+}
+
+export function preparedTreatment(
+  order: { shippingMethod: string; hasReservation: boolean; treatment: string },
+) {
+  if (order.treatment === 'sent') return order.treatment;
+  const { treatment } = preparationRoute(order.shippingMethod, order.hasReservation);
+  return treatment === 'manual-home-delivery' || treatment === 'manual-home-reservation'
+    ? treatment
+    : order.treatment;
 }
 
 export function wooStatusSlugByName(
