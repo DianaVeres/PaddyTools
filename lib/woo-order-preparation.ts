@@ -50,15 +50,16 @@ export function preparationSchool(order: WooPreparationOrder) {
       })),
     ),
   ];
-  const metadataSchool = clean(
-    values.find((entry) => /colegio|college|school|centro/i.test(entry.label))
-      ?.value,
-  );
+  const metadataSchool = values
+    .filter((entry) => /colegio|college|school|centro/i.test(entry.label))
+    .map((entry) => clean(entry.value))
+    .find((value) => /\p{L}/u.test(value) && value !== '[object Object]');
   if (metadataSchool) return metadataSchool;
   const shippingMethod = preparationShippingMethod(order);
   if (preparationRoute(shippingMethod, false).treatment !== 'school-ready') return '';
   const schoolMatch = shippingMethod.match(/^(?:v[ií]a\s+)?env[ií]o\s+(?:gratuito\s+)?(?:a|al)\s+(.+)$/i);
-  return clean(schoolMatch?.[1]);
+  const destination = clean(schoolMatch?.[1]);
+  return /\p{L}/u.test(destination) ? destination : '';
 }
 
 function preparationShippingMethod(order: WooPreparationOrder) {

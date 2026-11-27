@@ -13,7 +13,7 @@ type OrderResult = {
   hasIncident: boolean;
   canCreateIncident: boolean;
 };
-type Receipt = { itemId: number; kind: 'return' | 'incident'; pickupId: string; operationId: string; quantity: number; description: string };
+type Receipt = { itemId: number; kind: 'return' | 'incident'; pickupId: string; operationId: string; quantity: number; description: string; shippingRequired: boolean };
 
 export default function ReturnsPage() {
   const input = useRef<HTMLInputElement>(null);
@@ -45,7 +45,7 @@ export default function ReturnsPage() {
 
   function select(itemId: number, kind: Receipt['kind']) {
     setNotice('');
-    setReceipt({ itemId, kind, pickupId: '', quantity: 1, description: '', operationId: crypto.randomUUID() });
+    setReceipt({ itemId, kind, pickupId: '', quantity: 1, description: '', shippingRequired: false, operationId: crypto.randomUUID() });
   }
 
   const needsIncident = receipt?.kind === 'incident' && result?.hasIncident === false;
@@ -122,12 +122,19 @@ export default function ReturnsPage() {
                 </select>
               </label>
             : <p>{result.pickups[0] ? 'Se marcará la recogida como recibida.' : result.hasIncident ? 'La incidencia ya está registrada. Se guardará la nota.' : null}</p>)}
-          {needsIncident && (result.canCreateIncident ? <label className="grid gap-1">
+          {needsIncident && (result.canCreateIncident ? <>
+          <label className="grid gap-1">
             ¿Qué ha pasado?
             <textarea className="min-h-24 w-full rounded-lg border bg-white p-2" maxLength={4000}
               value={receipt.description} disabled={busy}
               onChange={(event) => setReceipt({ ...receipt, description: event.target.value })} />
-          </label> : <p>Tu usuario necesita permiso de Incidencias para darla de alta.</p>)}
+          </label>
+          <label className="flex min-h-11 items-center gap-2">
+            <input type="checkbox" checked={receipt.shippingRequired} disabled={busy}
+              onChange={(event) => setReceipt({ ...receipt, shippingRequired: event.target.checked })} />
+            Requiere envío
+          </label>
+          </> : <p>Tu usuario necesita permiso de Incidencias para darla de alta.</p>)}
           <div className="flex flex-wrap gap-2">
             <Button type="button" className="min-h-11" disabled={busy || (needsIncident && (!result.canCreateIncident || !receipt.description.trim())) || !Number.isSafeInteger(receipt.quantity) || receipt.quantity < 1 || receipt.quantity > item.quantity || (receipt.kind === 'incident' && result.pickups.length > 1 && !receipt.pickupId)}
               onClick={() => void receive()}>{receipt.kind === 'incident' ? 'Registrar incidencia' : 'Registrar devolución'}</Button>

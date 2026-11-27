@@ -7,6 +7,8 @@ import { getSessionUser } from '@/lib/auth';
 import { findIncidents } from '@/lib/incident-query';
 import { prepareIncidentWrite } from '@/lib/incident-write';
 import { incidentStatusUpdate } from '@/lib/incident-actions';
+import { MONDAY_RESERVATION_OPTIONS } from '@/lib/monday-config';
+import { reservationSchoolFromArticle } from '@/lib/reservation-prefill';
 import { normalizeOrderNoteReference } from '@/lib/order-note';
 import { returnOrderReference, returnReceivedNote } from '@/lib/order-return';
 import { loadWooOrderDetail } from '@/lib/woo-order-detail';
@@ -56,8 +58,8 @@ export async function POST(request: NextRequest) {
   if (!user?.permissions.includes('detalle') || !user.permissions.includes('pedidos'))
     return error('Sin permiso para gestionar devoluciones.', 403);
   try {
-    const { reference, itemId, kind, pickupId, operationId, quantity, description } = await request.json() as {
-      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown; quantity?: unknown; description?: unknown;
+    const { reference, itemId, kind, pickupId, operationId, quantity, description, shippingRequired } = await request.json() as {
+      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown; quantity?: unknown; description?: unknown; shippingRequired?: unknown;
     };
     if (pickupId !== undefined && typeof pickupId !== 'string') return error('Recogida no válida.', 400);
     const number = typeof reference === 'string' ? returnOrderReference(reference) : '';
@@ -111,10 +113,13 @@ export async function POST(request: NextRequest) {
 
     if (!user.permissions.includes('incidencias'))
       return error('Tu usuario necesita permiso de Incidencias para darla de alta.', 403);
+    if (shippingRequired !== undefined && typeof shippingRequired !== 'boolean')
+      return error('Indica si la incidencia requiere envío.', 400);
     const incidentText = typeof description === 'string' ? description.trim() : '';
     if (!incidentText || incidentText.length > 4000)
       return error('Describe qué ha pasado (máximo 4000 caracteres).', 400);
     const incidentDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(now);
+    const school = detail.school || reservationSchoolFromArticle([...MONDAY_RESERVATION_OPTIONS.schools], item.name, item.sku);
     const creation = await prepareIncidentWrite({
       order_number: detail.number,
       source_type: 'order',
@@ -125,7 +130,8 @@ export async function POST(request: NextRequest) {
       order_date: detail.dateCreated.slice(0, 10),
       order_status: detail.statusLabel,
       order_total: detail.total,
-      incident_school_name: detail.school || 'Sin colegio indicado',
+      incident_school_name: school || 'Sin colegio indicado',
+      shipping_required: shippingRequired ? 1 : 0,
       incident_date: incidentDate,
       incident_text: incidentText,
       products_json: [{ name: item.name, sku: item.sku, variation: item.size, quantity: units }],
