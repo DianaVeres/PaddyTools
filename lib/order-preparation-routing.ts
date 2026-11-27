@@ -1,7 +1,10 @@
+import { reservationBarcodeMatches } from './reservation-preparation.ts';
+
 export type PreparationTreatment =
   | 'school-ready'
   | 'store-ready'
   | 'manual-reservation'
+  | 'total-reservation'
   | 'manual-home-delivery'
   | 'manual-home-reservation'
   | 'manual-review';
@@ -24,11 +27,20 @@ const folded = (value: unknown) =>
 export function preparationRoute(
   shippingMethod: string,
   hasReservation: boolean,
+  totalReservation = false,
 ): PreparationRoute {
   const method = folded(shippingMethod).replace(/^via\s+/, '');
   const isHomeDelivery =
     method.includes('envio valencia y comunidad valenciana') ||
     /^(?:envios?[\s:–—-]+(?:gratuitos?\s+)?(?:(?:a|al|a la|para)\s+)?)?(?:espana\s+)?peninsul(?:a|ar)\b/.test(method);
+
+  if (totalReservation)
+    return {
+      treatment: 'total-reservation',
+      targetStatusName: 'Reserva Total',
+      message: 'Estado cambiado a Reserva Total.',
+      automatic: true,
+    };
 
   if (hasReservation && isHomeDelivery)
     return {
@@ -36,14 +48,6 @@ export function preparationRoute(
       targetStatusName: '',
       message:
         'Pendiente de tratamiento manual: envío a domicilio con reserva.',
-      automatic: false,
-    };
-
-  if (hasReservation)
-    return {
-      treatment: 'manual-reservation',
-      targetStatusName: '',
-      message: 'Pendiente de tratamiento manual: lleva reserva.',
       automatic: false,
     };
 
@@ -72,7 +76,7 @@ export function preparationRoute(
     };
 
   return {
-    treatment: 'manual-review',
+    treatment: hasReservation ? 'manual-reservation' : 'manual-review',
     targetStatusName: '',
     message:
       'Pendiente de tratamiento manual: método de entrega no reconocido.',
@@ -80,10 +84,35 @@ export function preparationRoute(
   };
 }
 
+export function isTotalPreparationReservation(
+  items: Array<{ sku: string; size: string; quantity: number }>,
+  reservations: Array<{ code: string; size: string; quantity: number }>,
+) {
+  if (!reservations.length) return false;
+  const remaining = items.map((item) => item.quantity);
+  for (const reservation of reservations) {
+    let units = reservation.quantity;
+    if (!Number.isSafeInteger(units) || units <= 0)
+      throw new Error('Revisa las unidades pendientes de la reserva en Monday.');
+    for (const [index, item] of items.entries()) {
+      if (!remaining[index] || !reservationBarcodeMatches(reservation, {
+        article: item.sku,
+        size: item.size === '—' && item.sku.includes('/') ? item.sku.split('/').at(-1) || '' : item.size,
+      })) continue;
+      const used = Math.min(units, remaining[index]);
+      remaining[index] -= used;
+      units -= used;
+      if (!units) break;
+    }
+    if (units) throw new Error('Hay artículos o unidades reservadas en Monday que no coinciden con el pedido. Revisa la referencia y la talla.');
+  }
+  return remaining.every((units) => units === 0);
+}
+
 export function preparedTreatment(
   order: { shippingMethod: string; hasReservation: boolean; treatment: string },
 ) {
-  if (order.treatment === 'sent') return order.treatment;
+  if (order.treatment === 'sent' || order.treatment === 'total-reservation') return order.treatment;
   const { treatment } = preparationRoute(order.shippingMethod, order.hasReservation);
   return treatment === 'manual-home-delivery' || treatment === 'manual-home-reservation'
     ? treatment
@@ -95,10 +124,11 @@ export function wooStatusSlugByName(
   statusName: string,
 ) {
   const wanted = folded(statusName);
+  const aliases = wanted === 'disponible para recogida en tienda' ? [wanted, 'disponible en tienda'] : [wanted];
   const found = statuses.find(
     (status) =>
-      folded(status.name) === wanted ||
-      folded(status.slug).replace(/^wc-/, '').replace(/-/g, ' ') === wanted,
+      aliases.includes(folded(status.name)) ||
+      aliases.includes(folded(status.slug).replace(/^wc-/, '').replace(/-/g, ' ')),
   );
   return String(found?.slug || '').replace(/^wc-/, '');
 }

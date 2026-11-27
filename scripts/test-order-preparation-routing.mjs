@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  isTotalPreparationReservation,
   preparationRoute,
   preparedTreatment,
   wooStatusSlugByName,
@@ -11,7 +12,7 @@ assert.equal(
 );
 assert.equal(
   preparationRoute('vía Envío al Colegio', true).treatment,
-  'manual-reservation',
+  'school-ready',
 );
 assert.deepEqual(preparationRoute('Envío a British College La Cañada', false), {
   treatment: 'school-ready',
@@ -38,7 +39,7 @@ for (const method of ['Península', 'vía Envío a Península', 'Envío a la Pen
 }
 assert.equal(preparationRoute('Envío al Colegio Peninsular', false).treatment, 'school-ready');
 assert.equal(preparationRoute('vía Envío gratuito a Colegio San Pedro', false).targetStatusName, 'Pedido preparado');
-assert.equal(preparationRoute('Envío gratuito al Colegio San Pedro', true).treatment, 'manual-reservation');
+assert.equal(preparationRoute('Envío gratuito al Colegio San Pedro', true).treatment, 'school-ready');
 assert.equal(
   preparationRoute('Envío Península', true).treatment,
   'manual-home-reservation',
@@ -46,8 +47,8 @@ assert.equal(
 );
 assert.equal(
   preparationRoute('Envío a Colegio', true).treatment,
-  'manual-reservation',
-  'una reserva debe impedir el cambio automático aunque sea envío a colegio',
+  'school-ready',
+  'una reserva parcial de colegio pasa a preparado',
 );
 assert.equal(
   wooStatusSlugByName(
@@ -57,4 +58,14 @@ assert.equal(
   'pedido-preparado',
 );
 
+assert.equal(preparationRoute('Recogida en tienda Paddy', true).treatment, 'store-ready');
+assert.equal(wooStatusSlugByName([{ slug: 'wc-tienda', name: 'Disponible en tienda' }], 'Disponible para recogida en tienda'), 'tienda');
+for (const method of ['Envío a colegio', 'Recogida en tienda Paddy', 'Envío Península']) {
+  assert.equal(preparationRoute(method, true, true).targetStatusName, 'Reserva Total');
+  assert.equal(preparedTreatment({ shippingMethod: method, hasReservation: true, treatment: 'total-reservation' }), 'total-reservation');
+}
+const items = [{ sku: '3/9508/AZUL/8', size: '8', quantity: 2 }];
+assert.equal(isTotalPreparationReservation(items, [{ code: '9508', size: 'T.8', quantity: 1 }]), false);
+assert.equal(isTotalPreparationReservation(items, [{ code: '9508', size: 'T.8', quantity: 2 }]), true);
+assert.throws(() => isTotalPreparationReservation(items, [{ code: '9508', size: 'T.10', quantity: 2 }]));
 console.log('Enrutado de pedidos preparados verificado.');

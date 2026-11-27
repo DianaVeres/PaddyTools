@@ -11,9 +11,11 @@ import {
 } from '@/lib/order-preparation-catalog';
 import { loadAcceptedPaymentOrders } from '@/lib/woo-order-preparation';
 import { loadPreparationOrder } from '@/lib/woo-order-preparation';
+import { isDeliveredReservation } from '@/lib/reservation-preparation';
 import { lookupMondayRecords } from '@/lib/monday-lookup';
 import { acceptedPaymentStatusSlug } from '@/lib/woo-initial-status-count';
 import {
+  isTotalPreparationReservation,
   preparationRoute,
   preparedTreatment,
   wooStatusSlugByName,
@@ -24,7 +26,7 @@ async function loadPendingReservations(orderNumber: string, token: string) {
   const records = await lookupMondayRecords(orderNumber, token);
   return records.filter((record) =>
     record.kind === 'reserva' &&
-    !/anulad|cancelad/i.test(record.status) &&
+    !isDeliveredReservation(record.status) && !/anulad|cancelad/i.test(record.status) &&
     (!String(record.pending || '').trim() || Number(record.pending) > 0),
   );
 }
@@ -175,15 +177,20 @@ export async function POST(request: NextRequest) {
       })
       .filter(Boolean)
       .join('; ');
-    const route = preparationRoute(order.shippingMethod, hasReservation);
-    if (route.treatment === 'manual-reservation') {
-      const method = preparationRoute(order.shippingMethod, false).treatment;
-      if (method === 'school-ready' || method === 'store-ready') {
-        const note = buildReservationNote(reservationNoteLines(pendingReservations), {
-          kind: method === 'school-ready' ? 'school' : 'store',
-        });
-        await saveCustomerOrderNote(orderId, config, note);
-      }
+    const totalReservation = isTotalPreparationReservation(
+      order.items,
+      pendingReservations.map((record) => ({
+        code: record.code || record.article,
+        size: record.size,
+        quantity: Number(String(record.pending || '').trim() || record.units),
+      })),
+    );
+    const route = preparationRoute(order.shippingMethod, hasReservation, totalReservation);
+    if (hasReservation && (route.treatment === 'school-ready' || route.treatment === 'store-ready')) {
+      const note = buildReservationNote(reservationNoteLines(pendingReservations), {
+        kind: route.treatment === 'school-ready' ? 'school' : 'store',
+      });
+      await saveCustomerOrderNote(orderId, config, note);
     }
     let wooStatus = '';
     if (route.automatic) {
