@@ -224,7 +224,9 @@ export default function Home() {
         const initialOrder = initialParams.get('order');
         if (initialOrder) {
           setQuery(initialOrder);
-          await search(undefined, initialOrder, initialParams.get('incidentId') || undefined);
+          const incidentId = initialParams.get('incidentId');
+          if (incidentId) await search(undefined, initialOrder, incidentId);
+          else await search(undefined, initialOrder);
         }
         const pendingDelete = initialParams.get('deleteIncident');
         if (pendingDelete) {
