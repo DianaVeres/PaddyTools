@@ -22,9 +22,9 @@ export async function allocateAutomaticIncidentId() {
   return nextAutomaticIncidentId(await readAllIncidentRows());
 }
 
-export async function saveIncident(
+export async function prepareIncidentWrite(
   incoming: Record<string, unknown>,
-  options: { allowManual?: boolean; actor?: AuthUser | null } = {},
+  options: { allowManual?: boolean; actor?: AuthUser | null; creationId?: string } = {},
 ) {
   const rows = await readAllIncidentRows();
   let originalReference = incidentTextValue(incoming.order_number)
@@ -121,18 +121,29 @@ export async function saveIncident(
       now,
     );
   }
-  const id = previous?.id || `INC-${crypto.randomUUID()}`;
-  if (previous)
-    await getDb()
-      .update(incidentRecords)
-      .set(incidentFieldsFor(id, saved))
-      .where(eq(incidentRecords.id, id));
-  else
-    await getDb().insert(incidentRecords).values(incidentFieldsFor(id, saved));
+  const id = previous?.id || options.creationId || `INC-${crypto.randomUUID()}`;
+  const db = getDb();
+  const fields = incidentFieldsFor(id, saved);
+  const insert = db.insert(incidentRecords).values(fields);
+  const statement = previous
+    ? db.update(incidentRecords).set(fields).where(eq(incidentRecords.id, id))
+    : options.creationId ? insert.onConflictDoNothing({ target: incidentRecords.id }) : insert;
   return {
-    ok: true,
-    id,
-    row: { ...saved, record_id: id },
-    incident: mapStoredIncident({ id, data: saved }),
+    statement,
+    result: {
+      ok: true,
+      id,
+      row: { ...saved, record_id: id },
+      incident: mapStoredIncident({ id, data: saved }),
+    },
   };
+}
+
+export async function saveIncident(
+  incoming: Record<string, unknown>,
+  options: { allowManual?: boolean; actor?: AuthUser | null } = {},
+) {
+  const { statement, result } = await prepareIncidentWrite(incoming, options);
+  await statement;
+  return result;
 }

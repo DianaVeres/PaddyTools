@@ -1,3 +1,4 @@
+import { preparationSchool } from '@/lib/woo-order-preparation';
 import { wooFetch, wooRoot } from '@/lib/woocommerce';
 
 type WooLine = {
@@ -195,6 +196,7 @@ export function formatWooOrderDetail(
           .join(' · '),
       ),
     },
+    school: preparationSchool(order),
     schoolCandidates: wooOrderSchoolCandidates(order),
     shippingMethod:
       order.shipping_lines

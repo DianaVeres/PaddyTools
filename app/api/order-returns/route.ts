@@ -5,6 +5,7 @@ import { getDb } from '@/db';
 import { orderNotes, orderReturns } from '@/db/schema';
 import { getSessionUser } from '@/lib/auth';
 import { findIncidents } from '@/lib/incident-query';
+import { prepareIncidentWrite } from '@/lib/incident-write';
 import { incidentStatusUpdate } from '@/lib/incident-actions';
 import { normalizeOrderNoteReference } from '@/lib/order-note';
 import { returnOrderReference, returnReceivedNote } from '@/lib/order-return';
@@ -16,9 +17,9 @@ const order = (reference: string) => loadWooOrderDetail(reference, env as unknow
 const error = (message: string, status: number) => NextResponse.json({ error: message }, { status });
 const canReceivePickup = (permissions: string[]) => permissions.includes('recogidas') || permissions.includes('incidencias');
 
-async function pendingPickups(number: string) {
+async function orderIncidents(number: string) {
   const { incidents } = await findIncidents('', number);
-  return incidents.filter((incident) => incident.pickupSchool && !incident.pickupReceived);
+  return { incidents, pickups: incidents.filter((incident) => incident.pickupSchool && !incident.pickupReceived) };
 }
 
 export async function GET(request: NextRequest) {
@@ -38,10 +39,12 @@ export async function GET(request: NextRequest) {
     const detail = await order(reference);
     if (!detail) return error('No se encontró el pedido.', 404);
     const canMarkIncident = canReceivePickup(user.permissions);
-    const pickups = canMarkIncident && request.nextUrl.searchParams.get('statusOnly') !== '1' ? await pendingPickups(detail.number) : [];
+    const history = canMarkIncident && request.nextUrl.searchParams.get('statusOnly') !== '1' ? await orderIncidents(detail.number) : null;
     return NextResponse.json({
       detail: { id: detail.id, number: detail.number, items: detail.items, returnAttended: detail.returnAttended },
-      canMarkIncident, pickups: pickups.map(({ id, incidentText, pickupDetails }) => ({ id, incidentText, pickupDetails })),
+      canMarkIncident, hasIncident: Boolean(history?.incidents.length),
+      canCreateIncident: user.permissions.includes('incidencias'),
+      pickups: (history?.pickups ?? []).map(({ id, incidentText, pickupDetails }) => ({ id, incidentText, pickupDetails })),
     });
   } catch {
     return error('No se pudo cargar el pedido o el registro.', 502);
@@ -53,8 +56,8 @@ export async function POST(request: NextRequest) {
   if (!user?.permissions.includes('detalle') || !user.permissions.includes('pedidos'))
     return error('Sin permiso para gestionar devoluciones.', 403);
   try {
-    const { reference, itemId, kind, pickupId, operationId, quantity } = await request.json() as {
-      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown; quantity?: unknown;
+    const { reference, itemId, kind, pickupId, operationId, quantity, description } = await request.json() as {
+      reference?: unknown; itemId?: unknown; kind?: unknown; pickupId?: unknown; operationId?: unknown; quantity?: unknown; description?: unknown;
     };
     if (pickupId !== undefined && typeof pickupId !== 'string') return error('Recogida no válida.', 400);
     const number = typeof reference === 'string' ? returnOrderReference(reference) : '';
@@ -90,16 +93,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const pickups = await pendingPickups(detail.number);
+    const { incidents, pickups } = await orderIncidents(detail.number);
     if (pickups.length > 1 && !pickupId)
       return error('Hay varias recogidas pendientes. Selecciona la incidencia correspondiente.', 409);
     const pickup = pickupId ? pickups.find((row) => row.id === pickupId) : pickups[0];
     if (pickupId && !pickup) return error('La recogida ya no está pendiente o no pertenece al pedido.', 409);
     const change = pickup ? await incidentStatusUpdate({ id: pickup.id, received: true }, user) : null;
     if (pickup && !change) return error('No se encontró la recogida.', 409);
-    if (change) await db.batch([note, change.statement]);
-    else await note;
-    return NextResponse.json({ ok: true, pickupReceived: Boolean(change) });
+    if (change) {
+      await db.batch([note, change.statement]);
+      return NextResponse.json({ ok: true, pickupReceived: true });
+    }
+    if (incidents.length) {
+      await note;
+      return NextResponse.json({ ok: true });
+    }
+
+    if (!user.permissions.includes('incidencias'))
+      return error('Tu usuario necesita permiso de Incidencias para darla de alta.', 403);
+    const incidentText = typeof description === 'string' ? description.trim() : '';
+    if (!incidentText || incidentText.length > 4000)
+      return error('Describe qué ha pasado (máximo 4000 caracteres).', 400);
+    const incidentDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(now);
+    const creation = await prepareIncidentWrite({
+      order_number: detail.number,
+      source_type: 'order',
+      customer_name: detail.customer.name,
+      customer_email: detail.customer.email,
+      customer_phone: detail.customer.phone,
+      shipping_address: detail.customer.address,
+      order_date: detail.dateCreated.slice(0, 10),
+      order_status: detail.statusLabel,
+      order_total: detail.total,
+      incident_school_name: detail.school || 'Sin colegio indicado',
+      incident_date: incidentDate,
+      incident_text: incidentText,
+      products_json: [{ name: item.name, sku: item.sku, variation: item.size, quantity: units }],
+    }, { actor: user, creationId: `INC-RECEPCION-${detail.id}` });
+    await db.batch([note, creation.statement]);
+    return NextResponse.json({ ok: true, incidentCreated: true });
   } catch {
     return error('No se pudo guardar la recepción. Puedes volver a intentarlo.', 502);
   }

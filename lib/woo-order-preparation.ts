@@ -1,3 +1,4 @@
+import { preparationRoute } from './order-preparation-routing';
 import { acceptedPaymentStatusSlug } from './woo-initial-status-count';
 import { wooFetch, wooResponseJson } from './woocommerce';
 
@@ -36,7 +37,7 @@ const clean = (value: unknown) =>
     .replace(/<[^>]*>/g, '')
     .trim();
 
-function preparationSchool(order: WooPreparationOrder) {
+export function preparationSchool(order: WooPreparationOrder) {
   const values = [
     ...(order.meta_data || []).map((meta) => ({
       label: meta.key || '',
@@ -55,7 +56,8 @@ function preparationSchool(order: WooPreparationOrder) {
   );
   if (metadataSchool) return metadataSchool;
   const shippingMethod = preparationShippingMethod(order);
-  const schoolMatch = shippingMethod.match(/^envío a\s+(.+)$/i);
+  if (preparationRoute(shippingMethod, false).treatment !== 'school-ready') return '';
+  const schoolMatch = shippingMethod.match(/^(?:v[ií]a\s+)?env[ií]o\s+(?:gratuito\s+)?(?:a|al)\s+(.+)$/i);
   return clean(schoolMatch?.[1]);
 }
 
