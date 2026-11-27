@@ -5,6 +5,19 @@ import { ScanBarcode } from 'lucide-react';
 import { BarcodeCameraScanner } from '@/components/order-preparation/barcode-camera-scanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { searchConnectedRecords, searchExactConnected } from '@/lib/dashboard-api';
+import { normalizeReferenceInput } from '@/lib/global-search';
+import { isExactReturnReference, returnOrderReference, returnSearchTerm } from '@/lib/order-return';
+
+type LookupMatch = {
+  id: string;
+  label: string;
+  reference: string;
+  customer: string;
+  details?: string;
+  order?: string;
+  incidentId?: string;
+};
 
 type OrderResult = {
   detail: { number: string; items: Array<{ id: number; name: string; size: string; sku: string; quantity: number }> };
@@ -23,6 +36,7 @@ export default function ReturnsPage() {
   const [notice, setNotice] = useState('');
   const [result, setResult] = useState<OrderResult | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [matches, setMatches] = useState<LookupMatch[]>([]);
 
   async function openOrder(code: string) {
     if (!code.trim() || busy) return;
@@ -36,8 +50,68 @@ export default function ReturnsPage() {
       if (!response.ok) throw new Error(data.error);
       setReference('');
       setResult(data);
+      return true;
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No se pudo abrir el pedido.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function search(value: string) {
+    if (busy) return;
+    const term = returnSearchTerm(value);
+    if (!term) {
+      setNotice('Introduce una referencia, un nombre o un teléfono.');
+      return;
+    }
+    const exact = isExactReturnReference(term);
+    const reference = normalizeReferenceInput(term);
+    const linkedOrder = returnOrderReference(reference);
+    if (/^PA\d+$/.test(reference)) {
+      setMatches([]);
+      if (await openOrder(reference)) return;
+    }
+    setBusy(true);
+    setResult(null);
+    setReceipt(null);
+    setMatches([]);
+    setNotice('');
+    try {
+      const connected = exact
+        ? await searchExactConnected({ reference, ticketReference: reference, wooOrder: linkedOrder.startsWith('PA') && linkedOrder !== reference, wooReference: linkedOrder })
+        : null;
+      const named = exact ? null : await searchConnectedRecords(term);
+      const results: LookupMatch[] = [];
+      if (connected?.order && normalizeReferenceInput(connected.order.number) === linkedOrder) results.push({
+        id: 'woo-' + linkedOrder, label: 'Pedido WooCommerce', reference: linkedOrder,
+        customer: connected.order.customer.name, order: linkedOrder,
+      });
+      for (const order of named?.wooMatches ?? []) results.push({
+        id: 'woo-' + order.id, label: 'Pedido WooCommerce', reference: order.number, customer: order.customerName,
+        details: [order.phone, order.dateCreated.slice(0, 10)].filter(Boolean).join(' · '), order: order.number,
+      });
+      for (const row of connected?.mondayRecords ?? named?.mondayMatches ?? []) results.push({
+        id: 'monday-' + row.id, label: row.kind === 'reserva' ? 'Reserva' : 'Prenda especial',
+        reference: row.reference, customer: row.customer,
+        details: [row.articleDescription || row.article || row.code, row.size, row.status].filter(Boolean).join(' · '),
+        order: returnOrderReference(row.reference).startsWith('PA') ? returnOrderReference(row.reference) : undefined,
+      });
+      const incidents = connected?.incidents.length ? connected.incidents : connected?.incident ? [connected.incident] : named?.incidentMatches ?? [];
+      for (const row of incidents) results.push({
+        id: 'incident-' + row.id, label: 'Incidencia', reference: row.orderNumber, customer: row.customerName,
+        details: row.pickupDetails || row.incidentText, incidentId: row.id,
+        order: returnOrderReference(row.orderNumber).startsWith('PA') ? returnOrderReference(row.orderNumber) : undefined,
+      });
+      if (connected?.ticket) results.push({
+        id: 'ticket-' + connected.ticket.number, label: 'Ticket de tienda', reference: connected.ticket.number,
+        customer: connected.ticket.customer,
+        details: connected.ticket.items.map((item) => item.name || item.article).filter(Boolean).join(' · '),
+      });
+      if (!results.length) setNotice('No se encontraron registros para esta búsqueda.');
+      setMatches(results);
+    } catch {
+      setNotice('No se pudo completar la búsqueda. Vuelve a intentarlo.');
     } finally {
       setBusy(false);
     }
@@ -77,23 +151,38 @@ export default function ReturnsPage() {
 
   return <>
     <form className="grid min-w-0 gap-2 rounded-xl border bg-white p-3"
-      onSubmit={(event) => { event.preventDefault(); void openOrder(reference); }}>
-      <label htmlFor="return-order">QR o número de pedido</label>
+      onSubmit={(event) => { event.preventDefault(); void search(reference); }}>
+      <label htmlFor="return-order">QR, referencia, nombre o teléfono</label>
       <div className="grid min-w-0 gap-2 sm:grid-cols-[1fr_auto_auto]">
         <Input id="return-order" ref={input} autoComplete="off" value={reference} disabled={busy}
-          placeholder="Ej. PA51548" onChange={(event) => setReference(event.target.value)} />
-        <Button type="submit" className="min-h-11" disabled={busy || !reference.trim()}>Abrir pedido</Button>
+          placeholder="Ej. PA51548, R11575 o nombre" onChange={(event) => setReference(event.target.value)} />
+        <Button type="submit" className="min-h-11" disabled={busy || !reference.trim()}>Buscar</Button>
         <Button type="button" className="min-h-11" variant="outline" disabled={busy} onClick={() => setCamera(true)}>
           <ScanBarcode /> Escanear QR
         </Button>
       </div>
     </form>
     {notice && <p className="rounded-lg bg-white p-3" role="status">{notice}</p>}
+    {matches.length > 0 && <section className="grid min-w-0 gap-2 rounded-xl border bg-white p-3">
+      <h2 className="font-bold">Resultados de búsqueda</h2>
+      {matches.map((match) => <article key={match.id} className="grid min-w-0 gap-2 rounded-lg border p-3">
+        <p className="break-words font-semibold">{match.label} {match.reference}{match.customer && ' · ' + match.customer}</p>
+        {match.details && <p className="whitespace-pre-line break-words">{match.details}</p>}
+        <div className="flex flex-wrap gap-2">
+          {match.order && <Button type="button" className="min-h-11" disabled={busy} onClick={() => void openOrder(match.order!)}>
+            Abrir pedido para devolución
+          </Button>}
+          {match.label !== 'Pedido WooCommerce' && <a className="underline underline-offset-4" href={'/?' + new URLSearchParams({ order: match.reference, ...(match.incidentId ? { incidentId: match.incidentId } : {}) })}>
+            Ver ficha en Consulta global
+          </a>}
+        </div>
+      </article>)}
+    </section>}
     {result && <section className="grid gap-2 rounded-xl border bg-white p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-bold">Pedido {result.detail.number}</h1>
         <Button type="button" variant="outline" disabled={busy} onClick={() => {
-          setResult(null); setReceipt(null); setNotice(''); input.current?.focus();
+          setResult(null); setReceipt(null); setMatches([]); setNotice(''); input.current?.focus();
         }}>Leer otro pedido</Button>
       </div>
       {result.detail.items.map((item) => <article className="grid min-w-0 gap-2 rounded-lg border p-3" key={item.id}>
@@ -144,7 +233,7 @@ export default function ReturnsPage() {
       </article>)}
     </section>}
     {camera && <BarcodeCameraScanner target="order" onClose={() => setCamera(false)} onScan={(code) => {
-      setCamera(false); void openOrder(code);
+      setCamera(false); void search(code);
     }} />}
   </>;
 }

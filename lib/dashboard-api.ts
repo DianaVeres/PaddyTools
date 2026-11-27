@@ -239,6 +239,7 @@ export async function searchExactConnected(input: {
   ticketReference: string;
   incidentId?: string;
   wooOrder: boolean;
+  wooReference?: string;
 }, callbacks: {
   onOrder?: (order: DashboardOrder) => void;
   onIncident?: (incident: IncidentRecord) => void;
@@ -246,7 +247,7 @@ export async function searchExactConnected(input: {
   onTicket?: (ticket: StoreTicketRecord) => void;
 } = {}) {
   const wooPromise = input.wooOrder
-    ? fetch(`/api/search?number=${encodeURIComponent(input.reference)}`, {
+    ? fetch(`/api/search?number=${encodeURIComponent(input.wooReference || input.reference)}`, {
             cache: 'no-store',
           })
         .then((response) => safeJson<DashboardOrder>(response, 'WooCommerce'))
@@ -263,7 +264,7 @@ export async function searchExactConnected(input: {
           ? `/api/incidents?id=${encodeURIComponent(input.incidentId)}`
           : `/api/incidents?number=${encodeURIComponent(input.reference)}`,
         { cache: 'no-store' },
-      ).then((response) => safeJson<{ found?: boolean; incident?: IncidentRecord }>(response))
+      ).then((response) => safeJson<{ found?: boolean; incident?: IncidentRecord; incidents?: IncidentRecord[] }>(response))
       .then((result) => {
         if (result.ok && result.data.found && result.data.incident)
           callbacks.onIncident?.(result.data.incident);
@@ -299,6 +300,7 @@ export async function searchExactConnected(input: {
       incident.ok && incident.data.found
         ? incident.data.incident || null
         : null,
+    incidents: incident.ok ? incident.data.incidents || [] : [],
     mondayRecords: monday.ok ? monday.data.records || [] : [],
     ticket: ticket.ok && ticket.data.found ? ticket.data.ticket || null : null,
     found:

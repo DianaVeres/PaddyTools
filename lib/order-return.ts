@@ -1,15 +1,24 @@
-import { normalizeReferenceInput } from './global-search.ts';
+import { linkedWooOrderReference, normalizeReferenceInput } from './global-search.ts';
 
-export function returnOrderReference(value: string) {
+export function returnSearchTerm(value: string) {
   let reference = value.trim();
   if (/^https?:\/\//i.test(reference)) {
     let url: URL;
     try { url = new URL(reference); } catch { return ''; }
     reference = url.searchParams.get('order') || url.searchParams.get('order_id') ||
-      url.searchParams.get('post') || url.pathname.match(/(?:orders|pedido|view-order)\/((?:PA)?\d+)\/?$/i)?.[1] || '';
+      url.searchParams.get('post') || url.searchParams.get('number') || url.searchParams.get('reference') ||
+      url.pathname.match(/(?:orders|pedido|view-order)\/([\w-]+)\/?$/i)?.[1] || '';
   }
-  reference = normalizeReferenceInput(reference.replace(/^pedido\s*:?\s*/i, ''));
+  return reference.replace(/^pedido\s*:\s*|^pedido\s+(?=[#\d]|[IR]?PA\d)/i, '').trim();
+}
+
+export function returnOrderReference(value: string) {
+  const reference = linkedWooOrderReference(returnSearchTerm(value));
   return /^(?:PA)?\d{1,15}$/.test(reference) ? reference : '';
+}
+
+export function isExactReturnReference(value: string) {
+  return /^(?:[IR]?PA\d+|[IR]\d+|IR\d+|I?INT-[\w-]+|\d+)$/i.test(normalizeReferenceInput(value));
 }
 
 export function returnReceivedNote(kind: 'return' | 'incident', name: string, size: string, date: Date, quantity = 1) {
